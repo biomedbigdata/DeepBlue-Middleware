@@ -26,6 +26,12 @@ var Command = function (name, parameters) {
   self.name = name;
   self.parameters = parameters;
 
+  self.convert = function (value, type) {
+    if (type == "string") {
+      return valeue;
+    }
+  }
+
   self.doRequest = function (req, res) {
     console.log(self);
     console.log("executing : " + name + " " + parameters);
@@ -39,12 +45,22 @@ var Command = function (name, parameters) {
       var parameter_type = parameter[1];
       var multiple = parameter[2];
       console.log(req.query);
+      console.log("param: " + req.query[parameter_name] + " type " + parameter_type);
       if (parameter_name in req.query) {
-        console.log("param:");
-        console.log(req.query[parameter_name]);
-        xmlrpc_request_parameters.push(req.query[parameter_name]);
+        var raw_value = req.query[parameter_name];
+        if (parameter_type == "string") {
+          xmlrpc_request_parameters.push(raw_value);
+        }
+         else if (parameter_type == "int") {
+          xmlrpc_request_parameters.push(parseInt(raw_value));
+        } else if (parameter_type == "double") {
+         xmlrpc_request_parameters.push(parseFloat(raw_value));
+        } else  {
+          res.send("Internal error: Unknown variables type " + parameter_type);
+          return;
+        }
       } else {
-        xmlrpc_request_parameters.push("");
+        xmlrpc_request_parameters.push(null);
       }
     }
     console.log(xmlrpc_request_parameters);
