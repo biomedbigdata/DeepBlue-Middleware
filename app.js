@@ -118,10 +118,53 @@ var status = function(req, res) {
 
 /*** ****/
 
-var get_data = function(collection, columns, start, length, global_search, sort_column, sort_direction) {
-
+var get_data = function(echo, collection, columns, start, length, global_search, sort_column, sort_direction, res) {
   console.log("get_data");
-  return {};
+
+  var data = [];
+
+  var client = xmlrpc.createClient(xmlrpc_host);
+  client.methodCall('list_epigenetic_marks', ['mk8xHba3tqpeRPy4'], function(error, value) {
+    console.log(error);
+    console.log(value[1]);
+
+    var ems = [];
+    for (count in value[1]) {
+      ems.push(value[1][count][0]);
+    }
+
+    client.methodCall('info', [ems, 'mk8xHba3tqpeRPy4'], function(error, value) {
+      console.log(value);
+
+      for (count in value[1]) {
+        var dt_row = [];
+        var row = value[1][count];
+
+        for (column_pos in columns ) {
+          dt_row.push(row[columns[column_pos]]);
+        }
+
+        data.push(dt_row);
+      }
+
+
+      console.log(value[1].length);
+
+      result = {};
+      result.sEcho = echo;
+      result.iTotalRecords = value[1].length;
+      result.iTotalDisplayRecords = value[1].length;
+      result.data = data;
+      res.send(result);
+
+    });
+
+  });
+
+
+  return {
+    data: data
+  };
 }
 
 
@@ -162,17 +205,7 @@ var datatable = function(req, res) {
   var sort_direction = req.query.sSortDir_0;
   console.log(sort_direction);
 
-  var result = get_data(collection, columns, start, length, global_search, sort_column, sort_direction);
-
-  result.sEcho = req.query.sEcho;
-
-  result.iTotalRecords = 0;
-  result.iTotalDisplayRecords = 0;
-  result.aaData = [];
-
-  console.log(result);
-
-  res.send(result);
+  var result = get_data(req.query.sEcho, collection, columns, start, length, global_search, sort_column, sort_direction, res);
 };
 
 router.get('/status', status);
