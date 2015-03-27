@@ -17,8 +17,8 @@ var datasets = {};
 
 var router = express.Router();
 
-//xmlrpc_host = { host: 'deepblue.mpi-inf.mpg.de', port: 80, path: '/xmlrpc'};
-xmlrpc_host = { host: '127.0.0.1', port: 31415, path: '/'};
+xmlrpc_host = { host: 'deepblue.mpi-inf.mpg.de', port: 80, path: '/xmlrpc'};
+//xmlrpc_host = { host: '127.0.0.1', port: 31415, path: '/'};
 var client = xmlrpc.createClient(xmlrpc_host);
 
 var Command = function (name, parameters) {
@@ -111,12 +111,20 @@ var status = function (req, res) {
       res.send(value);
     }
   })
-}
+};
 
+// TODO: datatables :)
+var datatable = function (req, res) {
+  console.log("Datatable");
+  console.log(req);
+  res.send(":)");
+};
 
 router.get('/status', status);
+router.post('/datatable', datatable);
+router.get('/datatable', datatable);
 
-app.use('/api', router);
+app.use('/', router);
 
 // uncomment after placing your favicon in /public
 //app.use(favicon(__dirname + '/public/favicon.ico'));
