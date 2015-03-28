@@ -146,6 +146,20 @@ var filter = function(row, columns, filters, global) {
   return false;
 }
 
+var sort_data = function (data, pos, direction) {
+
+  console.log(data);
+  data.sort(function (a, b) {
+    if (direction == "asc") {
+      return b[pos].localeCompare(a[pos]);
+    } else {
+      return a[pos].localeCompare(b[pos]);
+    }
+  });
+
+  return data;
+}
+
 
 var get_data = function(echo, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, res) {
   console.log("get_data");
@@ -184,6 +198,7 @@ var get_data = function(echo, collection, columns, start, length, global_search,
           data.push(dt_row);
         }
       }
+      data  = sort_data(data, sort_column, sort_direction);
       result = {};
       result.sEcho = echo;
       result.iTotalRecords = value[1].length;
