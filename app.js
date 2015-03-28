@@ -146,6 +146,21 @@ var filter = function(row, columns, filters, global) {
   return false;
 }
 
+var cache_control = function (collection_name) {
+  var self = this;
+  self.collection_name = collection_name;
+  self.data = [];
+  self.counter = -1;
+
+  self.check_status() {
+
+  }
+
+  self.get_data() {
+
+  }
+}
+
 var sort_data = function (data, pos, direction) {
 
   console.log(data);
