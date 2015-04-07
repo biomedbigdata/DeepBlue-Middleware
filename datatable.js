@@ -5,7 +5,7 @@ var settings = require('./settings');
 
 var filter = function(row, columns, filters, global) {
   // Discard the rows that does not match individual search
-  for (column in filters) {
+  for (var column in filters) {
     individual_filter = true;
     var filter_value = filters[column];
     var column_content = row[columns[column]].toLowerCase();
@@ -33,12 +33,12 @@ var filter = function(row, columns, filters, global) {
 
 
 var sort_data = function(data, pos, direction) {
-  console.log(data);
   data.sort(function(a, b) {
     if (direction == "asc") {
-      return b[pos].localeCompare(a[pos]);
+      // TODO: optimize/cache the lower case.
+      return b[pos].toLowerCase().localeCompare(a[pos].toLowerCase());
     } else {
-      return a[pos].localeCompare(b[pos]);
+      return a[pos].toLowerCase().localeCompare(b[pos].toLowerCase());
     }
   });
 
@@ -46,51 +46,40 @@ var sort_data = function(data, pos, direction) {
 }
 
 
-var get_data = function(echo, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, res) {
-  console.log("get_data");
+var process = function(echo, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, res) {
+  var cache = deepblue_cache[collection];
+  cache.get(function(error, cache_data) {
+    var data = [];
 
-  var data = [];
+    var filtered = 0;
+    var count = 0;
+    var i = start;
 
-  var client = xmlrpc.createClient(xmlrpc_host);
-  client.methodCall('list_epigenetic_marks', ['mk8xHba3tqpeRPy4'], function(error, value) {
-    var ems = [];
-    for (count in value[1]) {
-      ems.push(value[1][count][0]);
-    }
+    var cache_data = sort_data(cache_data, columns[sort_column], sort_direction);
 
-    client.methodCall('info', [ems, 'mk8xHba3tqpeRPy4'], function(error, value) {
-      var filtered = 0;
-      var count = 0;
-      var i = start;
-
-      while (i < value[1].length) {
-        var row = value[1][i];
-
-        i++;
-
-        if (has_filter && !filter(row, columns, columns_filters, global_search)) {
-          filtered++;
-          continue;
-        }
-
-        if (count < length) {
-          var dt_row = [];
-          for (column_pos in columns) {
-            dt_row.push(row[columns[column_pos]]);
-          }
-
-          count++;
-          data.push(dt_row);
-        }
+    while (i < cache_data.length) {
+      var row = cache_data[i];
+      i++;
+      if (has_filter && !filter(row, columns, columns_filters, global_search)) {
+        filtered++;
+        continue;
       }
-      data = sort_data(data, sort_column, sort_direction);
-      result = {};
-      result.sEcho = echo;
-      result.iTotalRecords = value[1].length;
-      result.iTotalDisplayRecords = value[1].length - filtered;
-      result.data = data;
-      res.send(result);
-    });
+
+      if (count < length) {
+        var dt_row = [];
+        for (column_pos in columns) {
+          dt_row.push(row[columns[column_pos]]);
+        }
+        count++;
+        data.push(dt_row);
+      }
+    }
+    result = {};
+    result.sEcho = echo;
+    result.iTotalRecords = cache_data.length;
+    result.iTotalDisplayRecords = cache_data.length - filtered;
+    result.data = data;
+    res.send(result);
   });
 }
 
@@ -144,7 +133,9 @@ var datatable = function(req, res) {
   }
   console.log(columns);
 
-  get_data(req.query.sEcho, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, res);
+  console.log(collection);
+
+  process(req.query.sEcho, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, res);
 };
 
 

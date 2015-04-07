@@ -40,9 +40,27 @@ CacheControl = function(collection_name) {
 
       var client = xmlrpc.createClient(xmlrpc_host);
       client.methodCall(function_name, ['mk8xHba3tqpeRPy4'], function(error, value) {
-        self.data = value;
-        self.counter = counter;
-        callback(error, self.data);
+
+        if (error) {
+          callback(error);
+        }
+
+        var ids = [];
+        var data = value[1];
+
+        for (count in data) {
+          ids.push(data[count][0]);
+        }
+
+        client.methodCall('info', [ids, 'mk8xHba3tqpeRPy4'], function(error, infos) {
+          if (error) {
+            callback(error);
+          }
+
+          self.data = infos[1];
+          self.counter = counter;
+          callback(error, self.data);
+        });
       });
     }
 }
@@ -58,13 +76,13 @@ samples = new CacheControl("samples");
 techniques = new CacheControl("techniques");
 
 module.exports = {
-  epigenetic_marks: epigenetic_marks,
-  biosources: biosources,
-  annotations: annotations,
-  column_types: column_types,
-  experiments: experiments,
-  genomes: genomes,
-  projects: projects,
-  samples: samples,
-  techniques: techniques
+  "epigenetic_marks": epigenetic_marks,
+  "biosources": biosources,
+  "annotations": annotations,
+  "column_types": column_types,
+  "experiments": experiments,
+  "genomes": genomes,
+  "projects": projects,
+  "samples": samples,
+  "techniques": techniques
 }
