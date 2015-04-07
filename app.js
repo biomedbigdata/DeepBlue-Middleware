@@ -101,21 +101,6 @@ client.methodCall('commands', [], function(error, value) {
   }
 });
 
-
-var status = function(req, res) {
-  var client = xmlrpc.createClient(xmlrpc_host);
-  client.methodCall('getStatus', [], function(error, value) {
-    if (error) {
-      console.log('error:', error);
-      console.log('req headers:', error.req && error.req._header);
-      console.log('res code:', error.res && error.res.statusCode);
-      console.log('res body:', error.body);
-    } else {
-      res.send(value);
-    }
-  })
-};
-
 /*** ****/
 
 var filter = function(row, columns, filters, global) {
@@ -146,25 +131,39 @@ var filter = function(row, columns, filters, global) {
   return false;
 }
 
-var cache_control = function (collection_name) {
+var CacheControl = function(collection_name) {
   var self = this;
   self.collection_name = collection_name;
   self.data = [];
   self.counter = -1;
 
-  self.check_status() {
-
+  self.check_status = function () {
+    var client = xmlrpc.createClient(xmlrpc_host);
+    client.methodCall('get_state', [collection_name, "mk8xHba3tqpeRPy4"], function(error, value) {
+      if (error) {
+        console.log('error:', error);
+        console.log('req headers:', error.req && error.req._header);
+        console.log('res code:', error.res && error.res.statusCode);
+        console.log('res body:', error.body);
+      } else {
+        console.log("value: " + value[1]);
+        return value[1] == self.counter;
+      }
+    });
   }
 
-  self.get_data() {
+  self.get_data = function () {
 
   }
 }
 
-var sort_data = function (data, pos, direction) {
+var biosources_cache = new CacheControl("biosources");
+biosources_cache.check_status();
+
+var sort_data = function(data, pos, direction) {
 
   console.log(data);
-  data.sort(function (a, b) {
+  data.sort(function(a, b) {
     if (direction == "asc") {
       return b[pos].localeCompare(a[pos]);
     } else {
@@ -213,7 +212,7 @@ var get_data = function(echo, collection, columns, start, length, global_search,
           data.push(dt_row);
         }
       }
-      data  = sort_data(data, sort_column, sort_direction);
+      data = sort_data(data, sort_column, sort_direction);
       result = {};
       result.sEcho = echo;
       result.iTotalRecords = value[1].length;
@@ -282,7 +281,6 @@ var datatable = function(req, res) {
   get_data(req.query.sEcho, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, res);
 };
 
-router.get('/status', status);
 router.post('/datatable', datatable);
 router.get('/datatable', datatable);
 
