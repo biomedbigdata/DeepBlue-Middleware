@@ -31,7 +31,7 @@ var process_extra_metadata = function(row) {
     }
   }
 
-  return tmp_str;
+  return "<div class='exp-metadata'>" + tmp_str + "</div><div class='exp-metadata-more-view'>-- View metadata --</div>";
 }
 
 
