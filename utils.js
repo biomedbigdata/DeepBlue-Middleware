@@ -1,4 +1,4 @@
-var experiment_annotation_extra_metadata = function(row) {
+var annotations_extra_metadata = function(row) {
   var tmp_str = "";
 
   if (row.format) {
@@ -36,6 +36,12 @@ var experiment_annotation_extra_metadata = function(row) {
     }
   }
 
+  return tmp_str;
+}
+
+var experiments_extra_metadata = function(row) {
+  var tmp_str = annotations_extra_metadata(row);
+
   return "<div class='exp-metadata'>" + tmp_str + "</div><div class='exp-metadata-more-view'>-- View metadata --</div>";
 }
 
@@ -62,7 +68,8 @@ var column_type_info = function(row) {
 }
 
 module.exports = {
-  experiment_annotation_extra_metadata: experiment_annotation_extra_metadata,
+  annotations_extra_metadata: annotations_extra_metadata,
+  experiments_extra_metadata: experiments_extra_metadata,
   biosources_extra_metadata: biosources_extra_metadata,
   column_type_info: column_type_info
 }

@@ -71,9 +71,13 @@ CacheControl = function(collection_name, parameters) {
           var infos_data = infos[1];
 
           for (d in infos_data) {
-            if (infos_data[d].type == "experiment" || infos_data[d].type == "experiment" || infos_data[d].type == "annotation") {
-              infos_data[d].extra_metadata = utils.experiment_annotation_extra_metadata(infos_data[d]);
+            if (infos_data[d].type == "experiment") {
+              infos_data[d].extra_metadata = utils.experiments_extra_metadata(infos_data[d]);
               infos_data[d].biosource = infos_data[d].sample_info.biosource_name;
+            }
+
+            if (infos_data[d].type == "annotation") {
+              infos_data[d].extra_metadata = utils.annotations_extra_metadata(infos_data[d]);
             }
 
             if (infos_data[d].type == "biosource" || infos_data[d].type == "sample") {
