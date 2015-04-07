@@ -49,7 +49,20 @@ var biosources_extra_metadata = function(row) {
   return tmp_str;
 }
 
+var column_type_info = function(row) {
+  if (row.column_type == "category") {
+    return "Acceptable Items: " + row.items;
+  } else if (row.column_type == "range") {
+    return row.minimum + " - " + row.maximum;
+  } else if (row.column_type == "calculated") {
+    return row.code;
+  } else {
+    return "";
+  }
+}
+
 module.exports = {
   experiment_annotation_extra_metadata: experiment_annotation_extra_metadata,
-  biosources_extra_metadata: biosources_extra_metadata
+  biosources_extra_metadata: biosources_extra_metadata,
+  column_type_info: column_type_info
 }

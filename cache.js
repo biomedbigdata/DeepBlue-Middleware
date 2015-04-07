@@ -52,6 +52,10 @@ CacheControl = function(collection_name, parameters) {
           callback(error);
         }
 
+        if (value[0] == "error") {
+          console.log(value[1]);
+        }
+
         var ids = [];
         var data = value[1];
 
@@ -75,6 +79,10 @@ CacheControl = function(collection_name, parameters) {
             if (infos_data[d].type == "biosource" || infos_data[d].type == "sample") {
               infos_data[d].extra_metadata = utils.biosources_extra_metadata(infos_data[d]);
             }
+
+            if (infos_data[d].type == "column_type") {
+              infos_data[d].info = utils.column_type_info(infos_data[d]);
+            }
           }
 
           self.data = infos[1];
@@ -85,9 +93,9 @@ CacheControl = function(collection_name, parameters) {
     }
 }
 
-epigenetic_marks = new CacheControl("epigenetic_marks");
+annotations = new CacheControl("annotations", [""]);
 biosources = new CacheControl("biosources");
-annotations = new CacheControl("annotations");
+epigenetic_marks = new CacheControl("epigenetic_marks");
 column_types = new CacheControl("column_types");
 experiments = new CacheControl("experiments", ["", "", "", "", ""]);
 genomes = new CacheControl("genomes");
