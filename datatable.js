@@ -3,6 +3,7 @@ var xmlrpc = require('xmlrpc');
 var deepblue_cache = require('./cache');
 var settings = require('./settings');
 
+
 var filter = function(row, columns, filters, global) {
   // Discard the rows that does not match individual search
   for (var column in filters) {
@@ -91,6 +92,10 @@ var datatable = function(req, res) {
 
   var columns = [];
   var columns_count = parseInt(req.query.iColumns);
+
+  console.log(columns_count);
+
+
   for (var i = 0; i < columns_count; i++) {
     var param_name = "col_" + i.toString();
     var column_name = req.query[param_name];
