@@ -36,9 +36,9 @@ var sort_data = function(data, pos, direction) {
   data.sort(function(a, b) {
     if (direction == "asc") {
       // TODO: optimize/cache the lower case.
-      return b[pos].toLowerCase().localeCompare(a[pos].toLowerCase());
-    } else {
       return a[pos].toLowerCase().localeCompare(b[pos].toLowerCase());
+    } else {
+      return b[pos].toLowerCase().localeCompare(a[pos].toLowerCase());
     }
   });
 
