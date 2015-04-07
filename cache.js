@@ -64,8 +64,6 @@ CacheControl = function(collection_name, parameters) {
             callback(error);
           }
 
-          console.log("processing data");
-
           var infos_data = infos[1];
 
           for (d in infos_data) {
@@ -74,7 +72,7 @@ CacheControl = function(collection_name, parameters) {
               infos_data[d].biosource = infos_data[d].sample_info.biosource_name;
             }
 
-            if (infos_data[d].type == "biosource") {
+            if (infos_data[d].type == "biosource" || infos_data[d].type == "sample") {
               infos_data[d].extra_metadata = utils.biosources_extra_metadata(infos_data[d]);
             }
           }
@@ -94,7 +92,7 @@ column_types = new CacheControl("column_types");
 experiments = new CacheControl("experiments", ["", "", "", "", ""]);
 genomes = new CacheControl("genomes");
 projects = new CacheControl("projects");
-samples = new CacheControl("samples");
+samples = new CacheControl("samples", ["", null]);
 techniques = new CacheControl("techniques");
 
 module.exports = {
