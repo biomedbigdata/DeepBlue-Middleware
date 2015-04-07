@@ -57,7 +57,7 @@ projects = new CacheControl("projects");
 samples = new CacheControl("samples");
 techniques = new CacheControl("techniques");
 
-exports.caches = {
+module.exports = {
   epigenetic_marks: epigenetic_marks,
   biosources: biosources,
   annotations: annotations,
