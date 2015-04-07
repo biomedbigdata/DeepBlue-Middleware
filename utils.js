@@ -1,4 +1,4 @@
-var process_extra_metadata = function(row) {
+var experiment_annotation_extra_metadata = function(row) {
   var tmp_str = "";
 
   if (row.format) {
@@ -39,7 +39,15 @@ var process_extra_metadata = function(row) {
   return "<div class='exp-metadata'>" + tmp_str + "</div><div class='exp-metadata-more-view'>-- View metadata --</div>";
 }
 
+var biosources_extra_metadata = function (row) {
+  var tmp_str = "";
+  for (key in row.extra_metadata) {
+    tmp_str += "<b>"+key+"</b> : " + row.extra_metadata[key] + "</br>";
+  }
+  return tmp_str;
+}
 
 module.exports = {
-  process_extra_metadata : process_extra_metadata
+  experiment_annotation_extra_metadata : experiment_annotation_extra_metadata,
+  biosources_extra_metadata: biosources_extra_metadata
 }
