@@ -35,6 +35,15 @@ var filter = function(row, columns, filters, global) {
 
 var sort_data = function(data, pos, direction) {
   data.sort(function(a, b) {
+    if (a[pos] === undefined || b[pos] == undefined) {
+      console.log("a: ");
+      console.log(a);
+      console.log("b: ");
+      console.log(b);
+      console.log("pos: ");
+      console.log(pos);
+      return 0;
+    }
     if (direction == "asc") {
       // TODO: optimize/cache the lower case.
       return a[pos].toLowerCase().localeCompare(b[pos].toLowerCase());
@@ -136,9 +145,6 @@ var datatable = function(req, res) {
       has_filter = true;
     }
   }
-  console.log(columns);
-
-  console.log(collection);
 
   process(req.query.sEcho, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, res);
 };
