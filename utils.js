@@ -47,6 +47,18 @@ var experiments_extra_metadata = function(row) {
 
 var biosources_extra_metadata = function(row) {
   var tmp_str = "";
+  for (key in row.extra_metadata) {
+    if (key != "type" && key != "_id" && key != "biosource_name" && key != "user") {
+      if (row.extra_metadata[key]) {
+        tmp_str += "<b>" + key + "</b> : " + row.extra_metadata[key] + "</br>";
+      }
+    }
+  }
+  return tmp_str;
+}
+
+var samples_extra_metadata = function(row) {
+  var tmp_str = "";
   for (key in row) {
     if (key != "type" && key != "_id" && key != "biosource_name" && key != "user") {
       tmp_str += "<b>" + key + "</b> : " + row[key] + "</br>";
@@ -71,5 +83,6 @@ module.exports = {
   annotations_extra_metadata: annotations_extra_metadata,
   experiments_extra_metadata: experiments_extra_metadata,
   biosources_extra_metadata: biosources_extra_metadata,
+  samples_extra_metadata: samples_extra_metadata,
   column_type_info: column_type_info
 }

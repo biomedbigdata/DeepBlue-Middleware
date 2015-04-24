@@ -70,6 +70,7 @@ CacheControl = function(collection_name, parameters) {
 
           var infos_data = infos[1];
 
+          console.log("building json");
           for (d in infos_data) {
             if (infos_data[d].type == "experiment") {
               infos_data[d].extra_metadata = utils.experiments_extra_metadata(infos_data[d]);
@@ -80,8 +81,12 @@ CacheControl = function(collection_name, parameters) {
               infos_data[d].extra_metadata = utils.annotations_extra_metadata(infos_data[d]);
             }
 
-            if (infos_data[d].type == "biosource" || infos_data[d].type == "sample") {
+            if (infos_data[d].type == "biosource") {
               infos_data[d].extra_metadata = utils.biosources_extra_metadata(infos_data[d]);
+            }
+
+            if (infos_data[d].type == "sample") {
+              infos_data[d].extra_metadata = utils.samples_extra_metadata(infos_data[d]);
             }
 
             if (infos_data[d].type == "column_type") {
