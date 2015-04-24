@@ -59,30 +59,38 @@ var sort_data = function(data, pos, direction) {
 var process = function(echo, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, res) {
   var cache = deepblue_cache[collection];
   cache.get(function(error, cache_data) {
-    var data = [];
 
     var filtered = 0;
-    var count = 0;
-    var i = start;
-
     var cache_data = sort_data(cache_data, columns[sort_column], sort_direction);
 
-    while (i < cache_data.length) {
-      var row = cache_data[i];
-      i++;
-      if (has_filter && !filter(row, columns, columns_filters, global_search)) {
-        filtered++;
-        continue;
-      }
-
-      if (count < length) {
-        var dt_row = [];
-        for (column_pos in columns) {
-          dt_row.push(row[columns[column_pos]]);
+    var filtered_data = [];
+    if (has_filter) {
+      var pos = 0;
+      while (pos < cache_data.length) {
+        var row = cache_data[pos];
+        if (filter(row, columns, columns_filters, global_search)) {
+          filtered_data.push(row);
+        } else {
+          filtered++;
         }
-        count++;
-        data.push(dt_row);
+        pos++;
       }
+    } else {
+      filtered_data = cache_data;
+    }
+
+    var i = start;
+    var count = 0;
+    var data = [];
+    while ((i < filtered_data.length) && (count < length)) {
+      var row = filtered_data[i];
+      var dt_row = [];
+      for (column_pos in columns) {
+        dt_row.push(row[columns[column_pos]]);
+      }
+      data.push(dt_row);
+      count++;
+      i++;
     }
     result = {};
     result.sEcho = echo;
