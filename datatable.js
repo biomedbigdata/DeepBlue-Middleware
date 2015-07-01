@@ -7,7 +7,6 @@ var settings = require('./settings');
 var filter = function(row, columns, filters, global) {
   // Discard the rows that does not match individual search
   for (var column in filters) {
-    individual_filter = true;
     var filter_value = filters[column];
     var column_content = row[columns[column]].toLowerCase();
 
@@ -85,14 +84,14 @@ var process = function(echo, collection, columns, start, length, global_search, 
     while ((i < filtered_data.length) && (count < length)) {
       var row = filtered_data[i];
       var dt_row = [];
-      for (column_pos in columns) {
+      for (var column_pos in columns) {
         dt_row.push(row[columns[column_pos]]);
       }
       data.push(dt_row);
       count++;
       i++;
     }
-    result = {};
+    var result = {};
     result.sEcho = echo;
     result.iTotalRecords = cache_data.length;
     result.iTotalDisplayRecords = cache_data.length - filtered;

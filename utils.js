@@ -24,7 +24,7 @@ var annotations_extra_metadata = function(row) {
 
   if (row.extra_metadata) {
     tmp_str += "<b>Extra Metadata</b> <br />";
-    for (extra_metadata_key in row.extra_metadata) {
+    for (var extra_metadata_key in row.extra_metadata) {
       var extra_metadata_value = row.extra_metadata[extra_metadata_key];
       if ((extra_metadata_value != '') && (extra_metadata_value != '-')) {
         if (extra_metadata_key == 'key') {
@@ -37,7 +37,7 @@ var annotations_extra_metadata = function(row) {
   }
 
   return tmp_str;
-}
+};
 
 var experiments_extra_metadata = function(row) {
   var tmp_str = annotations_extra_metadata(row);
@@ -47,7 +47,7 @@ var experiments_extra_metadata = function(row) {
 
 var biosources_extra_metadata = function(row) {
   var tmp_str = "";
-  for (key in row.extra_metadata) {
+  for (var key in row.extra_metadata) {
     if (key != "type" && key != "_id" && key != "biosource_name" && key != "user") {
       if (row.extra_metadata[key]) {
         tmp_str += "<b>" + key + "</b> : " + row.extra_metadata[key] + "</br>";
@@ -55,17 +55,17 @@ var biosources_extra_metadata = function(row) {
     }
   }
   return tmp_str;
-}
+};
 
 var samples_extra_metadata = function(row) {
   var tmp_str = "";
-  for (key in row) {
+  for (var key in row) {
     if (key != "type" && key != "_id" && key != "biosource_name" && key != "user") {
       tmp_str += "<b>" + key + "</b> : " + row[key] + "</br>";
     }
   }
   return tmp_str;
-}
+};
 
 var column_type_info = function(row) {
   if (row.column_type == "category") {
@@ -77,7 +77,7 @@ var column_type_info = function(row) {
   } else {
     return "";
   }
-}
+};
 
 module.exports = {
   annotations_extra_metadata: annotations_extra_metadata,
@@ -85,4 +85,4 @@ module.exports = {
   biosources_extra_metadata: biosources_extra_metadata,
   samples_extra_metadata: samples_extra_metadata,
   column_type_info: column_type_info
-}
+};
