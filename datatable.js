@@ -8,8 +8,8 @@ var settings = require('./settings');
 var filter = function(row, columns, filters, global) {
   // Discard the rows that does not match individual search
   for (var column in filters) {
-    var filter_value = filters[column];
-    var column_content = row[columns[column]].toLowerCase().replace("-", "");
+    var filter_value = filters[column].toLowerCase().replace(/[\W_]+/g, "");
+    var column_content = row[columns[column]].toLowerCase().replace(/[\W_]+/g, "");
 
     if (column_content.indexOf(filter_value) == -1) {
       return false;
