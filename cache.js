@@ -97,7 +97,6 @@ var CacheControl = function (collection_name, parameters) {
           if (infos_data[d].type == "column_type") {
             infos_data[d].info = utils.column_type_info(infos_data[d]);
           }
-          console.log(infos_data[d]);
         }
 
         self.data = infos[1];
