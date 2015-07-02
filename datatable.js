@@ -9,7 +9,7 @@ var filter = function(row, columns, filters, global) {
   // Discard the rows that does not match individual search
   for (var column in filters) {
     var filter_value = filters[column];
-    var column_content = row[columns[column]].toLowerCase();
+    var column_content = row[columns[column]].toLowerCase().replace("-", "");
 
     if (column_content.indexOf(filter_value) == -1) {
       return false;
