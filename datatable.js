@@ -1,6 +1,7 @@
 var xmlrpc = require('xmlrpc');
 
 var deepblue_cache = require('./cache');
+var experiments_cache = require('./experiments_cache');
 var settings = require('./settings');
 
 
@@ -54,10 +55,15 @@ var sort_data = function(data, pos, direction) {
   return data;
 }
 
+var process = function(echo, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, key, res) {
+  var cache;
+  if (collection == "experiments") {
+    cache = experiments_cache["cache"];
+  } else {
+    cache = deepblue_cache[collection];
+  }
 
-var process = function(echo, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, res) {
-  var cache = deepblue_cache[collection];
-  cache.get(function(error, cache_data) {
+  cache.get(key, function(error, cache_data) {
 
     var filtered = 0;
     var cache_data = sort_data(cache_data, columns[sort_column], sort_direction);
@@ -105,6 +111,9 @@ var datatable = function(req, res) {
   console.log(req.query);
 
   var collection = req.query.collection;
+  var key = req.query.key;
+
+  console.log(key);
 
   var columns = [];
   var columns_count = parseInt(req.query.iColumns);
@@ -153,7 +162,7 @@ var datatable = function(req, res) {
     }
   }
 
-  process(req.query.sEcho, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, res);
+  process(req.query.sEcho, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, key, res);
 };
 
 
