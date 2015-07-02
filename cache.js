@@ -41,13 +41,13 @@ var CacheControl = function(collection_name, parameters) {
       var function_name = "list_" + self.collection_name;
       console.log("load new data");
 
-      if (parameters) {
-        parameters = self.parameters.concat([user_key]);
+      if (self.parameters) {
+        function_parameters = self.parameters.concat([user_key]);
       } else {
-        parameters = [user_key];
+        function_parameters = [user_key];
       }
       var client = xmlrpc.createClient(xmlrpc_host);
-      client.methodCall(function_name, parameters, function(error, value) {
+      client.methodCall(function_name, function_parameters, function(error, value) {
 
         if (error) {
           callback(error);
