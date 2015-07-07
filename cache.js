@@ -106,7 +106,7 @@ var CacheControl = function(collection_name, parameters) {
 };
 
 var annotations = new CacheControl("annotations", [""]);
-var biosources = new CacheControl("biosources");
+var biosources = new CacheControl("biosources", [null]);
 var epigenetic_marks = new CacheControl("epigenetic_marks");
 var column_types = new CacheControl("column_types");
 var experiments = new CacheControl("experiments", ["", "", "", "", ""]);
