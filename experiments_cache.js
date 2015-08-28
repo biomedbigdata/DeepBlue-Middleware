@@ -12,6 +12,7 @@ var ExperimentsCacheControl = function() {
 
   self.projects_state = {};
   self.projects_data = {};
+  self._id_item = {};
 
   self.matches = 0;
   self.requests = 0;
@@ -82,17 +83,19 @@ var ExperimentsCacheControl = function() {
       var parameters = ["", "", "", "", projects, user_key];
       client.methodCall("list_experiments", parameters, function(error, value) {
         if (error) {
-          callback(error);
+          return callback(error);
         }
 
         if (value[0] == "error") {
           console.log(value[1]);
         }
         var ids = [];
-        var info_data = value[1];
+        var list_ids = value[1];
         console.log("processings ids");
-        for (var count in info_data) {
-          ids.push(info_data[count][0]);
+        for (var count in list_ids) {
+          if (!(list_ids[count][0] in self._id_item)) {
+            ids.push(list_ids[count][0]);
+          }
         }
 
         console.log("request info");
@@ -102,7 +105,7 @@ var ExperimentsCacheControl = function() {
 
           if (error) {
             console.log(error);
-            callback(error);
+            return callback(error);
           }
 
           for (p in projects) {
@@ -115,8 +118,12 @@ var ExperimentsCacheControl = function() {
           for (var d in infos_data) {
             infos_data[d].extra_metadata = utils.experiments_extra_metadata(infos_data[d]);
             infos_data[d].biosource = infos_data[d].sample_info.biosource_name;
-            pre_cached_data[infos_data[d].project].push(infos_data[d]);
-            data.push(infos_data[d]);
+            self._id_item[infos_data[d]["_id"]] = infos_data[d];
+          }
+
+          for (var p in list_ids) {
+            var item = self._id_item[list_ids[p][0]];
+            pre_cached_data[item.project].push(item);
           }
 
           // set the data cache
@@ -139,6 +146,16 @@ var ExperimentsCacheControl = function() {
 };
 
 var experiments = new ExperimentsCacheControl();
+function callback_log(error, data) {
+  if (error) {
+      console.log(error);
+  }
+  if (data) {
+    console.log(data.length);
+  }
+}
+
+experiments.get("NA5HfJiaR2U7lopK", callback_log);
 
 module.exports = {
   "cache": experiments,

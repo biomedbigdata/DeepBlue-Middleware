@@ -53,7 +53,7 @@ var CacheControl = function(collection_name, parameters) {
       client.methodCall(function_name, function_parameters, function(error, value) {
 
         if (error) {
-          callback(error);
+          return callback(error);
         }
 
         if (value[0] == "error") {
@@ -70,7 +70,7 @@ var CacheControl = function(collection_name, parameters) {
 
         client.methodCall('info', [ids, user_key], function(error, infos) {
           if (error) {
-            callback(error);
+            return callback(error);
           }
           var infos_data = infos[1];
 
@@ -132,6 +132,7 @@ function callback_log(error, data) {
   }
 }
 
+/*
 annotations.get("NA5HfJiaR2U7lopK", callback_log);
 biosources.get("NA5HfJiaR2U7lopK", callback_log);
 epigenetic_marks.get("NA5HfJiaR2U7lopK", callback_log);
@@ -141,13 +142,13 @@ genomes.get("NA5HfJiaR2U7lopK", callback_log);
 projects.get("NA5HfJiaR2U7lopK", callback_log);
 samples.get("NA5HfJiaR2U7lopK", callback_log);
 techniques.get("NA5HfJiaR2U7lopK", callback_log);
+*/
 
 module.exports = {
   "epigenetic_marks": epigenetic_marks,
   "biosources": biosources,
   "annotations": annotations,
   "column_types": column_types,
-  "experiments": experiments,
   "genomes": genomes,
   "projects": projects,
   "samples": samples,
