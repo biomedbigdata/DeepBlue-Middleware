@@ -5,11 +5,14 @@ var utils = require('./utils');
 
 var xmlrpc_host = settings.xmlrpc_host();
 
+var anonymous_key = "NA5HfJiaR2U7lopK"
+
 var CacheControl = function(collection_name, parameters) {
   console.log("Creating cache controle for " + collection_name);
   var self = this;
   self.collection_name = collection_name;
   self.data = [];
+  self._id_item = {};
   self.counter = -1;
 
   self.matches = 0;
@@ -57,24 +60,23 @@ var CacheControl = function(collection_name, parameters) {
           console.log(value[1]);
         }
         var ids = [];
-        var data = value[1];
-        console.log("processings ids");
-        for (var count in data) {
-          ids.push(data[count][0]);
+        var list_ids = value[1];
+
+        for (var count in list_ids) {
+          if (!(list_ids[count][0] in self._id_item)) {
+            ids.push(list_ids[count][0]);
+          }
         }
 
-        console.log("request info");
         client.methodCall('info', [ids, user_key], function(error, infos) {
-          console.log(infos);
-          console.log(error);
           if (error) {
             callback(error);
           }
-
           var infos_data = infos[1];
 
           console.log("building json");
           for (var d in infos_data) {
+            var _id = infos_data[d]["_id"];
             if (infos_data[d].type == "experiment") {
               infos_data[d].extra_metadata = utils.experiments_extra_metadata(infos_data[d]);
               infos_data[d].biosource = infos_data[d].sample_info.biosource_name;
@@ -95,10 +97,16 @@ var CacheControl = function(collection_name, parameters) {
             if (infos_data[d].type == "column_type") {
               infos_data[d].info = utils.column_type_info(infos_data[d]);
             }
+            self._id_item[_id] = infos_data[d];
           }
 
-          self.data = infos[1];
+          var id_infos = [];
+          for (var p in list_ids) {
+            id_infos.push(self._id_item[list_ids[p][0]]);
+          }
+
           self.counter = counter;
+          self.data = id_infos;
           callback(error, self.data);
         });
       });
@@ -114,6 +122,25 @@ var genomes = new CacheControl("genomes");
 var projects = new CacheControl("projects");
 var samples = new CacheControl("samples", ["", null]);
 var techniques = new CacheControl("techniques");
+
+function callback_log(error, data) {
+  if (error) {
+      console.log(error);
+  }
+  if (data) {
+    console.log(data.length);
+  }
+}
+
+annotations.get("NA5HfJiaR2U7lopK", callback_log);
+biosources.get("NA5HfJiaR2U7lopK", callback_log);
+epigenetic_marks.get("NA5HfJiaR2U7lopK", callback_log);
+column_types.get("NA5HfJiaR2U7lopK", callback_log);
+experiments.get("NA5HfJiaR2U7lopK", callback_log);
+genomes.get("NA5HfJiaR2U7lopK", callback_log);
+projects.get("NA5HfJiaR2U7lopK", callback_log);
+samples.get("NA5HfJiaR2U7lopK", callback_log);
+techniques.get("NA5HfJiaR2U7lopK", callback_log);
 
 module.exports = {
   "epigenetic_marks": epigenetic_marks,
