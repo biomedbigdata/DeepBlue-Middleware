@@ -21,12 +21,14 @@ var CacheControl = function(collection_name, parameters) {
 
   self.parameters = parameters;
 
+
+  // TODO: Move to info.js and access the cache data from there
   self.get_info = function(error, user_key, user_info, callback) {
     if (error) {
       callback(error);
     }
     if (_id in self._id_item) {
-      callback(self._id_item[_id]);
+      return callback(self._id_item[_id]);
     }
     else {
       var client = xmlrpc.createClient(xmlrpc_host);
@@ -35,16 +37,17 @@ var CacheControl = function(collection_name, parameters) {
           return callback(error);
         }
         if (infos[0] == "error") {
-          callback(infos[1]);
+          return callback(infos[1]);
         }
         var infos_data = infos[1][0];
         info = utils.build_info(infos_data)
         self._id_item[_id] = info;
-        callback(error, self._id_item[_id]);
+        return callback(error, self._id_item[_id]);
       });
     }
   }
 
+  // TODO: Move to info.js and access the cache data from there
   self.info = function(_id, user_key, callback) {
     users.check(user_key, callback, self.get_info);
   }
@@ -142,6 +145,7 @@ function callback_log(error, data) {
   }
 }
 
+/*
 annotations.get(anonymous_key, callback_log);
 biosources.get(anonymous_key, callback_log);
 epigenetic_marks.get(anonymous_key, callback_log);
@@ -151,7 +155,7 @@ genomes.get(anonymous_key, callback_log);
 projects.get(anonymous_key, callback_log);
 samples.get(anonymous_key, callback_log);
 techniques.get(anonymous_key, callback_log);
-
+*/
 
 module.exports = {
   "epigenetic_marks": epigenetic_marks,

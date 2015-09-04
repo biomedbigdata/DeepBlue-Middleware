@@ -1,6 +1,7 @@
 /* global process */
 var xmlrpc = require('xmlrpc');
 var settings = require('./settings');
+var users = require('./users.js')
 var utils = require('./utils');
 
 var xmlrpc_host = settings.xmlrpc_host();
@@ -17,6 +18,36 @@ var ExperimentsCacheControl = function() {
 
   self.matches = 0;
   self.requests = 0;
+
+  // TODO: Move to info.js and access the cache data from there
+  self.get_info = function(error, user_key, user_info, callback) {
+    if (error) {
+      return callback(error);
+    }
+    if (_id in self._id_item) {
+      return callback(self._id_item[_id]);
+    }
+    else {
+      var client = xmlrpc.createClient(xmlrpc_host);
+      client.methodCall('info', [_id, user_key], function(error, infos) {
+        if (error) {
+          return callback(error);
+        }
+        if (infos[0] == "error") {
+          return callback({"error": infos[1]});
+        }
+        var infos_data = infos[1][0];
+        info = utils.build_info(infos_data)
+        self._id_item[_id] = info;
+        return callback(error, self._id_item[_id]);
+      });
+    }
+  }
+
+  // TODO: Move to info.js and access the cache data from there
+  self.info = function(_id, user_key, callback) {
+    users.check(user_key, callback, self.get_info);
+  }
 
   self.get = function(user_key, callback) {
       self.requests++;
@@ -179,7 +210,7 @@ function callback_log(error, data) {
   }
 }
 
-experiments.get("NA5HfJiaR2U7lopK", callback_log);
+//experiments.get("NA5HfJiaR2U7lopK", callback_log);
 
 module.exports = {
   "cache": experiments,
