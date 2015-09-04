@@ -1,7 +1,8 @@
 /* global process */
-var xmlrpc = require('xmlrpc');
 var settings = require('./settings');
 var utils = require('./utils');
+var users = require('./users.js')
+var xmlrpc = require('xmlrpc');
 
 var xmlrpc_host = settings.xmlrpc_host();
 
@@ -19,6 +20,34 @@ var CacheControl = function(collection_name, parameters) {
   self.requests = 0;
 
   self.parameters = parameters;
+
+  self.get_info = function(error, user_key, user_info, callback) {
+    if (error) {
+      callback(error);
+    }
+    if (_id in self._id_item) {
+      callback(self._id_item[_id]);
+    }
+    else {
+      var client = xmlrpc.createClient(xmlrpc_host);
+      client.methodCall('info', [_id, user_key], function(error, infos) {
+        if (error) {
+          return callback(error);
+        }
+        if (infos[0] == "error") {
+          callback(infos[1]);
+        }
+        var infos_data = infos[1][0];
+        info = utils.build_info(infos_data)
+        self._id_item[_id] = info;
+        callback(error, self._id_item[_id]);
+      });
+    }
+  }
+
+  self.info = function(_id, user_key, callback) {
+    users.check(user_key, callback, self.get_info);
+  }
 
   self.get = function(user_key, callback) {
       self.requests++;
@@ -77,26 +106,7 @@ var CacheControl = function(collection_name, parameters) {
           console.log("building json");
           for (var d in infos_data) {
             var _id = infos_data[d]["_id"];
-            if (infos_data[d].type == "experiment") {
-              infos_data[d].extra_metadata = utils.experiments_extra_metadata(infos_data[d]);
-              infos_data[d].biosource = infos_data[d].sample_info.biosource_name;
-            }
-
-            if (infos_data[d].type == "annotation") {
-              infos_data[d].extra_metadata = utils.annotations_extra_metadata(infos_data[d]);
-            }
-
-            if (infos_data[d].type == "biosource") {
-              infos_data[d].extra_metadata = utils.biosources_extra_metadata(infos_data[d]);
-            }
-
-            if (infos_data[d].type == "sample") {
-              infos_data[d].extra_metadata = utils.samples_extra_metadata(infos_data[d]);
-            }
-
-            if (infos_data[d].type == "column_type") {
-              infos_data[d].info = utils.column_type_info(infos_data[d]);
-            }
+            info = utils.build_info(infos_data[d]);
             self._id_item[_id] = infos_data[d];
           }
 
@@ -132,16 +142,16 @@ function callback_log(error, data) {
   }
 }
 
+annotations.get(anonymous_key, callback_log);
 /*
-annotations.get("NA5HfJiaR2U7lopK", callback_log);
-biosources.get("NA5HfJiaR2U7lopK", callback_log);
-epigenetic_marks.get("NA5HfJiaR2U7lopK", callback_log);
-column_types.get("NA5HfJiaR2U7lopK", callback_log);
-experiments.get("NA5HfJiaR2U7lopK", callback_log);
-genomes.get("NA5HfJiaR2U7lopK", callback_log);
-projects.get("NA5HfJiaR2U7lopK", callback_log);
-samples.get("NA5HfJiaR2U7lopK", callback_log);
-techniques.get("NA5HfJiaR2U7lopK", callback_log);
+biosources.get(anonymous_key, callback_log);
+epigenetic_marks.get(anonymous_key, callback_log);
+column_types.get(anonymous_key, callback_log);
+experiments.get(anonymous_key, callback_log);
+genomes.get(anonymous_key, callback_log);
+projects.get(anonymous_key, callback_log);
+samples.get(anonymous_key, callback_log);
+techniques.get(anonymous_key, callback_log);
 */
 
 module.exports = {

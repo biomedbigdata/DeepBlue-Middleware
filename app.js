@@ -6,6 +6,7 @@ var bodyParser = require('body-parser');
 var datatable = require('./datatable');
 var rest_to_xmlrpc = require('./rest_to_xmlrpc');
 var settings = require('./settings');
+var info = require('./info');
 
 var app = express();
 
@@ -13,6 +14,8 @@ var router = rest_to_xmlrpc.router;
 
 router.post('/datatable', datatable);
 router.get('/datatable', datatable);
+console.log(info);
+router.get('/info', info);
 
 app.use('/', router);
 
