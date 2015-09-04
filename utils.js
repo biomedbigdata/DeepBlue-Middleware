@@ -79,10 +79,36 @@ var column_type_info = function(row) {
   }
 };
 
+
+var build_info = function (info_data) {
+  if (info_data.type == "experiment") {
+    info_data.extra_metadata = experiments_extra_metadata(info_data);
+    info_data.biosource = info_data.sample_info.biosource_name;
+  }
+
+  if (info_data.type == "annotation") {
+    info_data.extra_metadata = annotations_extra_metadata(info_data);
+  }
+
+  if (info_data.type == "biosource") {
+    info_data.extra_metadata = biosources_extra_metadata(info_data);
+  }
+
+  if (info_data.type == "sample") {
+    info_data.extra_metadata = samples_extra_metadata(info_data);
+  }
+
+  if (info_data.type == "column_type") {
+    info_data.info = column_type_info(info_data);
+  }
+  return info_data;
+}
+
 module.exports = {
   annotations_extra_metadata: annotations_extra_metadata,
   experiments_extra_metadata: experiments_extra_metadata,
   biosources_extra_metadata: biosources_extra_metadata,
   samples_extra_metadata: samples_extra_metadata,
-  column_type_info: column_type_info
+  column_type_info: column_type_info,
+  build_info: build_info
 };

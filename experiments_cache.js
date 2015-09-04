@@ -12,6 +12,7 @@ var ExperimentsCacheControl = function() {
 
   self.projects_state = {};
   self.projects_data = {};
+  self._project_counter = {};
   self._id_item = {};
 
   self.matches = 0;
@@ -44,43 +45,60 @@ var ExperimentsCacheControl = function() {
           var project_to_load = [];
           var project_cached = [];
 
-          for (p in user_projects) {
-            var project_name = user_projects[p]
-            var project_state = self.projects_state[project_name]
-            console.log(project_name + " - " + project_state);
-            if (project_state == undefined || project_state != counter) {
-              project_to_load.push(project_name);
-            } else {
-              project_cached.push(project_name);
+          client.methodCall("list_in_use", ["projects", user_key], function (error, value) {
+            if (error) {
+              return callback(error);
             }
-          }
 
-          // Three Options
-          // 1. All data is cached
-          if (project_to_load.length == 0) {
-            var request_data = [];
-            self.matches++;
-            console.log("Everything is cached <3.");
-            process.nextTick(function() {
-              for (up in user_projects) {
-                var project_name = user_projects[up];
-                request_data = request_data.concat(self.projects_data[project_name]);
+            if (value[0] == "error") {
+              return callback(value[1]);
+            }
+
+            project_count = {};
+            for (k in value[1]) {
+              p_info = value[1][k];
+              project_count[p_info[1]] = p_info[2];
+            }
+
+            for (p in user_projects) {
+              var project_name = user_projects[p]
+              var project_state = self.projects_state[project_name]
+              console.log(project_name + " - " + self._project_counter[project_name] + " - " + project_count[project_name]);
+              if ( !(project_name in self._project_counter) || self._project_counter[project_name] != project_count[project_name]) {
+                project_to_load.push(project_name);
+                self._project_counter[project_name] = project_count[project_name];
+              } else {
+                project_cached.push(project_name);
               }
-              callback(error, request_data);
-            });
+            }
 
-            // 2. Some data is cached
-            // 3. None data is cached
-          } else {
-            self.load_data(client, project_to_load, project_cached, user_key, counter, callback);
-          }
+            // Three Options
+            // 1. All data is cached
+            if (project_to_load.length == 0) {
+              var request_data = [];
+              self.matches++;
+              console.log("Everything is cached <3.");
+              process.nextTick(function() {
+                for (up in user_projects) {
+                  var project_name = user_projects[up];
+                  request_data = request_data.concat(self.projects_data[project_name]);
+                }
+                callback(error, request_data);
+              });
+
+              // 2. Some data is cached
+              // 3. None data is cached
+            } else {
+              self.load_data(client, project_to_load, project_cached, user_key, counter, callback);
+            }
+          });
         }
       });
     },
 
-    self.load_data = function(client, projects, projects_cached, user_key, counter, callback) {
-      console.log("load new data for " + projects.length + " projects.");
-      var parameters = ["", "", "", "", projects, user_key];
+    self.load_data = function(client, projects_to_load, projects_cached, user_key, counter, callback) {
+      console.log("load new data for " + projects_to_load.length + " projects.");
+      var parameters = ["", "", "", "", projects_to_load, user_key];
       client.methodCall("list_experiments", parameters, function(error, value) {
         if (error) {
           return callback(error);
@@ -100,18 +118,18 @@ var ExperimentsCacheControl = function() {
 
         console.log("request info");
         client.methodCall('info', [ids, user_key], function(error, infos) {
-          data = [];
-          pre_cached_data = {};
 
           if (error) {
             console.log(error);
             return callback(error);
           }
 
-          for (p in projects) {
-            var project_name = projects[p];
+          pre_cached_data = {}
+
+          for (p in projects_to_load) {
+            var project_name = projects_to_load[p];
             console.log("init array for " + project_name);
-            pre_cached_data[projects[p]] = [];
+            pre_cached_data[projects_to_load[p]] = [];
           }
 
           var infos_data = infos[1];
@@ -134,6 +152,12 @@ var ExperimentsCacheControl = function() {
           }
 
           // Load the data from the cache
+          data = [];
+          for (cp in projects_to_load) {
+            var cached_project_name = projects_to_load[cp];
+            data = data.concat(self.projects_data[cached_project_name]);
+          }
+
           for (cp in projects_cached) {
             var cached_project_name = projects_cached[cp];
             data = data.concat(self.projects_data[cached_project_name]);
