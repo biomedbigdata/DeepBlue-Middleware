@@ -37,7 +37,7 @@ var CacheControl = function(collection_name, parameters) {
           return callback(error);
         }
         if (infos[0] == "error") {
-          return callback(infos[1]);
+          return callback({"error": infos[1]});
         }
         var infos_data = infos[1][0];
         info = utils.build_info(infos_data)
@@ -145,7 +145,6 @@ function callback_log(error, data) {
   }
 }
 
-/*
 annotations.get(anonymous_key, callback_log);
 biosources.get(anonymous_key, callback_log);
 epigenetic_marks.get(anonymous_key, callback_log);
@@ -155,7 +154,6 @@ genomes.get(anonymous_key, callback_log);
 projects.get(anonymous_key, callback_log);
 samples.get(anonymous_key, callback_log);
 techniques.get(anonymous_key, callback_log);
-*/
 
 module.exports = {
   "epigenetic_marks": epigenetic_marks,
