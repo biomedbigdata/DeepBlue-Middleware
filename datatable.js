@@ -64,7 +64,9 @@ var process = function(echo, collection, columns, start, length, global_search, 
   }
 
   cache.get(key, function(error, cache_data) {
-
+    if (error) {
+      return res.send(error);
+    }
     var filtered = 0;
     var cache_data = sort_data(cache_data, columns[sort_column], sort_direction);
 
@@ -106,7 +108,6 @@ var process = function(echo, collection, columns, start, length, global_search, 
   });
 }
 
-// TODO: datatables :)
 var datatable = function(req, res) {
   console.log(req.query);
 
