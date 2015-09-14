@@ -6,12 +6,15 @@ var settings = require('./settings');
 
 
 var filter = function(row, columns, filters, global) {
+  if (row == undefined) {
+    console.log("row is undefined");
+  }
   // Discard the rows that does not match individual search
   for (var column in filters) {
     var filter_value = filters[column].toLowerCase().replace(/[\W_]+/g, "");
     var column_content = row[columns[column]].toLowerCase().replace(/[\W_]+/g, "");
 
-    if (column_content.indexOf(filter_value) == -1) {
+    if (column_content.indexOf(filter_value) < 0) {
       return false;
     }
   }
@@ -23,7 +26,15 @@ var filter = function(row, columns, filters, global) {
 
   // Verify if at least one column matches with the global search
   for (column in columns) {
-    if (row[columns[column]].toLowerCase().indexOf(global) > -1) {
+    var row_column_value = row[columns[column]];
+    if (row_column_value == undefined) {
+      console.log("undefined row column value");
+      console.log(row);
+      console.log(column);
+      console.log(columns);
+      return false;
+    }
+    if (row_column_value.toLowerCase().indexOf(global) >= 0) {
       return true;
     }
   }
