@@ -210,7 +210,7 @@ function callback_log(error, data) {
   }
 }
 
-experiments.get("NA5HfJiaR2U7lopK", callback_log);
+experiments.get("anonymous_key", callback_log);
 
 module.exports = {
   "cache": experiments,

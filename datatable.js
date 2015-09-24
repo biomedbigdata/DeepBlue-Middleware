@@ -11,6 +11,9 @@ var filter = function(row, columns, filters, global) {
   }
   // Discard the rows that does not match individual search
   for (var column in filters) {
+
+// HERE CHECK
+
     var filter_value = filters[column].toLowerCase().replace(/[\W_]+/g, "");
     var column_content = row[columns[column]].toLowerCase().replace(/[\W_]+/g, "");
 
