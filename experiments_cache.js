@@ -111,8 +111,12 @@ var ExperimentsCacheControl = function() {
               console.log("Everything is cached <3.");
               process.nextTick(function() {
                 for (up in user_projects) {
-                  var project_name = user_projects[up];
-                  request_data = request_data.concat(self.projects_data[project_name]);
+                  if (self.projects_data[project_name] !== undefined) {
+                    var project_name = user_projects[up];
+                    request_data = request_data.concat(self.projects_data[project_name]);
+                  } else {
+                    console.log(user_projects[up] + " data is undefined (probably it is loading)");
+                  }
                 }
                 callback(error, request_data);
               });
