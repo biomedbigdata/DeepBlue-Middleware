@@ -6,7 +6,7 @@ var xmlrpc = require('xmlrpc');
 
 var xmlrpc_host = settings.xmlrpc_host();
 
-var anonymous_key = "NA5HfJiaR2U7lopK"
+var anonymous_key = "anonymous_key"
 
 var CacheControl = function(collection_name, parameters) {
   console.log("Creating cache controle for " + collection_name);
