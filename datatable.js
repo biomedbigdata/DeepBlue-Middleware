@@ -8,11 +8,18 @@ var settings = require('./settings');
 var filter = function(row, columns, filters, global) {
   if (row == undefined) {
     console.log("row is undefined");
+    return false;
   }
+
   // Discard the rows that does not match individual search
   for (var column in filters) {
-
     var filter_value = filters[column].toLowerCase().replace(/[\W_]+/g, "");
+    if (row[columns[column]] == undefined) {
+        console.log(row);
+        console.log(columns);
+	console.log(column);
+        return false;
+    }
     var column_content = row[columns[column]].toLowerCase().replace(/[\W_]+/g, "");
 
     if (column_content.indexOf(filter_value) < 0) {
