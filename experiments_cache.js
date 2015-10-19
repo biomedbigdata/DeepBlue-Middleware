@@ -43,7 +43,7 @@ var ExperimentsCacheControl = function() {
         return callback({"error": infos[1]});
       }
       var infos_data = infos[1][0];
-      info = utils.build_info(infos_data)
+      var info = utils.build_info(infos_data)
       self._id_item[id] = info;
       return callback(error, self._id_item[id]);
     });
@@ -117,7 +117,7 @@ var ExperimentsCacheControl = function() {
               self.matches++;
               console.log("Everything is cached <3.");
               process.nextTick(function() {
-                for (up in user_projects) {
+                for (var up in user_projects) {
                   var project_name = user_projects[up];
                   if (self.projects_data[project_name] !== undefined) {
                     request_data = request_data.concat(self.projects_data[project_name]);
