@@ -24,9 +24,6 @@ var ExperimentsCacheControl = function() {
   // TODO: Move to info.js and access the cache data from there
   self.get_info = function(error, user_key, user_info, params, callback) {
     console.log("experiments_cache.get_info");
-    console.log(user_key);
-    console.log(user_info);
-    console.log(params);
     var id = params[0];
     if (error) {
       return callback(error);
@@ -56,9 +53,6 @@ var ExperimentsCacheControl = function() {
   self.info = function(id, user_key, callback)
   {
     console.log("experiments_cache.info()");
-    console.log(id);
-    console.log(user_key);
-    console.log(users),
     users.check(user_key, callback, self.get_info, id);
   }
 
