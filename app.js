@@ -15,7 +15,7 @@ var router = rest_to_xmlrpc.router;
 router.post('/datatable', datatable);
 router.get('/datatable', datatable);
 console.log(info);
-router.get('/info', info);
+router.get('/cached_info', info);
 
 app.use('/', router);
 
