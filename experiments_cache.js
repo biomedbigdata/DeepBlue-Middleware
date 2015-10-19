@@ -1,3 +1,5 @@
+'use strict';
+
 /* global process */
 var xmlrpc = require('xmlrpc');
 var settings = require('./settings');
@@ -20,33 +22,44 @@ var ExperimentsCacheControl = function() {
   self.requests = 0;
 
   // TODO: Move to info.js and access the cache data from there
-  self.get_info = function(error, user_key, user_info, callback) {
+  self.get_info = function(error, user_key, user_info, params, callback) {
+    console.log("experiments_cache.get_info");
+    console.log(user_key);
+    console.log(user_info);
+    console.log(params);
+    var id = params[0];
     if (error) {
       return callback(error);
     }
-    if (_id in self._id_item) {
-      return callback(self._id_item[_id]);
+    if (id in self._id_item) {
+      return callback(error, self._id_item[id]);
     }
-    else {
-      var client = xmlrpc.createClient(xmlrpc_host);
-      client.methodCall('info', [_id, user_key], function(error, infos) {
-        if (error) {
-          return callback(error);
-        }
-        if (infos[0] == "error") {
-          return callback({"error": infos[1]});
-        }
-        var infos_data = infos[1][0];
-        info = utils.build_info(infos_data)
-        self._id_item[_id] = info;
-        return callback(error, self._id_item[_id]);
-      });
-    }
+
+    var client = xmlrpc.createClient(xmlrpc_host);
+    client.methodCall('info', [id, user_key], function(error, infos) {
+      if (error) {
+        console.log("ERROR");
+        console.log(error);
+        return callback(error);
+      }
+      if (infos[0] == "error") {
+        return callback({"error": infos[1]});
+      }
+      var infos_data = infos[1][0];
+      info = utils.build_info(infos_data)
+      self._id_item[id] = info;
+      return callback(error, self._id_item[id]);
+    });
   }
 
   // TODO: Move to info.js and access the cache data from there
-  self.info = function(_id, user_key, callback) {
-    users.check(user_key, callback, self.get_info);
+  self.info = function(id, user_key, callback)
+  {
+    console.log("experiments_cache.info()");
+    console.log(id);
+    console.log(user_key);
+    console.log(users),
+    users.check(user_key, callback, self.get_info, id);
   }
 
   self.get = function(user_key, callback) {
@@ -85,13 +98,13 @@ var ExperimentsCacheControl = function() {
               return callback(value[1]);
             }
 
-            project_count = {};
-            for (k in value[1]) {
-              p_info = value[1][k];
+            var project_count = {};
+            for (var k in value[1]) {
+              var p_info = value[1][k];
               project_count[p_info[1]] = p_info[2];
             }
 
-            for (p in user_projects) {
+            for (var p in user_projects) {
               var project_name = user_projects[p]
               var project_state = self.projects_state[project_name]
               console.log(project_name + " - " + self._project_counter[project_name] + " - " + project_count[project_name]);
@@ -159,9 +172,9 @@ var ExperimentsCacheControl = function() {
             return callback(error);
           }
 
-          pre_cached_data = {}
+          var pre_cached_data = {}
 
-          for (p in projects_to_load) {
+          for (var p in projects_to_load) {
             var project_name = projects_to_load[p];
             console.log("init array for " + project_name);
             pre_cached_data[projects_to_load[p]] = [];
@@ -187,8 +200,8 @@ var ExperimentsCacheControl = function() {
           }
 
           // Load the data from the cache
-          data = [];
-          for (cp in projects_to_load) {
+          var data = [];
+          for (var cp in projects_to_load) {
             var cached_project_name = projects_to_load[cp];
             data = data.concat(self.projects_data[cached_project_name]);
           }
@@ -214,7 +227,7 @@ function callback_log(error, data) {
   }
 }
 
-experiments.get("anonymous_key", callback_log);
+//experiments.get("anonymous_key", callback_log);
 
 module.exports = {
   "cache": experiments,
