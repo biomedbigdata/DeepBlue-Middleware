@@ -22,10 +22,7 @@ var WaitingQueue = function(count, res) {
         }
 
         self.data.push(value);
-        console.log(self.data.length);
-        console.log(self.count);
         if (self.data.length == self.count) {
-            console.log("Eeeeee");
             self.res.send(self.data);
         }
     }
@@ -72,9 +69,6 @@ var info = function(req, res) {
 
 
 var cached_info_from_id = function(_id, user_key, waiting_queue) {
-    console.log("cached_info_from_id");
-    console.log(_id);
-    console.log(user_key);
 	if (_id == undefined && ids == undefined) {
         console.log(_id);
         console.log(ids);
