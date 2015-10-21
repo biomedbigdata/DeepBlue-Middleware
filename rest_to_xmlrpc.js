@@ -32,7 +32,6 @@ var Command = function(name, parameters) {
       var parameter_name = parameter[0];
       var parameter_type = parameter[1];
       var multiple = parameter[2];
-      console.log(req.query);
       console.log("param: " + req.query[parameter_name] + " type " + parameter_type);
       if (parameter_name in req.query) {
         var raw_value = req.query[parameter_name];
@@ -42,6 +41,9 @@ var Command = function(name, parameters) {
           xmlrpc_request_parameters.push(parseInt(raw_value));
         } else if (parameter_type == "double") {
           xmlrpc_request_parameters.push(parseFloat(raw_value));
+        } else if (parameter_type == "struct") {
+          var extra_metadata = JSON.parse(raw_value);
+          xmlrpc_request_parameters.push(extra_metadata);
         } else {
           res.send("Internal error: Unknown variables type " + parameter_type);
           return;
