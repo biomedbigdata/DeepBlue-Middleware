@@ -140,7 +140,7 @@ var ExperimentsCacheControl = function() {
 
     self.load_data = function(client, projects_to_load, projects_cached, user_key, counter, callback) {
       console.log("load new data for " + projects_to_load.length + " projects.");
-      var parameters = ["", "", "", "", projects_to_load, user_key];
+      var parameters = ["", "", "", "", "", "", projects_to_load, user_key];
       client.methodCall("list_experiments", parameters, function(error, value) {
         if (error) {
           return callback(error);
