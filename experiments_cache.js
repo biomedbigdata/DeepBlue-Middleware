@@ -89,7 +89,7 @@ var ExperimentsCacheControl = function() {
             }
 
             if (value[0] == "error") {
-              return callback(value[1]);
+              return callback({"error": value[1]});
             }
 
             var project_count = {};
