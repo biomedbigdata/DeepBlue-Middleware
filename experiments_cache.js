@@ -148,6 +148,7 @@ var ExperimentsCacheControl = function() {
 
         if (value[0] == "error") {
           console.log(value[1]);
+          return callback({"error": value[1]});
         }
         var ids = [];
         var list_ids = value[1];
