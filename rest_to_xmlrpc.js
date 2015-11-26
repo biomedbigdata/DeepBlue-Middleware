@@ -44,6 +44,9 @@ var Command = function(name, parameters) {
         } else if (parameter_type == "struct") {
           var extra_metadata = JSON.parse(raw_value);
           xmlrpc_request_parameters.push(extra_metadata);
+        } else if (parameter_type == "boolean") {
+          var bool_value = value == "true";
+          xmlrpc_request_parameters.push(bool_value);
         } else {
           res.send("Internal error: Unknown variables type " + parameter_type);
           return;
