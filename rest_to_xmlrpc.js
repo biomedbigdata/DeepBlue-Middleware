@@ -45,7 +45,7 @@ var Command = function(name, parameters) {
           var extra_metadata = JSON.parse(raw_value);
           xmlrpc_request_parameters.push(extra_metadata);
         } else if (parameter_type == "boolean") {
-          var bool_value = value == "true";
+          var bool_value = raw_value == "true";
           xmlrpc_request_parameters.push(bool_value);
         } else {
           res.send("Internal error: Unknown variables type " + parameter_type);
