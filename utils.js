@@ -45,6 +45,20 @@ var experiments_extra_metadata = function(row) {
   return "<div class='exp-metadata'>" + tmp_str + "</div><div class='exp-metadata-more-view'>-- View metadata --</div>";
 }
 
+var epigenetic_marks_extra_metadata = function(row) {
+  var tmp_str = "";
+  if (row.extra_metadata) {
+    for (var key in row.extra_metadata) {
+      if (key != "type" && key != "_id") {
+        if (row.extra_metadata[key]) {
+          tmp_str += "<b>" + key + "</b> : " + row.extra_metadata[key] + "</br>";
+        }
+      }
+    }
+  }
+  return tmp_str;
+};
+
 var biosources_extra_metadata = function(row) {
   var tmp_str = "";
   for (var key in row.extra_metadata) {
@@ -92,6 +106,10 @@ var build_info = function (info_data) {
 
   if (info_data.type == "biosource") {
     info_data.extra_metadata = biosources_extra_metadata(info_data);
+  }
+
+  if (info_data.type == "epigenetic_mark") {
+   info_data.extra_metadata = epigenetic_marks_extra_metadata(info_data);
   }
 
   if (info_data.type == "sample") {
