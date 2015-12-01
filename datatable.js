@@ -17,13 +17,20 @@ var filter = function(row, columns, filters, global) {
     if (row[columns[column]] == undefined) {
         console.log(row);
         console.log(columns);
-	console.log(column);
+        console.log(column);
         return false;
     }
-    var column_content = row[columns[column]].toLowerCase().replace(/[\W_]+/g, "");
 
-    if (column_content.indexOf(filter_value) < 0) {
-      return false;
+    if ((column == "_id" ) || (column == "sample_id")) {
+      var column_content = row[columns[column]].toLowerCase();
+      if (column_content != filter_value) {
+        return false;
+      }
+    } else {
+      var column_content = row[columns[column]].toLowerCase().replace(/[\W_]+/g, "");
+      if (column_content.indexOf(filter_value) < 0) {
+        return false;
+      }
     }
   }
 
@@ -42,7 +49,7 @@ var filter = function(row, columns, filters, global) {
       console.log(columns);
       return false;
     }
-    if (row_column_value.toLowerCase().indexOf(global) >= 0) {
+    if (row_column_value.toLowerCase().replace(/[\W_]+/g, "").indexOf(global) >= 0) {
       return true;
     }
   }
@@ -63,6 +70,7 @@ var sort_data = function(data, pos, direction) {
       console.log(pos);
       return 0;
     }
+
     if (direction == "asc") {
       // TODO: optimize/cache the lower case.
       return a[pos].toLowerCase().localeCompare(b[pos].toLowerCase());
