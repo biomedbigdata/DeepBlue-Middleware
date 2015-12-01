@@ -13,15 +13,16 @@ var filter = function(row, columns, filters, global) {
 
   // Discard the rows that does not match individual search
   for (var column in filters) {
+    var column_name = columns[column];
     var filter_value = filters[column].toLowerCase().replace(/[\W_]+/g, "");
-    if (row[columns[column]] == undefined) {
+    if (row[column_name] == undefined) {
         console.log(row);
         console.log(columns);
         console.log(column);
         return false;
     }
 
-    if ((column == "_id" ) || (column == "sample_id")) {
+    if ((column_name == "_id" ) || (column_name == "sample_id")) {
       var column_content = row[columns[column]].toLowerCase();
       if (column_content != filter_value) {
         return false;
