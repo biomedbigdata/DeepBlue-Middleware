@@ -52,7 +52,11 @@ var Command = function(name, parameters) {
           return;
         }
       } else {
-        xmlrpc_request_parameters.push(null);
+        if (parameter_name == "user_key") {
+          xmlrpc_request_parameters.push("anonymous_key");
+        } else {
+          xmlrpc_request_parameters.push(null);
+        }
       }
     }
     console.log(xmlrpc_request_parameters);
