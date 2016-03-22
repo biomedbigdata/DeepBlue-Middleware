@@ -4,6 +4,8 @@ var deepblue_cache = require('./cache');
 var experiments_cache = require('./experiments_cache');
 var settings = require('./settings');
 
+var client = xmlrpc.createClient(settings.xmlrpc_host());
+
 
 var filter = function(row, columns, filters, global) {
   if (row == undefined) {
@@ -186,12 +188,36 @@ var datatable = function(req, res) {
     var param_name = "sSearch_" + i.toString();
     var columns_filter = req.query[param_name].toLowerCase();
     if (columns_filter) {
-      columns_filters[i] = columns_filter;
+      columns_filters[columns[i]] = columns_filter;
       has_filter = true;
     }
   }
 
-  process(req.query.sEcho, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, key, res);
+  var sort_column_name = columns[parseInt(sort_column)];
+
+  console.log("columns_filters");
+  console.log(columns_filters);
+
+
+  client.methodCall("datatable", [collection, columns, start, length, global_search, sort_column_name, sort_direction, has_filter, columns_filters, key], function(error, value) {
+      if (error) {
+        console.log('error:', error);
+        console.log('req headers:', error.req && error.req._header);
+        console.log('res code:', error.res && error.res.statusCode);
+        console.log('res body:', error.body);
+      } else {
+        var result = {};
+        console.log(value);
+        result.sEcho = req.query.sEcho;
+        result.iTotalDisplayRecords = value[1][0]; //cache_data.length; // - filtered;
+        result.iTotalRecords = value[1][1].length;
+        result.data = value[1][1];
+        res.send(result);
+      }
+    });
+
+
+  //process(req.query.sEcho, collection, columns, start, length, global_search, sort_column, sort_direction, has_filter, columns_filters, key, res);
 };
 
 
