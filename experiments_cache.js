@@ -49,12 +49,62 @@ var ExperimentsCacheControl = function() {
     });
   }
 
+  self.get_infos = function(error, user_key, user_info, params, callback) {
+    console.log("experiments_cache.get_infos");
+    var ids = params[0];
+    if (error) {
+      return callback(error);
+    }
+
+    var new_ids = [];
+    var cache_info = [];
+    for (var i in ids) {
+      var id = ids[i];
+      if (id in self._id_item) {
+        cache_info.push(self._id_item[id]);
+      }
+      else {
+        new_ids.push(id);
+      }
+    }
+
+    if (new_ids.length != 0) {
+      var client = xmlrpc.createClient(xmlrpc_host);
+      client.methodCall('info', [new_ids, user_key], function(error, infos) {
+        if (error) {
+          console.log("ERROR");
+          console.log(error);
+          return callback(error);
+        }
+        if (infos[0] == "error") {
+          return callback({"error": infos[1]});
+        }
+        var infos_data = infos[1];
+        for (var i in infos_data) {
+          var info = utils.build_info(infos_data[i]);
+          cache_info.push(info);
+          self._id_item[info['_id']] = info;
+        }
+        return callback(error, cache_info);
+      });
+    }
+    else {
+      return callback(error, cache_info);
+    }
+  };
+
   // TODO: Move to info.js and access the cache data from there
   self.info = function(id, user_key, callback)
   {
     console.log("experiments_cache.info()");
     users.check(user_key, callback, self.get_info, id);
-  }
+  };
+
+  self.infos = function(ids, user_key, callback)
+  {
+    console.log("experiments_cache.info()");
+    users.check(user_key, callback, self.get_infos, ids);
+  };
 
   self.get = function(user_key, callback) {
       self.requests++;
@@ -66,6 +116,8 @@ var ExperimentsCacheControl = function() {
           callback(error);
         } else {
           var projects = value[1];
+          //var projects = [];//'p2', 'BLUEPRINT Epigenome']];
+          //var projects = [['p2', 'BLUEPRINT Epigenome']];
           for (var project in projects) {
             user_projects.push(projects[project][1]);
           }

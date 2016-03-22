@@ -4,6 +4,7 @@ var logger = require('morgan');
 var bodyParser = require('body-parser');
 
 var datatable = require('./datatable');
+var grid = require('./grid');
 var rest_to_xmlrpc = require('./rest_to_xmlrpc');
 var settings = require('./settings');
 var info = require('./info');
@@ -14,6 +15,10 @@ var router = rest_to_xmlrpc.router;
 
 router.post('/datatable', datatable);
 router.get('/datatable', datatable);
+
+router.post('/grid', grid);
+router.get('/grid', grid);
+
 console.log(info);
 router.get('/cached_info', info);
 
