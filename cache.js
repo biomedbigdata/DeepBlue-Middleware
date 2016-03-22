@@ -145,14 +145,14 @@ function callback_log(error, data) {
   }
 }
 
-annotations.get(anonymous_key, callback_log);
-biosources.get(anonymous_key, callback_log);
-epigenetic_marks.get(anonymous_key, callback_log);
-column_types.get(anonymous_key, callback_log);
-genomes.get(anonymous_key, callback_log);
-projects.get(anonymous_key, callback_log);
-samples.get(anonymous_key, callback_log);
-techniques.get(anonymous_key, callback_log);
+//annotations.get(anonymous_key, callback_log);
+//biosources.get(anonymous_key, callback_log);
+//epigenetic_marks.get(anonymous_key, callback_log);
+//column_types.get(anonymous_key, callback_log);
+//genomes.get(anonymous_key, callback_log);
+//projects.get(anonymous_key, callback_log);
+//samples.get(anonymous_key, callback_log);
+//techniques.get(anonymous_key, callback_log);
 
 module.exports = {
   "epigenetic_marks": epigenetic_marks,

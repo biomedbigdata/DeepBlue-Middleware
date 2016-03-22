@@ -40,6 +40,8 @@ var list_experiments = function(params, user_key, res) {
             var grid_projects = {};
             var grid_experiments = {};
             var grid_data = {};
+            var grid_biosources = [];
+            var grid_epigenetic_marks = [];
 
             for (var d in data) {
                 var experiment_info = data[d];
@@ -48,6 +50,9 @@ var list_experiments = function(params, user_key, res) {
                 var epigenetic_mark = experiment_info['epigenetic_mark'];
                 var project = experiment_info['project'];
                 var name = experiment_info['name'];
+
+                grid_epigenetic_marks.push(epigenetic_mark);
+                grid_biosources.push(biosource);
 
                 if (biosource in grid_projects) {
                     if (epigenetic_mark in grid_projects[biosource]) {
@@ -70,8 +75,8 @@ var list_experiments = function(params, user_key, res) {
             //console.log(grid_experiments);
             grid_data['projects'] = grid_projects;
             grid_data['experiments'] = grid_experiments;
-            grid_data['biosources'] = "";
-            grid_data['epigenetic_marks'] = "";
+            grid_data['biosources'] = grid_biosources;
+            grid_data['epigenetic_marks'] = grid_epigenetic_marks;
 
             return res.send(grid_data);
         });
@@ -91,7 +96,7 @@ var grid = function(req, res) {
     var vocabs = ['experiment-genome',"experiment-datatype", "experiment-epigenetic_mark", "experiment-biosource","experiment-sample", "experiment-technique", 'experiment-project'];
     for (v in vocabs) {
         if (vocabs[v] in request) {
-            params.push(req.query.request[vocabs[v]]);
+            params.push(request[vocabs[v]]);
             console.log(vocabs[v]);
         }
         else {
