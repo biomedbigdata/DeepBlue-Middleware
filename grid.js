@@ -35,13 +35,13 @@ var list_experiments = function(params, user_key, res) {
             ids.push(experiments[e][0]);
         }
 
-        console.log(ids);
         cache.infos(ids, user_key, function(error, data){
             var grid_projects = {};
             var grid_experiments = {};
             var grid_data = {};
             var grid_biosources = [];
             var grid_epigenetic_marks = [];
+            var experiment_count = ids.length;
 
             for (var d in data) {
                 var experiment_info = data[d];
@@ -51,19 +51,29 @@ var list_experiments = function(params, user_key, res) {
                 var project = experiment_info['project'];
                 var name = experiment_info['name'];
 
-                grid_epigenetic_marks.push(epigenetic_mark);
-                grid_biosources.push(biosource);
+                if (grid_epigenetic_marks.indexOf(epigenetic_mark) >= 0) {
+                    grid_epigenetic_marks.push(epigenetic_mark);
+                }
 
                 if (biosource in grid_projects) {
                     if (epigenetic_mark in grid_projects[biosource]) {
                         grid_projects[biosource][epigenetic_mark].push(project);
                         grid_experiments[biosource][epigenetic_mark].push([id, name, project])
                     }
+                    else{
+                        grid_experiments[biosource][epigenetic_mark] = [];
+                        grid_experiments[biosource][epigenetic_mark].push([id, name, project]);
+
+                        grid_projects[biosource][epigenetic_mark] = [];
+                        grid_projects[biosource][epigenetic_mark].push(project);
+                    }
                 }
                 else {
                     grid_projects[biosource] = {};
                     grid_projects[biosource][epigenetic_mark] = [];
                     grid_projects[biosource][epigenetic_mark].push(project);
+
+                    grid_biosources.push(biosource);
 
                     grid_experiments[biosource] = {};
                     grid_experiments[biosource][epigenetic_mark] = [];
@@ -77,6 +87,7 @@ var list_experiments = function(params, user_key, res) {
             grid_data['experiments'] = grid_experiments;
             grid_data['biosources'] = grid_biosources;
             grid_data['epigenetic_marks'] = grid_epigenetic_marks;
+            grid_data['experiment_count'] = experiment_count;
 
             return res.send(grid_data);
         });
