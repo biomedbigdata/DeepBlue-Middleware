@@ -51,7 +51,7 @@ var list_experiments = function(params, user_key, res) {
                 var project = experiment_info['project'];
                 var name = experiment_info['name'];
 
-                if (grid_epigenetic_marks.indexOf(epigenetic_mark) >= 0) {
+                if (grid_epigenetic_marks.indexOf(epigenetic_mark) < 0) {
                     grid_epigenetic_marks.push(epigenetic_mark);
                 }
 
