@@ -36,12 +36,13 @@ var list_experiments = function(params, user_key, res) {
         }
 
         cache.infos(ids, user_key, function(error, data){
-            var grid_projects = {};
-            var grid_experiments = {};
-            var grid_data = {};
-            var grid_biosources = [];
-            var grid_epigenetic_marks = [];
-            var experiment_count = ids.length;
+            var grid_projects = {}; //grid containing project affiliation
+            var grid_experiments = {}; // grid containing id, name and project of all experiments
+            var grid_data = {}; // container for returned data
+            var grid_biosources = {}; // counts all the biosources
+            var grid_epigenetic_marks = {}; //counts all the epigenetic marks
+
+            var experiment_count = ids.length; // experiment count
 
             for (var d in data) {
                 var experiment_info = data[d];
@@ -51,8 +52,11 @@ var list_experiments = function(params, user_key, res) {
                 var project = experiment_info['project'];
                 var name = experiment_info['name'];
 
-                if (grid_epigenetic_marks.indexOf(epigenetic_mark) < 0) {
-                    grid_epigenetic_marks.push(epigenetic_mark);
+                if (epigenetic_mark in grid_epigenetic_marks) {
+                    grid_epigenetic_marks[epigenetic_mark] = grid_epigenetic_marks[epigenetic_mark] + 1;
+                }
+                else {
+                    grid_epigenetic_marks[epigenetic_mark] = 1;
                 }
 
                 if (biosource in grid_projects) {
@@ -64,6 +68,8 @@ var list_experiments = function(params, user_key, res) {
                         grid_experiments[biosource][epigenetic_mark] = [];
                         grid_experiments[biosource][epigenetic_mark].push([id, name, project]);
 
+                        grid_biosources[biosource] = grid_biosources[biosource] + 1;
+
                         grid_projects[biosource][epigenetic_mark] = [];
                         grid_projects[biosource][epigenetic_mark].push(project);
                     }
@@ -73,7 +79,7 @@ var list_experiments = function(params, user_key, res) {
                     grid_projects[biosource][epigenetic_mark] = [];
                     grid_projects[biosource][epigenetic_mark].push(project);
 
-                    grid_biosources.push(biosource);
+                    grid_biosources[biosource] = 1;
 
                     grid_experiments[biosource] = {};
                     grid_experiments[biosource][epigenetic_mark] = [];
@@ -81,13 +87,54 @@ var list_experiments = function(params, user_key, res) {
                 }
             }
 
-            //console.log(grid_projects);
-            //console.log(grid_experiments);
-            grid_data['projects'] = grid_projects;
-            grid_data['experiments'] = grid_experiments;
-            grid_data['biosources'] = grid_biosources;
-            grid_data['epigenetic_marks'] = grid_epigenetic_marks;
-            grid_data['experiment_count'] = experiment_count;
+            // filter biosource and epigenetic-marks
+            var filter_biosource = 40;
+            var filter_epigenetic_mark = 15;
+
+            // sort biosources and epigenetic_marks by count
+            var biosource_sorted = (Object.keys(grid_biosources).sort(function(a,b){return grid_biosources[b] - grid_biosources[a]})).slice(0,filter_biosource);
+            var epigenetic_mark_sorted = (Object.keys(grid_epigenetic_marks).sort(function(a,b){return grid_epigenetic_marks[b] - grid_epigenetic_marks[a]})).slice(0,filter_epigenetic_mark);
+
+            // sort biosources and epigenetic_marks alphabetically
+            var cell_biosources = biosource_sorted.sort();
+            var cell_epigenetic_marks = epigenetic_mark_sorted.sort();
+
+            var cell_experiments_count = {}; //contains the experiment count in each cell of the filtered grid
+            var cell_project = {}; //contains the project in each cell of the filtered grid
+            var cell_experiments = {}; //contains the project in each cell of the filtered grid
+
+            console.log(biosource_sorted);
+            console.log(epigenetic_mark_sorted);
+
+            for (var b in cell_biosources) {
+
+                var bio = cell_biosources[b];
+                cell_experiments_count[bio] = {};
+                cell_project[bio] = {};
+                cell_experiments[bio] = {};
+
+                for (var e in cell_epigenetic_marks) {
+                    var epi = cell_epigenetic_marks[e];
+
+                    if (epi in grid_experiments[bio]) {
+                        cell_experiments_count[bio][epi] = grid_experiments[bio][epi].length;
+                        cell_project[bio][epi] = grid_projects[bio][epi][0];
+                        cell_experiments[bio][epi] = grid_experiments[bio][epi];
+                    }
+                    else {
+                        cell_experiments_count[bio][epi] = 0;
+                        cell_project[bio][epi] = "";
+                        cell_experiments[bio][epi] = [];
+                    }
+                }
+            }
+
+            grid_data['cell_projects'] = cell_project;
+            grid_data['cell_experiments'] = cell_experiments;
+            grid_data['cell_experiment_count'] = cell_experiments_count;
+            grid_data['cell_biosources'] = cell_biosources;
+            grid_data['cell_epigenetic_marks'] = cell_epigenetic_marks;
+            grid_data['total_experiment'] = experiment_count;
 
             return res.send(grid_data);
         });
