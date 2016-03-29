@@ -8,9 +8,11 @@
  *
  */
 
-var xmlrpc = require('xmlrpc');
 var experiments_cache = require('./experiments_cache');
+
 var settings = require('./settings');
+var xmlrpc = require('xmlrpc');
+var xmlrpc_host = settings.xmlrpc_host();
 
 var list_experiments = function(params, user_key, res) {
     var client = xmlrpc.createClient(xmlrpc_host);
