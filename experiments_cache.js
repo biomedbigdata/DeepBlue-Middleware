@@ -64,8 +64,6 @@ var ExperimentsCacheControl = function() {
       }
     }
 
-    console.log(new_ids);
-
     if (new_ids.length != 0) {
       var client = xmlrpc.createClient(xmlrpc_host);
       client.methodCall('info', [new_ids, user_key], function(error, infos) {
