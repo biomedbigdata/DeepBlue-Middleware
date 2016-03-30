@@ -7,7 +7,6 @@ var datatable = require('./datatable');
 var grid = require('./grid');
 var rest_to_xmlrpc = require('./rest_to_xmlrpc');
 var settings = require('./settings');
-var info = require('./info');
 
 var app = express();
 
@@ -18,9 +17,6 @@ router.get('/datatable', datatable);
 
 router.post('/grid', grid);
 router.get('/grid', grid);
-
-console.log(info);
-router.get('/cached_info', info);
 
 app.use('/', router);
 
