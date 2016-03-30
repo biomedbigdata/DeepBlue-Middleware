@@ -156,7 +156,7 @@ var grid = function(req, res) {
 
     // retrieve all experiment matching criteria in the request...   you need xmlrpc for this
     var vocabs = ['experiment-genome',"experiment-datatype", "experiment-epigenetic_mark", "experiment-biosource","experiment-sample", "experiment-technique", 'experiment-project'];
-    for (v in vocabs) {
+    for (var v in vocabs) {
         if (vocabs[v] in request) {
             params.push(request[vocabs[v]]);
             console.log(vocabs[v]);
