@@ -1,7 +1,5 @@
 var xmlrpc = require('xmlrpc');
 
-var deepblue_cache = require('./cache');
-var experiments_cache = require('./experiments_cache');
 var settings = require('./settings');
 
 var client = xmlrpc.createClient(settings.xmlrpc_host());
