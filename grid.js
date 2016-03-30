@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * Created
  * on 3/21/2016.
@@ -8,13 +10,15 @@
  *
  */
 
-var xmlrpc = require('xmlrpc');
 var experiments_cache = require('./experiments_cache');
+var cache = experiments_cache["cache"];
+
 var settings = require('./settings');
+var xmlrpc = require('xmlrpc');
+var xmlrpc_host = settings.xmlrpc_host();
 
 var list_experiments = function(params, user_key, res) {
     var client = xmlrpc.createClient(xmlrpc_host);
-    var cache = experiments_cache["cache"];
 
     client.methodCall('list_experiments', params, function(error, result) {
         if (error) {
@@ -35,7 +39,7 @@ var list_experiments = function(params, user_key, res) {
             ids.push(experiments[e][0]);
         }
 
-        cache.infos(ids, user_key, function(error, data){
+        cache.infos(ids, user_key).then( function(data) {
             var grid_projects = {}; //grid containing project affiliation
             var grid_experiments = {}; // grid containing id, name and project of all experiments
             var grid_data = {}; // container for returned data
@@ -152,7 +156,7 @@ var grid = function(req, res) {
 
     // retrieve all experiment matching criteria in the request...   you need xmlrpc for this
     var vocabs = ['experiment-genome',"experiment-datatype", "experiment-epigenetic_mark", "experiment-biosource","experiment-sample", "experiment-technique", 'experiment-project'];
-    for (v in vocabs) {
+    for (var v in vocabs) {
         if (vocabs[v] in request) {
             params.push(request[vocabs[v]]);
             console.log(vocabs[v]);
