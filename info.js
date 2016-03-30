@@ -4,40 +4,6 @@ var deepblue_cache = require('./cache');
 var experiments_cache = require('./experiments_cache');
 
 
-var WaitingQueue = function(count, res) {
-    var self = this;
-    self.count = count;
-    self.res = res;
-    self.data = [];
-    self.had_error = false;
-
-    self.insert = function(error, value) {
-        if (error) {
-            console.log("error on insert");
-            self.error(error);
-        }
-
-        if (self.had_error) {
-            return;
-        }
-
-        self.data.push(value);
-        if (self.data.length == self.count) {
-            self.res.send(self.data);
-        }
-    }
-
-    self.error = function(error) {
-        if (self.had_error) {
-            return;
-        }
-        console.log("WaitingQueue.error");
-        console.log(error);
-        self.had_error = true;
-        res.send(error);
-    }
-}
-
 var info = function(req, res) {
 	var id = req.query.id;
     var ids = req.query.ids;

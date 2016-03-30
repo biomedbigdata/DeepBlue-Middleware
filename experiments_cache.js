@@ -1,6 +1,6 @@
 'use strict';
 
-/* global process */
+var Q = require('q') ;
 var xmlrpc = require('xmlrpc');
 var settings = require('./settings');
 var users = require('./users.js')
@@ -21,40 +21,36 @@ var ExperimentsCacheControl = function() {
   self.matches = 0;
   self.requests = 0;
 
-  // TODO: Move to info.js and access the cache data from there
-  self.get_info = function(error, user_key, user_info, params, callback) {
+  self.get_info = function(id, user_key) {
     console.log("experiments_cache.get_info");
-    var id = params[0];
-    if (error) {
-      return callback(error);
-    }
+    var deferred = Q.defer();
+
     if (id in self._id_item) {
-      return callback(error, self._id_item[id]);
+      deferred.resolve(self._id_item[id]);
     }
 
     var client = xmlrpc.createClient(xmlrpc_host);
     client.methodCall('info', [id, user_key], function(error, infos) {
       if (error) {
-        console.log("ERROR");
-        console.log(error);
-        return callback(error);
+        deferred.reject(error);
       }
+
       if (infos[0] == "error") {
-        return callback({"error": infos[1]});
+        deferred.reject(error);
       }
+
       var infos_data = infos[1][0];
       var info = utils.build_info(infos_data)
       self._id_item[id] = info;
-      return callback(error, self._id_item[id]);
+      deferred.resolve(info);
     });
+
+    return deferred.promise;
   }
 
-  self.get_infos = function(error, user_key, user_info, params, callback) {
+  self.get_infos = function(ids, user_key) {
     console.log("experiments_cache.get_infos");
-    var ids = params[0];
-    if (error) {
-      return callback(error);
-    }
+    var deferred = Q.defer();
 
     var new_ids = [];
     var cache_info = [];
@@ -72,12 +68,10 @@ var ExperimentsCacheControl = function() {
       var client = xmlrpc.createClient(xmlrpc_host);
       client.methodCall('info', [new_ids, user_key], function(error, infos) {
         if (error) {
-          console.log("ERROR");
-          console.log(error);
-          return callback(error);
+          deferred.reject(error);
         }
         if (infos[0] == "error") {
-          return callback({"error": infos[1]});
+          deferred.reject({"error": infos[1]});
         }
         var infos_data = infos[1];
         for (var i in infos_data) {
@@ -85,196 +79,247 @@ var ExperimentsCacheControl = function() {
           cache_info.push(info);
           self._id_item[info['_id']] = info;
         }
-        return callback(error, cache_info);
+        deferred.resolve(cache_info);
       });
     }
     else {
-      return callback(error, cache_info);
+      deferred.resolve(cache_info);
     }
+
+    return deferred.promise;
   };
 
-  // TODO: Move to info.js and access the cache data from there
-  self.info = function(id, user_key, callback)
+  self._info = function(id_ids, info_function, user_key)
   {
     console.log("experiments_cache.info()");
-    users.check(user_key, callback, self.get_info, id);
+
+    return users.check(user_key)
+    .then(function() {
+      return info_function(id);
+    });
+  }
+
+  // TODO: Move to info.js and access the cache data from there
+  self.info = function(id, user_key)
+  {
+    console.log("experiments_cache.info()");
+    return self._info(id, self.info, user_key);
   };
 
   self.infos = function(ids, user_key, callback)
   {
-    console.log("experiments_cache.info()");
-    users.check(user_key, callback, self.get_infos, ids);
+    console.log("experiments_cache.infos()");
+    return self._info(ids, self.infos, user_key);
   };
 
-  self.get = function(user_key, callback) {
-      self.requests++;
-      var client = xmlrpc.createClient(xmlrpc_host);
+  self.check_status = function(user_key, user_projects) {
+    console.log("check_status", user_projects);
+    var deferred = Q.defer();
 
-      var user_projects = [];
-      client.methodCall("list_projects", [user_key], function(error, value) {
+    var client = xmlrpc.createClient(xmlrpc_host);
+
+    client.methodCall('get_state', [self.collection_name, user_key], function(error, get_state_result) {
+      if (error) {
+        deferred.reject(error);
+        return;
+      }
+
+      if (get_state_result[0] == "error") {
+        deferred.reject({"error": get_state_result[1]});
+        return;
+      }
+
+      var collection_state = get_state_result[1];
+      var project_to_load = [];
+      var project_cached = [];
+
+      client.methodCall("list_in_use", ["projects", user_key], function (error, list_in_use_result) {
         if (error) {
-          callback(error);
-        } else {
-          var projects = value[1];
-          //var projects = [];//'p2', 'BLUEPRINT Epigenome']];
-          //var projects = [['p2', 'BLUEPRINT Epigenome']];
-          for (var project in projects) {
-            user_projects.push(projects[project][1]);
-          }
-          self.check_status(client, user_key, user_projects, callback);
+          deferred.reject(error);
+          return;
         }
-      });
-    },
 
-    self.check_status = function(client, user_key, user_projects, callback) {
-      client.methodCall('get_state', [self.collection_name, user_key], function(error, value) {
-        if (error) {
-          callback(error);
-        } else {
-          var counter = value[1];
-          var project_to_load = [];
-          var project_cached = [];
+        if (list_in_use_result[0] == "error") {
+          deferred.reject({"error": value[1]});
+          return;
+        }
 
-          client.methodCall("list_in_use", ["projects", user_key], function (error, value) {
-            if (error) {
-              return callback(error);
-            }
+        var project_count = {};
+        for (var k in list_in_use_result[1]) {
+          var p_info = list_in_use_result[1][k];
+          project_count[p_info[1]] = p_info[2];
+        }
 
-            if (value[0] == "error") {
-              return callback({"error": value[1]});
-            }
+        for (var p in user_projects) {
+          var project_name = user_projects[p]
+          var project_state = self.projects_state[project_name]
+          console.log(project_name + " - " + self._project_counter[project_name] + " - " + project_count[project_name]);
+          if ( !(project_name in self._project_counter) || self._project_counter[project_name] != project_count[project_name]) {
+            project_to_load.push(project_name);
+            self._project_counter[project_name] = project_count[project_name];
+          } else {
+            project_cached.push(project_name);
+          }
+        }
 
-            var project_count = {};
-            for (var k in value[1]) {
-              var p_info = value[1][k];
-              project_count[p_info[1]] = p_info[2];
-            }
-
-            for (var p in user_projects) {
-              var project_name = user_projects[p]
-              var project_state = self.projects_state[project_name]
-              console.log(project_name + " - " + self._project_counter[project_name] + " - " + project_count[project_name]);
-              if ( !(project_name in self._project_counter) || self._project_counter[project_name] != project_count[project_name]) {
-                project_to_load.push(project_name);
-                self._project_counter[project_name] = project_count[project_name];
+        // Three Options
+        // 1. All data is cached
+        if (project_to_load.length == 0) {
+          var request_data = [];
+          self.matches++;
+          console.log("Everything is cached <3.");
+          process.nextTick(function() {
+            for (var up in user_projects) {
+              var project_name = user_projects[up];
+              if (self.projects_data[project_name] !== undefined) {
+                request_data = request_data.concat(self.projects_data[project_name]);
               } else {
-                project_cached.push(project_name);
+                console.log(project_name + " data is undefined (probably it is loading)");
               }
             }
+            deferred.resolve(request_data);
+          });
 
-            // Three Options
-            // 1. All data is cached
-            if (project_to_load.length == 0) {
-              var request_data = [];
-              self.matches++;
-              console.log("Everything is cached <3.");
-              process.nextTick(function() {
-                for (var up in user_projects) {
-                  var project_name = user_projects[up];
-                  if (self.projects_data[project_name] !== undefined) {
-                    request_data = request_data.concat(self.projects_data[project_name]);
-                  } else {
-                    console.log(project_name + " data is undefined (probably it is loading)");
-                  }
-                }
-                callback(error, request_data);
-              });
-
-              // 2. Some data is cached
-              // 3. None data is cached
-            } else {
-              self.load_data(client, project_to_load, project_cached, user_key, counter, callback);
-            }
+        // 2. Some data is cached
+        // 3. None data is cached
+        } else {
+          console.log("---------------");
+          console.log(project_to_load);
+          console.log(project_cached);
+          console.log(user_key);
+          console.log(collection_state);
+          console.log("---------------");
+          self.load_data(project_to_load, project_cached, user_key, collection_state).then(function(data) {
+            deferred.resolve(data);
           });
         }
       });
-    },
+    });
 
-    self.load_data = function(client, projects_to_load, projects_cached, user_key, counter, callback) {
-      console.log("load new data for " + projects_to_load.length + " projects.");
-      var parameters = ["", "", "", "", "", "", projects_to_load, user_key];
-      client.methodCall("list_experiments", parameters, function(error, value) {
+    return deferred.promise;
+  },
+
+  self.load_data = function(projects_to_load, projects_cached, user_key, collection_state) {
+    console.log("load new data for " + projects_to_load.length + " projects.");
+
+    var deferred = Q.defer();
+
+    var client = xmlrpc.createClient(xmlrpc_host);
+    var parameters = ["", "", "", "", "", "", projects_to_load, user_key];
+    client.methodCall("list_experiments", parameters, function(error, list_experiments_result) {
+      if (error) {
+        deferred.reject(error);
+        return;
+      }
+
+      if (list_experiments_result[0] == "error") {
+        console.log(list_experiments_result[1]);
+        deferred.reject({"error": list_experiments_result[1]});
+        return;
+      }
+
+      var ids = [];
+      var list_ids = list_experiments_result[1];
+      console.log("processings ids");
+      for (var count in list_ids) {
+        if (!(list_ids[count][0] in self._id_item)) {
+          ids.push(list_ids[count][0]);
+        }
+      }
+
+      console.log("request info");
+      client.methodCall('info', [ids, user_key], function(error, info_result) {
+
         if (error) {
-          return callback(error);
+          console.log(error);
+          deferred.reject(error);
+          return;
         }
 
-        if (value[0] == "error") {
-          console.log(value[1]);
-          return callback({"error": value[1]});
-        }
-        var ids = [];
-        var list_ids = value[1];
-        console.log("processings ids");
-        for (var count in list_ids) {
-          if (!(list_ids[count][0] in self._id_item)) {
-            ids.push(list_ids[count][0]);
-          }
+        if (info_result[0] == "error") {
+          console.log(info_result[1]);
+          deferred.reject({"error": info_result[1]});
+          return;
         }
 
-        console.log("request info");
-        client.methodCall('info', [ids, user_key], function(error, infos) {
+        var pre_cached_data = {}
 
-          if (error) {
-            console.log(error);
-            return callback(error);
-          }
+        for (var p in projects_to_load) {
+          var project_name = projects_to_load[p];
+          console.log("init array for " + project_name);
+          pre_cached_data[projects_to_load[p]] = [];
+        }
 
-          var pre_cached_data = {}
+        var infos_data = info_result[1];
+        for (var d in infos_data) {
+          infos_data[d].extra_metadata = utils.experiments_extra_metadata(infos_data[d]);
+          infos_data[d].biosource = infos_data[d].sample_info.biosource_name;
+          self._id_item[infos_data[d]["_id"]] = infos_data[d];
+        }
 
-          for (var p in projects_to_load) {
-            var project_name = projects_to_load[p];
-            console.log("init array for " + project_name);
-            pre_cached_data[projects_to_load[p]] = [];
-          }
+        for (var p in list_ids) {
+          var item = self._id_item[list_ids[p][0]];
+          pre_cached_data[item.project].push(item);
+        }
 
-          var infos_data = infos[1];
-          for (var d in infos_data) {
-            infos_data[d].extra_metadata = utils.experiments_extra_metadata(infos_data[d]);
-            infos_data[d].biosource = infos_data[d].sample_info.biosource_name;
-            self._id_item[infos_data[d]["_id"]] = infos_data[d];
-          }
+        // set the data cache
+        for (p in pre_cached_data) {
+          console.log("storing: " + p + " " + collection_state + " " +   pre_cached_data[p].length);
+          self.projects_state[p] = collection_state;
+          self.projects_data[p] = pre_cached_data[p];
+        }
 
-          for (var p in list_ids) {
-            var item = self._id_item[list_ids[p][0]];
-            pre_cached_data[item.project].push(item);
-          }
+        // Load the data from the cache
+        var data = [];
+        for (var cp in projects_to_load) {
+          var cached_project_name = projects_to_load[cp];
+          data = data.concat(self.projects_data[cached_project_name]);
+        }
 
-          // set the data cache
-          for (p in pre_cached_data) {
-            console.log("storing: " + p + " " + counter + " " +   pre_cached_data[p].length);
-            self.projects_state[p] = counter;
-            self.projects_data[p] = pre_cached_data[p];
-          }
+        for (cp in projects_cached) {
+          var cached_project_name = projects_cached[cp];
+          data = data.concat(self.projects_data[cached_project_name]);
+        }
 
-          // Load the data from the cache
-          var data = [];
-          for (var cp in projects_to_load) {
-            var cached_project_name = projects_to_load[cp];
-            data = data.concat(self.projects_data[cached_project_name]);
-          }
-
-          for (cp in projects_cached) {
-            var cached_project_name = projects_cached[cp];
-            data = data.concat(self.projects_data[cached_project_name]);
-          }
-
-          callback(error, data);
-        });
+        deferred.resolve(data);
       });
-    };
+    });
+    return deferred.promise;
+  };
+
+  self.get = function(user_key, callback) {
+    var deferred = Q.defer();
+
+    self.requests++;
+    var client = xmlrpc.createClient(xmlrpc_host);
+
+    var user_projects = [];
+    client.methodCall("list_projects", [user_key], function(error, value) {
+      if (error) {
+          deferred.reject(error);
+      } else {
+        var projects = value[1];
+        for (var project in projects) {
+          user_projects.push(projects[project][1]);
+        }
+
+        deferred.resolve(
+          self.check_status(user_key, user_projects)
+        );
+      }
+    });
+
+    return deferred.promise;
+  }
 };
 
 var experiments = new ExperimentsCacheControl();
-function callback_log(error, data) {
-  if (error) {
-      console.log(error);
-  }
-  if (data) {
-    console.log(data.length);
-  }
+
+var print_length = function(data) {
+  console.log(data.length);
 }
 
-experiments.get("anonymous_key", callback_log);
+experiments.get("anonymous_key").then(print_length, console.error);
 
 module.exports = {
   "cache": experiments,

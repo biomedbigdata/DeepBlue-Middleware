@@ -1,3 +1,6 @@
+'use strict';
+
+var Q = require('q');
 var settings = require('./settings');
 var xmlrpc = require('xmlrpc');
 var xmlrpc_host = settings.xmlrpc_host();
@@ -6,7 +9,8 @@ var xmlrpc_host = settings.xmlrpc_host();
 var last_check = Date.now();
 var users_info_cache = {};
 
-check = function (user_key, sender, callback, param) {
+var check = function (user_key) {
+	var deferred = Q.defer();
 	console.log("users.check");
 	var client = xmlrpc.createClient(xmlrpc_host);
 
@@ -18,27 +22,29 @@ check = function (user_key, sender, callback, param) {
 	}
 
 	if (user_key in users_info_cache) {
-		return callback(null, user_key, users_info_cache[user_key], [param], sender);
+		deferred.resolve(users_info_cache[user_key]);
 	}
 
 	client.methodCall('info', ["me", user_key], function(error, infos) {
 		if (error) {
-			return sender(error);
+			deferred.reject(error);
 		}
 
 		if (infos[0] == "error") {
-			return sender(infos[1]);
+			deferred.reject(infos[1]);
 		}
 
 		var user_info = infos[1][0];
 
 		if (user_info["permission_level"] == "NONE") {
-			return sender({"error":"Invalid permission level level"});
+			deferred.reject({"error":"Invalid permission level level"});
 		}
 
 		users_info_cache[user_key] = user_info;
-		callback(error, user_key, user_info, [param], sender);
+		deferred.resolve(user_info);
 	});
+
+	return deferred.promise;
 }
 
 
