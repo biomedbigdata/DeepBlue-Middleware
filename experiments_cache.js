@@ -106,7 +106,7 @@ var ExperimentsCacheControl = function() {
     return self._info(id, self.info, user_key);
   };
 
-  self.infos = function(ids, user_key, callback)
+  self.infos = function(ids, user_key)
   {
     console.log("experiments_cache.infos()");
     return self._info(ids, self.infos, user_key);
@@ -287,7 +287,7 @@ var ExperimentsCacheControl = function() {
     return deferred.promise;
   };
 
-  self.get = function(user_key, callback) {
+  self.get = function(user_key) {
     var deferred = Q.defer();
 
     self.requests++;
