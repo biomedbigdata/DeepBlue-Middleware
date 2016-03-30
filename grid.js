@@ -39,7 +39,7 @@ var list_experiments = function(params, user_key, res) {
             ids.push(experiments[e][0]);
         }
 
-        cache.infos(ids, user_key, function(error, data){
+        cache.infos(ids, user_key).then( function(data) {
             var grid_projects = {}; //grid containing project affiliation
             var grid_experiments = {}; // grid containing id, name and project of all experiments
             var grid_data = {}; // container for returned data
