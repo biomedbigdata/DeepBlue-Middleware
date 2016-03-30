@@ -49,7 +49,7 @@ var ExperimentsCacheControl = function() {
   }
 
   self.get_infos = function(ids, user_key) {
-    console.log("experiments_cache.get_infos");
+    console.log("experiments_cache.get_infos()");
     var deferred = Q.defer();
 
     var new_ids = [];
@@ -63,6 +63,8 @@ var ExperimentsCacheControl = function() {
         new_ids.push(id);
       }
     }
+
+    console.log(new_ids);
 
     if (new_ids.length != 0) {
       var client = xmlrpc.createClient(xmlrpc_host);
@@ -91,25 +93,26 @@ var ExperimentsCacheControl = function() {
 
   self._info = function(id_ids, info_function, user_key)
   {
-    console.log("experiments_cache.info()");
+    var deferred = Q.defer();
 
-    return users.check(user_key)
-    .then(function() {
-      return info_function(id);
+    users.check(user_key).then(function() {
+      deferred.resolve(info_function(id_ids, user_key));
     });
+
+    return deferred.promise;
   }
 
   // TODO: Move to info.js and access the cache data from there
   self.info = function(id, user_key)
   {
     console.log("experiments_cache.info()");
-    return self._info(id, self.info, user_key);
+    return self._info(id, self.get_info, user_key);
   };
 
   self.infos = function(ids, user_key)
   {
     console.log("experiments_cache.infos()");
-    return self._info(ids, self.infos, user_key);
+    return self._info(ids, self.get_infos, user_key);
   };
 
   self.check_status = function(user_key, user_projects) {
