@@ -63,7 +63,6 @@ var list_experiments = function(params, user_key, res) {
         var experiments = result[1];
 
         // loop through the experiments and retrieve the following: biosource, epigenetic_mark using the cache
-        //experiments = [["e56955","E016.HUES64_Cell_Line.norm.pos.wig"],['e53553', 'S00D7151.hypo_meth.bs_call.GRCh38.20150707.bed']];
         var ids = [];
         for (var e in experiments) {
             ids.push(experiments[e][0]);
@@ -81,11 +80,16 @@ var list_experiments = function(params, user_key, res) {
             for (var d in data) {
                 var experiment_info = data[d];
                 var id = experiment_info['_id'];
-                var biosource = get_normalized(experiment_info['biosource']);
-                var epigenetic_mark = get_normalized(experiment_info['epigenetic_mark']);
-                var project = get_normalized(experiment_info['project']);
-
                 var name = experiment_info['name'];
+                var type = experiment_info['data_type'];
+                var desc = experiment_info['description'];
+                var genome = experiment_info['genome'];
+                var epigenetic_mark = get_normalized(experiment_info['epigenetic_mark']);
+                var biosource = get_normalized(experiment_info['biosource']);
+                var samp = experiment_info['sample_id'];
+                var tech = experiment_info['technique'];
+                var project = get_normalized(experiment_info['project']);
+                var meta = experiment_info['extra_metadata'];
 
                 if (epigenetic_mark in grid_epigenetic_marks) {
                     grid_epigenetic_marks[epigenetic_mark] = grid_epigenetic_marks[epigenetic_mark] + 1;
@@ -94,14 +98,16 @@ var list_experiments = function(params, user_key, res) {
                     grid_epigenetic_marks[epigenetic_mark] = 1;
                 }
 
+                var experiment_info = [ id, name, type, desc, genome, get_unnormalized(epigenetic_mark), get_unnormalized(biosource), samp, tech, get_unnormalized(project), meta];
+
                 if (biosource in grid_projects) {
                     if (epigenetic_mark in grid_projects[biosource]) {
                         grid_projects[biosource][epigenetic_mark].push(project);
-                        grid_experiments[biosource][epigenetic_mark].push([id, name, project])
+                        grid_experiments[biosource][epigenetic_mark].push(experiment_info)
                     }
                     else{
                         grid_experiments[biosource][epigenetic_mark] = [];
-                        grid_experiments[biosource][epigenetic_mark].push([id, name, project]);
+                        grid_experiments[biosource][epigenetic_mark].push(experiment_info)
 
                         grid_biosources[biosource] = grid_biosources[biosource] + 1;
 
@@ -118,7 +124,7 @@ var list_experiments = function(params, user_key, res) {
 
                     grid_experiments[biosource] = {};
                     grid_experiments[biosource][epigenetic_mark] = [];
-                    grid_experiments[biosource][epigenetic_mark].push([id, name, project]);
+                    grid_experiments[biosource][epigenetic_mark].push(experiment_info);
                 }
             }
 
