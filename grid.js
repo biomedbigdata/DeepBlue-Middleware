@@ -17,6 +17,36 @@ var settings = require('./settings');
 var xmlrpc = require('xmlrpc');
 var xmlrpc_host = settings.xmlrpc_host();
 
+var normalized_names = {};
+normalized_names["DNA Methylation"] = "dnamethylation";
+normalized_names["dna methylation"] = "dnamethylation";
+
+var unnormalized_names = {}
+unnormalized_names["dnamethylation"] = "DNA Methylation";
+
+
+var get_normalized = function(name) {
+    if (name in normalized_names) {
+        return normalized_names[name];
+    } else {
+        var norm_name = name.toLowerCase().replace(/[\W_]+/g, "");
+        normalized_names[name] = norm_name;
+        // TODO: do not overwrite the existing unnormalized names.
+        unnormalized_names[norm_name] = name;
+        return norm_name;
+    }
+}
+
+var get_unnormalized = function(normalized_name) {
+    if (normalized_name in unnormalized_names) {
+        return unnormalized_names[normalized_name];
+    } else {
+        // It can NEVER happens.
+        console.log(normalized_name + " NOT FOUND!");
+        return "XXX";
+    }
+}
+
 var list_experiments = function(params, user_key, res) {
     var client = xmlrpc.createClient(xmlrpc_host);
 
@@ -29,8 +59,8 @@ var list_experiments = function(params, user_key, res) {
             return res.send({"error": result[1]});
         }
 
+
         var experiments = result[1];
-        console.log(experiments.length);
 
         // loop through the experiments and retrieve the following: biosource, epigenetic_mark using the cache
         //experiments = [["e56955","E016.HUES64_Cell_Line.norm.pos.wig"],['e53553', 'S00D7151.hypo_meth.bs_call.GRCh38.20150707.bed']];
@@ -51,9 +81,10 @@ var list_experiments = function(params, user_key, res) {
             for (var d in data) {
                 var experiment_info = data[d];
                 var id = experiment_info['_id'];
-                var biosource = experiment_info['biosource'];
-                var epigenetic_mark = experiment_info['epigenetic_mark'];
-                var project = experiment_info['project'];
+                var biosource = get_normalized(experiment_info['biosource']);
+                var epigenetic_mark = get_normalized(experiment_info['epigenetic_mark']);
+                var project = get_normalized(experiment_info['project']);
+
                 var name = experiment_info['name'];
 
                 if (epigenetic_mark in grid_epigenetic_marks) {
@@ -100,19 +131,18 @@ var list_experiments = function(params, user_key, res) {
             var epigenetic_mark_sorted = (Object.keys(grid_epigenetic_marks).sort(function(a,b){return grid_epigenetic_marks[b] - grid_epigenetic_marks[a]})).slice(0,filter_epigenetic_mark);
 
             // sort biosources and epigenetic_marks alphabetically
-            var cell_biosources = biosource_sorted.sort();
-            var cell_epigenetic_marks = epigenetic_mark_sorted.sort();
+            var cell_biosources = biosource_sorted.map(get_unnormalized).sort();
+            var cell_epigenetic_marks = epigenetic_mark_sorted.map(get_unnormalized).sort();
 
             var cell_experiments_count = {}; //contains the experiment count in each cell of the filtered grid
             var cell_project = {}; //contains the project in each cell of the filtered grid
             var cell_experiments = {}; //contains the project in each cell of the filtered grid
 
-            console.log(biosource_sorted);
-            console.log(epigenetic_mark_sorted);
-
             for (var b in cell_biosources) {
-
                 var bio = cell_biosources[b];
+
+                var norm_bio = get_normalized(bio);
+
                 cell_experiments_count[bio] = {};
                 cell_project[bio] = {};
                 cell_experiments[bio] = {};
@@ -120,10 +150,12 @@ var list_experiments = function(params, user_key, res) {
                 for (var e in cell_epigenetic_marks) {
                     var epi = cell_epigenetic_marks[e];
 
-                    if (epi in grid_experiments[bio]) {
-                        cell_experiments_count[bio][epi] = grid_experiments[bio][epi].length;
-                        cell_project[bio][epi] = grid_projects[bio][epi][0];
-                        cell_experiments[bio][epi] = grid_experiments[bio][epi];
+                    var norm_epi = get_normalized(epi);
+
+                    if (norm_epi in grid_experiments[norm_bio]) {
+                        cell_experiments_count[bio][epi] = grid_experiments[norm_bio][norm_epi].length;
+                        cell_project[bio][epi] =  get_unnormalized(grid_projects[norm_bio][norm_epi][0]);
+                        cell_experiments[bio][epi] = grid_experiments[norm_bio][norm_epi];
                     }
                     else {
                         cell_experiments_count[bio][epi] = 0;
