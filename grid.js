@@ -47,7 +47,7 @@ var get_unnormalized = function(normalized_name) {
     }
 }
 
-var list_experiments = function(params, cols_count, user_key, res) {
+var list_experiments = function(params, user_key, res) {
     var client = xmlrpc.createClient(xmlrpc_host);
 
     client.methodCall('list_experiments', params, function(error, result) {
@@ -131,11 +131,11 @@ var list_experiments = function(params, cols_count, user_key, res) {
             }
 
             // filter biosource and epigenetic-marks
-            var filter_epigenetic_mark = cols_count;
+            var filter_epigenetic_mark = 15;
 
             // sort biosources and epigenetic_marks by count
             var biosource_sorted = Object.keys(grid_biosources).sort(function(a,b){return grid_biosources[b] - grid_biosources[a]});
-            var epigenetic_mark_sorted = (Object.keys(grid_epigenetic_marks).sort(function(a,b){return grid_epigenetic_marks[b] - grid_epigenetic_marks[a]})).slice(0,filter_epigenetic_mark);
+            var epigenetic_mark_sorted = (Object.keys(grid_epigenetic_marks).sort(function(a,b){return grid_epigenetic_marks[b] - grid_epigenetic_marks[a]})).slice(0, filter_epigenetic_mark);
 
             // sort biosources and epigenetic_marks alphabetically
             var cell_biosources = biosource_sorted.map(get_unnormalized).sort();
@@ -187,13 +187,13 @@ var list_experiments = function(params, cols_count, user_key, res) {
 var grid = function(req, res) {
     console.log(req.query);
     var key = req.query.key;
-    var cols_count = req.query.cols;
     var params = [];
     var request = [];
     if ("request" in req.query) {
         request = req.query.request;
     }
 
+    //console.log(req.body);
     // retrieve all experiment matching criteria in the request...   you need xmlrpc for this
     var vocabs = ['experiment-genome',"experiment-datatype", "experiment-epigenetic_mark", "experiment-biosource","experiment-sample", "experiment-technique", 'experiment-project'];
     for (var v in vocabs) {
@@ -207,7 +207,7 @@ var grid = function(req, res) {
     }
     console.log(params);
     params.push(key);
-    list_experiments(params, cols_count, key, res);
+    list_experiments(params, key, res);
 };
 
 module.exports = grid;
