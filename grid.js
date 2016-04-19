@@ -185,15 +185,23 @@ var list_experiments = function(params, user_key, res) {
 };
 
 var grid = function(req, res) {
-    console.log(req.query);
-    var key = req.query.key;
-    var params = [];
-    var request = [];
-    if ("request" in req.query) {
-        request = req.query.request;
+    var request_data;
+
+    // If the request was sent by GET
+    if (req.query.length > 0) {
+        request_data = req.query;
+    } else {
+    // If the request was sent by POST
+        request_data = req.body;
     }
 
-    //console.log(req.body);
+    var key = request_data.key;
+    var params = [];
+    var request = [];
+    if ("request" in request_data) {
+        request = request_data.request;
+    }
+
     // retrieve all experiment matching criteria in the request...   you need xmlrpc for this
     var vocabs = ['experiment-genome',"experiment-datatype", "experiment-epigenetic_mark", "experiment-biosource","experiment-sample", "experiment-technique", 'experiment-project'];
     for (var v in vocabs) {
