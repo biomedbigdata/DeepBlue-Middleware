@@ -1,3 +1,4 @@
+var compression = require('compression')
 var express = require('express');
 var path = require('path');
 var logger = require('morgan');
@@ -9,6 +10,7 @@ var rest_to_xmlrpc = require('./rest_to_xmlrpc');
 var settings = require('./settings');
 
 var app = express();
+app.use(compression());
 
 app.use(bodyParser.urlencoded({
   extended: true
