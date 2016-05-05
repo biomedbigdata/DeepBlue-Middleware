@@ -55,7 +55,6 @@ var get_unnormalized = function(normalized_name) {
 var select_experiments = function(params, res) {
     var client = xmlrpc.createClient(xmlrpc_host);
 
-    /*
     // Count the number of selected epigenetic marks.
     if (params[2].length == 0 || params[2].length > EPIGENETIC_MARKS_COUNT) {
         console.log("XXXXXXX");
@@ -92,12 +91,8 @@ var select_experiments = function(params, res) {
                 get_experiments(params, res);
         });
     } else {
-        */
-
         get_experiments(params, res);
-    /*
     }
-    */
 }
 
 
