@@ -137,16 +137,9 @@ var build_grid = function(experiments_ids, params, res) {
             var experiment_info = data[d];
             var id = experiment_info['_id'];
 
-            var name = experiment_info['name'];
-            var type = experiment_info['data_type'];
-            var desc = experiment_info['description'];
-            var genome = experiment_info['genome'];
             var epigenetic_mark = get_normalized(experiment_info['epigenetic_mark']);
             var biosource = get_normalized(experiment_info['biosource']);
-            var samp = experiment_info['sample_id'];
-            var tech = experiment_info['technique'];
             var project = get_normalized(experiment_info['project']);
-            var meta = experiment_info['extra_metadata'];
 
             if (epigenetic_mark in grid_epigenetic_marks) {
                 grid_epigenetic_marks[epigenetic_mark] = grid_epigenetic_marks[epigenetic_mark] + 1;
@@ -155,7 +148,7 @@ var build_grid = function(experiments_ids, params, res) {
                 grid_epigenetic_marks[epigenetic_mark] = 1;
             }
 
-            var experiment_info = [ id, name, type, desc, genome, get_unnormalized(epigenetic_mark), get_unnormalized(biosource), samp, tech, get_unnormalized(project), meta];
+            var experiment_info = [ id ];
 
             if (biosource in grid_projects) {
                 if (epigenetic_mark in grid_projects[biosource]) {
