@@ -73,19 +73,9 @@ var select_experiments = function(params, res) {
                 em.sort(function(a,b){return b[2] - a[2]});
                 var em_names = [];
 
-                var c1 = 0;
-                var c2 = 0;
                 for (var i = 0; i < EPIGENETIC_MARKS_COUNT; i++) {
-                    c1 += em[i][2];
                     em_names.push(em[i][1]);
                 }
-
-                for (var i = EPIGENETIC_MARKS_COUNT; i < em.length; i++) {
-                    c2 += em[i][2];
-                }
-
-                console.log(c1);
-                console.log(c2);
                 console.timeEnd("faceting");
                 params[2] = em_names;
                 get_experiments(params, res);
