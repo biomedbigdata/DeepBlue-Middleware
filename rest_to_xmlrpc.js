@@ -14,12 +14,6 @@ var Command = function(name, parameters) {
   self.name = name;
   self.parameters = parameters;
 
-  self.convert = function(value, type) {
-    if (type == "string") {
-      return valeue;
-    }
-  }
-
   self.doRequest = function(req, res) {
     console.log(self);
     console.log("executing : " + name + " " + parameters);
