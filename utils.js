@@ -1,3 +1,10 @@
+var normalized_names = {};
+normalized_names["DNA Methylation"] = "dnamethylation";
+normalized_names["dna methylation"] = "dnamethylation";
+
+var unnormalized_names = {};
+unnormalized_names["dnamethylation"] = "DNA Methylation";
+
 var annotations_extra_metadata = function(row) {
   var tmp_str = "";
 
@@ -120,7 +127,37 @@ var build_info = function (info_data) {
     info_data.info = column_type_info(info_data);
   }
   return info_data;
-}
+};
+
+var get_normalized_array = function (name_array) {
+  var normalized_array = [];
+  for (var n in name_array) {
+    normalized_array.push(get_normalized(name_array[n]));
+  }
+  return normalized_array;
+};
+
+var get_normalized = function(name) {
+  if (name in normalized_names) {
+    return normalized_names[name];
+  } else { 
+    var norm_name = name.toLowerCase().replace(/[\W_]+/g, "");
+    normalized_names[name] = norm_name;
+    // TODO: do not overwrite the existing unnormalized names.
+    unnormalized_names[norm_name] = name;
+    return norm_name;
+  }
+};
+
+var get_unnormalized = function(normalized_name) {
+  if (normalized_name in unnormalized_names) {
+    return unnormalized_names[normalized_name];
+  } else {
+    // It can NEVER happens.
+    console.log(normalized_name + " NOT FOUND!");
+    return "XXX";
+  }
+};
 
 module.exports = {
   annotations_extra_metadata: annotations_extra_metadata,
@@ -128,5 +165,8 @@ module.exports = {
   biosources_extra_metadata: biosources_extra_metadata,
   samples_extra_metadata: samples_extra_metadata,
   column_type_info: column_type_info,
-  build_info: build_info
+  build_info: build_info,
+  get_normalized: get_normalized,
+  get_unnormalized: get_unnormalized,
+  get_normalized_array: get_normalized_array
 };
