@@ -130,11 +130,7 @@ var build_info = function (info_data) {
 };
 
 var get_normalized_array = function (name_array) {
-  var normalized_array = [];
-  for (var n in name_array) {
-    normalized_array.push(get_normalized(name_array[n]));
-  }
-  return normalized_array;
+  return name_array.map(get_normalized);
 };
 
 var get_normalized = function(name) {

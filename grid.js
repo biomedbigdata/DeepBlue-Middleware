@@ -29,7 +29,7 @@ var select_experiments = function(params, res) {
 
     // Count the number of selected epigenetic marks.
     if (params[2].length == 0 || params[2].length > EPIGENETIC_MARKS_COUNT) {
-        console.log("XXXXXXX");
+        console.log("counting epigenetic marks");
         console.time("faceting");
         client.methodCall("collection_experiments_count", ["epigenetic_marks", params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7]], function(error, result) {
 
@@ -78,7 +78,7 @@ var get_experiments = function (params, res) {
 var build_grid = function(experiments_ids, params, res) {
     console.time('build_grid');
     var info_promisse = cache.infos(experiments_ids, params[7]);
-    var n_params = [];
+    var n_params = []; // normalized representation of params
 
     for (var p=0; p < params.length; p++) {
         if (params[p] instanceof Array) {
@@ -99,51 +99,42 @@ var build_grid = function(experiments_ids, params, res) {
         var experiment_count = data.length; // experiment count
         console.log("semi filtered experiment count: " + experiment_count);
 
-        var skip_count1 = 0;  var skip_count2 = 0; var skip_count3 = 0;
         for (var d in data) {
             var experiment_info = data[d];
             var id = experiment_info['_id'];
 
             // check if the experiments is valid based on the other collection filters
-            var data_type = experiment_info['data_type'];
-            if((params[1] instanceof Array ) && (params[1].indexOf(data_type) < 0)){
-                // console.log("skip " + data_type + " " + id);
-                // skip_count1 = skip_count1 + 1;
+            var data_type = utils.get_normalized(experiment_info['data_type']);
+            // params[1] is the data-type component of the request parameters
+            if((n_params[1] instanceof Array ) && (n_params[1].indexOf(data_type) < 0)){
                 continue;
             }
 
-            var project = experiment_info['project'];
-            if((params[6] instanceof Array ) && (params[6].indexOf(project) < 0)){
-                // console.log("skip " + project + " " + id);
-                // skip_count2 = skip_count2 + 1;
+            var project = utils.get_normalized(experiment_info['project']);
+            // params[6] is the project component of the request parameters
+            if((n_params[6] instanceof Array ) && (n_params[6].indexOf(project) < 0)){
                 continue;
             }
 
-            var genome = experiment_info['genome'];
-            if((params[0] instanceof Array ) && (params[0].indexOf(genome) < 0)){
-                // console.log("skip " + genome + " " + id);
-                skip_count1 = skip_count1 + 1;
+            var genome = utils.get_normalized(experiment_info['genome']);
+            // params[0] is the genome component of the request parameters
+            if((n_params[0] instanceof Array ) && (n_params[0].indexOf(genome) < 0)){
                 continue;
             }
 
             var technique = utils.get_normalized(experiment_info['technique']);
+            // params[5] is the technique component of the request parameters
             if((n_params[5] instanceof Array ) && (n_params[5].indexOf(technique) < 0)){
-                // console.log("skip " + techniques + " " + id);
-                skip_count2 = skip_count2 + 1;
                 continue;
             }
 
-            var biosour = experiment_info['sample_info']['biosource_name'];
-            if((params[3] instanceof Array ) && (params[3].indexOf(biosour) < 0)){
-                // console.log("skip " + biosource + " " + id);
-                skip_count3 = skip_count3 + 1;
+            var biosource = utils.get_normalized(experiment_info['biosource']);
+            // params[3] is the biosource component of the request parameters
+            if((n_params[3] instanceof Array ) && (n_params[3].indexOf(biosource) < 0)){
                 continue;
             }
 
             var epigenetic_mark = utils.get_normalized(experiment_info['epigenetic_mark']);
-            var biosource = utils.get_normalized(experiment_info['biosource']);
-            var project = utils.get_normalized(experiment_info['project']);
-
             if (epigenetic_mark in grid_epigenetic_marks) {
                 grid_epigenetic_marks[epigenetic_mark] = grid_epigenetic_marks[epigenetic_mark] + 1;
             }
@@ -180,9 +171,6 @@ var build_grid = function(experiments_ids, params, res) {
                 grid_experiments[biosource][epigenetic_mark].push(experiment_info);
             }
         }
-        // console.log("skip count_genome " + skip_count1);
-        // console.log("skip count_techniques " + skip_count2);
-        // console.log("skip count_biosources " + skip_count3);
 
         // sort biosources and epigenetic_marks by count
         var biosource_sorted = Object.keys(grid_biosources).sort(function(a,b){return grid_biosources[b] - grid_biosources[a]});
@@ -238,7 +226,7 @@ var build_grid = function(experiments_ids, params, res) {
 };
 
 var grid = function(req, res) {
-    console.time("grid")
+    console.time("grid");
     var request_data;
 
     // If the request was sent by GET
