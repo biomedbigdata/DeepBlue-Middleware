@@ -1,6 +1,6 @@
 'use strict';
 
-var Q = require('q');
+var Q = require('q') ;
 var xmlrpc = require('xmlrpc');
 var settings = require('./settings');
 var users = require('./users.js');
