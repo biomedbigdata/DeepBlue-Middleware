@@ -17,7 +17,7 @@ var ExperimentsCacheControl = function() {
   self.projects_data = {};
   self._project_counter = {};
   self._id_item = {};
-  self._biosource_item = {};
+  self._project_item = {};
   self._epigenetic_marks_item = {};
 
   self.matches = 0;
@@ -50,48 +50,51 @@ var ExperimentsCacheControl = function() {
     return deferred.promise;
   };
 
-  self.get_experiments = function(by, parameters) {
+  self.get_experiments = function(parameters) {
     console.log("experiments_cache.get_experiments()");
     var deferred = Q.defer();
     var cache_source;
-    var new_exs = [];
+    var new_prs = [];
     var cache_info = [];
-    var filter;
+    var epigenetic_marks_filter;
+    var project_filter;
 
-    if (by == 'biosources') {
-      console.log('retrieve biosources cache');
-      cache_source = self._biosource_item;
-      filter = parameters[3];
-    }
+    console.log('retrieve epigenetic-marks by projects cache');
+    cache_source = self._project_item;
 
-    if (by == 'epigenetic_marks') {
-      console.log('retrieve epigenetic-marks cache');
-      cache_source = self._epigenetic_marks_item;
-      filter = parameters[2];
-    }
+    project_filter = parameters[6];
+    epigenetic_marks_filter = parameters[2];
 
-    for (var f=0; f < filter.length; f++) {
-      var ex = utils.get_normalized(filter[f]);
-      if (ex in cache_source) {
-        // console.log(ex + " " + cache_source[ex].length);
-        cache_info = cache_info.concat(cache_source[ex]);
+    for (var p=0; p < project_filter.length; p++) {
+      var pr = utils.get_normalized(project_filter[p]);
+      if (pr in cache_source) {
+        // console.log(pr, "present");
+        for (var f=0; f < epigenetic_marks_filter.length; f++) {
+          var ex = utils.get_normalized(epigenetic_marks_filter[f]);
+          if (ex in cache_source[pr]) {
+            // console.log(pr, ex, "present");
+            cache_info = cache_info.concat(cache_source[pr][ex]);
+          }
+          // else {
+          //   console.log(pr, ex,"missing");
+          // }
+        }
       }
       else {
-        new_exs.push(ex);
+        // console.log(pr, "missing");
+        new_prs.push(pr);
       }
     }
-    console.log("missing: " + new_exs.length);
 
-    if (new_exs.length != 0) {
-      if (by == 'biosources') {
-        parameters[3] = new_exs;
-      }
-      if (by == 'epigenetic_marks') {
-        parameters[2] = new_exs;
-      }
+    // console.log("main", cache_info.length);
+    // console.log("missing: " + new_prs.length);
+
+    if (new_prs.length != 0) {
+      var temp_params = [parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], parameters[6], parameters[7]];
+      temp_params[6] = new_prs;
 
       var client = xmlrpc.createClient(xmlrpc_host);
-      client.methodCall('list_experiments', parameters, function(error, result) {
+      client.methodCall('list_experiments', temp_params, function(error, result) {
 
         if (error) {
           deferred.reject(error);
@@ -106,6 +109,8 @@ var ExperimentsCacheControl = function() {
             cache_info.push(data[e][0]);
           }
         }
+        // console.log("new", data.length);
+        // console.log("plus", cache_info.length);
         deferred.resolve(cache_info);
       });
     }
@@ -181,14 +186,14 @@ var ExperimentsCacheControl = function() {
     return self._info(ids, self.get_infos, user_key);
   };
 
-  self.list_experiments = function(by, parameter)
+  self.list_experiments = function(parameter)
   {
     console.log("experiments_cache.list_experiments()");
 
     var deferred = Q.defer();
     var user_key = parameter[7];
     users.check(user_key).then(function() {
-      deferred.resolve(self.get_experiments(by, parameter));
+      deferred.resolve(self.get_experiments(parameter));
     });
 
     return deferred.promise;
@@ -338,29 +343,27 @@ var ExperimentsCacheControl = function() {
           infos_data[d].biosource = infos_data[d].sample_info.biosource_name;
           self._id_item[infos_data[d]["_id"]] = infos_data[d];
 
-          // biosource caching
-          var n_biosource = utils.get_normalized(infos_data[d].biosource);
-          if (!(n_biosource in self._biosource_item)) {
-            self._biosource_item[n_biosource] = [];
-            self._biosource_item[n_biosource].push(infos_data[d]["_id"]);
-          }
-          else {
-            self._biosource_item[n_biosource].push(infos_data[d]["_id"]);
-          }
-
-          // epigenetic-mark caching
+          // epigenetic-mark by projects caching
+          var n_project = utils.get_normalized(infos_data[d].project);
           var n_epi_marks = utils.get_normalized(infos_data[d].epigenetic_mark);
-          if (!( n_epi_marks in self._epigenetic_marks_item)) {
-            self._epigenetic_marks_item[n_epi_marks] = [];
-            self._epigenetic_marks_item[n_epi_marks].push(infos_data[d]["_id"]);
+
+          if (!( n_project in self._project_item)) {
+            self._project_item[n_project] = {};
+            self._project_item[n_project][n_epi_marks] = [];
+            self._project_item[n_project][n_epi_marks].push(infos_data[d]["_id"]);
           }
           else {
-            self._epigenetic_marks_item[n_epi_marks].push(infos_data[d]["_id"]);
+            if (!( n_epi_marks in self._project_item[n_project])) {
+              self._project_item[n_project][n_epi_marks] = [];
+              self._project_item[n_project][n_epi_marks].push(infos_data[d]["_id"]);
+            }
+            else {
+              self._project_item[n_project][n_epi_marks].push(infos_data[d]["_id"]);
+            }
           }
         }
 
-        console.log("Saved " + Object.keys(self._epigenetic_marks_item).length + " epigenetic-marks");
-        console.log("Saved " + Object.keys(self._biosource_item).length + " biosources");
+        console.log("Saved " + Object.keys(self._project_item).length + " projects");
 
         for (var p in list_ids) {
           var item = self._id_item[list_ids[p][0]];
