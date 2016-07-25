@@ -62,12 +62,12 @@ var select_experiments = function(params, res) {
 
 
 var get_experiments = function (params, res) {
-    console.log(params);
+    // console.log(params);
     var client = xmlrpc.createClient(xmlrpc_host);
     console.time("list_experiments");
 
     // so get the ids of experiments based on the biosources selected
-    var experiments_promise = cache.list_experiments('epigenetic_marks', params);
+    var experiments_promise = cache.list_experiments(params);
     experiments_promise.then( function(data) {
         var experiments_ids = data; // experiment count
         console.timeEnd("list_experiments");
@@ -76,7 +76,7 @@ var get_experiments = function (params, res) {
 };
 
 var build_grid = function(experiments_ids, params, res) {
-    console.time('build_grid');
+    console.time('list_info');
     var info_promisse = cache.infos(experiments_ids, params[7]);
     var n_params = []; // normalized representation of params
 
@@ -90,6 +90,7 @@ var build_grid = function(experiments_ids, params, res) {
     }
 
     info_promisse.then( function(data) {
+        console.timeEnd('list_info');
         var grid_projects = {}; //grid containing project affiliation
         var grid_experiments = {}; // grid containing id, name and project of all experiments
         var grid_data = {}; // container for returned data
@@ -98,7 +99,7 @@ var build_grid = function(experiments_ids, params, res) {
 
         var experiment_count = data.length; // experiment count
         console.log("semi filtered experiment count: " + experiment_count);
-
+        console.time('build_grid1');
         for (var d in data) {
             var experiment_info = data[d];
             var id = experiment_info['_id'];
@@ -111,10 +112,10 @@ var build_grid = function(experiments_ids, params, res) {
             }
 
             var project = utils.get_normalized(experiment_info['project']);
-            // params[6] is the project component of the request parameters
-            if((n_params[6] instanceof Array ) && (n_params[6].indexOf(project) < 0)){
-                continue;
-            }
+            // // params[6] is the project component of the request parameters
+            // if((n_params[6] instanceof Array ) && (n_params[6].indexOf(project) < 0)){
+            //     continue;
+            // }
 
             var genome = utils.get_normalized(experiment_info['genome']);
             // params[0] is the genome component of the request parameters
@@ -171,7 +172,8 @@ var build_grid = function(experiments_ids, params, res) {
                 grid_experiments[biosource][epigenetic_mark].push(experiment_info);
             }
         }
-
+        console.timeEnd('build_grid1');
+        console.time('build_grid2');
         // sort biosources and epigenetic_marks by count
         var biosource_sorted = Object.keys(grid_biosources).sort(function(a,b){return grid_biosources[b] - grid_biosources[a]});
         var epigenetic_mark_sorted = (Object.keys(grid_epigenetic_marks).sort(function(a,b){return grid_epigenetic_marks[b] - grid_epigenetic_marks[a]}));
@@ -219,8 +221,8 @@ var build_grid = function(experiments_ids, params, res) {
         grid_data['total_experiment'] = experiment_count;
 
         console.log("done");
+        console.timeEnd('build_grid2');
         console.timeEnd("grid");
-        console.timeEnd('build_grid');
         return res.send(grid_data);
     });
 };
