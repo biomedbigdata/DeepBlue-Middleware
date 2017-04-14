@@ -253,6 +253,7 @@ var grid = function(req, res) {
         if (collections[v] in request) {
             params.push(request[collections[v]]);
             console.log(collections[v]);
+            console.log(request[collections[v]]);
         }
         else {
             params.push("");

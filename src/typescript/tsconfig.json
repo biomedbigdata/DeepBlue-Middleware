@@ -1,0 +1,45 @@
+/*
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es6",
+        "sourceMap": true,
+        "mapRoot": "./",
+        "outDir": "dist",
+        "declaration": false,
+        "allowJs": true,
+        "jsx": "react",
+        "forceConsistentCasingInFileNames": true,
+        "types": [
+            "node"
+        ]
+    },
+    "exclude": [
+        "./node_modules",
+        "./dist",
+        "./.vscode"
+    ]
+}
+*/
+{
+    "compilerOptions": {
+        "baseUrl": "",
+        "declaration": false,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "lib": ["es6", "dom"],
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "outDir": "../dist/out-tsc",
+        "target": "es6",
+        "typeRoots": [
+            "../../node_modules/@types"
+        ],
+        "allowJs": true,
+        "jsx": "react",
+        "forceConsistentCasingInFileNames": true,
+        "types": [
+            "node"
+        ]
+    }
+}

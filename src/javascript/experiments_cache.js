@@ -68,27 +68,17 @@ var ExperimentsCacheControl = function() {
     for (var p=0; p < project_filter.length; p++) {
       var pr = utils.get_normalized(project_filter[p]);
       if (pr in cache_source) {
-        // console.log(pr, "present");
         for (var f=0; f < epigenetic_marks_filter.length; f++) {
           var ex = utils.get_normalized(epigenetic_marks_filter[f]);
           if (ex in cache_source[pr]) {
-            // console.log(pr, ex, "present");
             cache_info = cache_info.concat(cache_source[pr][ex]);
           }
-          // else {
-          //   console.log(pr, ex,"missing");
-          // }
         }
       }
       else {
-        // console.log(pr, "missing");
         new_prs.push(pr);
       }
     }
-
-    // console.log("main", cache_info.length);
-    // console.log("missing: " + new_prs.length);
-
     if (new_prs.length != 0) {
       var temp_params = [parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], parameters[6], parameters[7]];
       temp_params[6] = new_prs;
@@ -109,8 +99,7 @@ var ExperimentsCacheControl = function() {
             cache_info.push(data[e][0]);
           }
         }
-        // console.log("new", data.length);
-        // console.log("plus", cache_info.length);
+
         deferred.resolve(cache_info);
       });
     }
@@ -408,7 +397,7 @@ var ExperimentsCacheControl = function() {
       } else {
         var projects = value[1];
         // console.log(projects);
-        // var projects = [ ['p2','BLUEPRINT Epigenome']];
+        //var projects = [ ['p2','BLUEPRINT Epigenome']];
         for (var project in projects) {
           user_projects.push(projects[project][1]);
         }

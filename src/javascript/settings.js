@@ -1,3 +1,4 @@
+
 exports.xmlrpc_host = function() {
 	return {
 		host: 'deepblue.mpi-inf.mpg.de',
@@ -5,3 +6,13 @@ exports.xmlrpc_host = function() {
 		path: '/xmlrpc'
 	}
 }
+
+/*
+exports.xmlrpc_host = function() {
+	return {
+		host: 'localhost',
+		port: 31415,
+		path: '/xmlrpc'
+	}
+}
+*/

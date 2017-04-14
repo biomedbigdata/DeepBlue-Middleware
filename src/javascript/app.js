@@ -8,9 +8,17 @@ var datatable = require('./datatable');
 var grid = require('./grid');
 var rest_to_xmlrpc = require('./rest_to_xmlrpc');
 var settings = require('./settings');
+var composed_commands = require('./typescript/app/service/composed_commands');
 
 var app = express();
 app.use(compression());
+
+app.all('*', function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
 
 app.use(bodyParser.urlencoded({
   extended: true
@@ -24,6 +32,10 @@ router.get('/datatable', datatable);
 
 router.post('/grid', grid);
 router.get('/grid', grid);
+
+//app.use('/composed_commands', composed_commands)
+
+console.log(composed_commands);
 
 app.use('/', router);
 
