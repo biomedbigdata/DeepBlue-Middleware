@@ -7,12 +7,14 @@ import { Subject } from 'rxjs/Subject'
 
 import { DeepBlueService } from '../service/deepblue';
 import { ProgressElement } from '../service/progresselement';
-import { DataCache } from'../service/cache';
+import { DataCache } from '../service/cache';
 
-import { IdName} from '../domain/deepblue'
+import { IdName } from '../domain/deepblue'
 import { DeepBlueOperation } from '../domain/operations'
 
 const composed_commands: Router = Router();
+
+const deepBlueUrl: string = "http://deepblue.mpi-inf.mpg.de";
 
 composed_commands.get('/', (req, res, next) => {
     res.send('respond with a resource');
@@ -20,72 +22,64 @@ composed_commands.get('/', (req, res, next) => {
 
 let dbs: DeepBlueService = new DeepBlueService();
 
+
 dbs.init().subscribe(() => {
     console.log("INUITTTTT00");
     dbs.execute("info", { "id": "me" }).subscribe((value: Object[]) => {
         console.log(value);
         console.log("XXXXXXXXXXXXXXXX000");
     });
+
+    let progress_bar = new ProgressElement();
+    let request_count = 10;
+
+    let exp = new IdName("e100269", "HSC_PB_I31_covg.bedgraph");
+
+    dbs.selectExperiment(exp, progress_bar, request_count).subscribe((deepBlueOperation: DeepBlueOperation) => {
+        console.log(deepBlueOperation);
+    });
 })
+
+
+
 
 /*
 class ComposedCommands {
 
-    deepBlueUrl : string = "http://deepblue.mpi-inf.mpg.de";
 
-    idNamesQueryCache: DataCache<IdName, DeepBlueOperation> = new DataCache<IdName, DeepBlueOperation>();
+    deepBlueService: DeepBlueService;
 
-    deepBlueService : DeepBlueService;
+    constructor(private requestCount : number = 0) {    }
 
-    selectExperiment(experiment: IdName, progress_element: ProgressElement, request_count: number): Observable<DeepBlueOperation> {
-        if (!experiment) {
-            return Observable.empty<DeepBlueOperation>();
-        }
+    selectMultipleExperiments(experiments: IdName[], progress_element: ProgressElement, request_count: number): Observable<DeepBlueOperation[]> {
 
-        if (this.idNamesQueryCache.get(experiment, request_count)) {
-            console.log("selectExperiment hit");
-            progress_element.increment(request_count);
-            let cached_operation = this.idNamesQueryCache.get(experiment, request_count);
-            return Observable.of(cached_operation);
-        }
+        let observableBatch: Observable<DeepBlueOperation>[] = [];
 
-        let params: URLSearchParams = new URLSearchParams();
-        params.set("experiment_name", experiment.name);
-        params.set("genome", this.getGenome().name);
-        return this.http.get(this.deepBlueUrl + "/select_experiments", { "search": params })
-            .map((res: Response) => {
-                let body = res.json();
-                let response: string = body[1] || "";
-                progress_element.increment(request_count);
-                return new DeepBlueOperation(experiment, response, "select_experiment", request_count);
-            })
-            .do((operation) => {
-                this.idNamesQueryCache.put(experiment, operation)
-            })
-            .catch(this.handleError);
-    }
-
-    selectMultipleExperiments(experiments: IdName[], progress_element: ProgressElement, request_count: number): Promise<DeepBlueOperation[]> {
-
-        var observableBatch = [];
         experiments.forEach((experiment, key) => {
             console.log(experiment);
             progress_element.increment(request_count);
-            observableBatch.push(this.selectExperiment(experiment, progress_element, request_count));
+            observableBatch.push(this.deepBlueService.selectExperiment(experiment, progress_element, request_count));
         });
 
-        return Q.all(observableBatch);
+        return Observable.forkJoin(observableBatch);
     }
 
     countOverlaps(queries: Array<String>, experiments: Array<String>) {
-        // Each experiment is started, selected, overlaped, count, get request data (4 times each)
-        let total = queries.length * experiments.length;
+
+        this.requestCount++;
+        let current_request = this.requestCount;
 
         var start = new Date().getTime();
 
-        this.deepBlueService.selectMultipleExperiments(experiments, this.progress_element, this.current_request).subscribe((selected_experiments: DeepBlueOperation[]) => {
+        let progress_element: ProgressElement = new ProgressElement();
+        // Each experiment is started, selected, overlaped, count, get request data (4 times each)
+        let total = queries.length * experiments.length;
+
+        progress_element.reset(total, current_request);
+
+        this.selectMultipleExperiments(experiments, progress_element, current_request).subscribe((selected_experiments: DeepBlueOperation[]) => {
             if (selected_experiments.length == 0) {
-                this.reloadPlot([]);
+                // TODO: mark end
                 return;
             }
             if (selected_experiments[0].request_count != this.current_request) {
@@ -125,8 +119,21 @@ class ComposedCommands {
             });
         });
     }
+
+    private handleError(error: Response | any) {
+        let errMsg: string;
+        if (error instanceof Response) {
+            const body = error.json() || '';
+            const err = body.error || JSON.stringify(body);
+            errMsg = `${err.status} - ${err.statusText || ''} ${err}`
+        } else {
+            errMsg = error.message ? error.message : error.toString();
+        }
+        console.log(errMsg);
+        return Observable.throw(errMsg);
+    }
 }
-}
+
 */
 
 export default composed_commands;

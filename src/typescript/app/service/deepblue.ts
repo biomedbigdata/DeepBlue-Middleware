@@ -2,6 +2,14 @@ import { Observable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
 import { Subject } from "rxjs/Subject";
 
+import { DataCache } from '../service/cache';
+
+import { IdName } from '../domain/deepblue'
+import { DeepBlueOperation } from '../domain/operations'
+
+import { ProgressElement } from '../service/progresselement';
+
+
 import 'rxjs/Rx';
 
 import * as xmlrpc from 'xmlrpc';
@@ -52,14 +60,19 @@ class Command {
   }
 
 
-  makeRequest(parameters: Object): Observable<Object[]> {
+  makeRequest(parameters: Object): Observable<string[]> {
     let xmlrpc_parameters = this.build_xmlrpc_request(parameters);
     var client = xmlrpc.createClient(xmlrpc_host);
     var methodCall = Observable.bindCallback(client.methodCall);
 
-    let subject: Subject<Object[]> = new Subject<Object[]>();
+    let subject: Subject<string[]> = new Subject<string[]>();
     client.methodCall(this.name, xmlrpc_parameters, (error: Object, value: any) => {
-      subject.next(value);
+      console.log("COOOL");
+      console.log(value)
+      subject.next([value]);
+      subject.next(["aaaaaaaa", "addadda"]);
+      subject.next(["aaaaaaaa", "addadda"]);
+      subject.complete();
     });
 
     return subject.asObservable();
@@ -70,6 +83,9 @@ class Command {
 export class DeepBlueService {
 
   private _commands: Map<string, Command>;
+
+  idNamesQueryCache: DataCache<IdName, DeepBlueOperation> = new DataCache<IdName, DeepBlueOperation>();
+
 
   constructor() { }
 
@@ -92,9 +108,46 @@ export class DeepBlueService {
     return subject.asObservable();
   }
 
-  execute(command_name: string, parameters: Object): Observable<Object[]> {
+  execute(command_name: string, parameters: Object): Observable<string[]> {
     let command: Command = this._commands[command_name];
     console.log(command);
     return command.makeRequest(parameters);
   }
+
+  selectExperiment(experiment: IdName, progress_element: ProgressElement, request_count: number): Observable<DeepBlueOperation> {
+    if (!experiment) {
+      return Observable.empty<DeepBlueOperation>();
+    }
+
+    if (this.idNamesQueryCache.get(experiment, request_count)) {
+      console.log("selectExperiment hit");
+      progress_element.increment(request_count);
+      let cached_operation = this.idNamesQueryCache.get(experiment, request_count);
+      return Observable.of(cached_operation);
+    }
+
+    let params: Object = new Object();
+    params["experiment_name"] = experiment.name;
+    console.log(params);
+    console.log("params");
+    return this.execute("select_experiments", params).map((body: string[]) => {
+      console.log("NOPPPP");
+      let response: string = body[1] || "";
+      progress_element.increment(request_count);
+      console.log("123434444");
+      console.log(response);
+      return new DeepBlueOperation(experiment, response, "select_experiment", request_count);
+    }).do((operation) => {
+      this.idNamesQueryCache.put(experiment, operation)
+    })
+      .catch(this.handleError);
+  }
+
+  private handleError(error: Response | any) {
+    let errMsg: string;
+    errMsg = error.message ? error.message : error.toString();
+    console.log(errMsg);
+    return Observable.throw(errMsg);
+  }
+
 }

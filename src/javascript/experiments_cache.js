@@ -418,7 +418,7 @@ var print_length = function(data) {
   console.log(data.length);
 }
 
-experiments.get("anonymous_key").then(print_length, console.error);
+//experiments.get("anonymous_key").then(print_length, console.error);
 
 module.exports = {
   "cache": experiments,
