@@ -1,5 +1,5 @@
 export interface ICloneable {
-    clone (request_count: number): any;
+    clone (): any;
 }
 
 export interface IKey extends ICloneable {

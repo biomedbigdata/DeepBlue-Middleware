@@ -1,18 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 class DeepBlueOperation {
-    constructor(data, query_id, command, request_count, cached = false) {
+    constructor(data, query_id, command, cached = false) {
         this.data = data;
         this.query_id = query_id;
         this.command = command;
-        this.request_count = request_count;
         this.cached = cached;
     }
-    clone(request_count = -1) {
-        return new DeepBlueOperation(this.data, this.query_id, this.command, request_count, this.cached);
+    clone() {
+        return new DeepBlueOperation(this.data, this.query_id, this.command, this.cached);
     }
     cacheIt(query_id) {
-        return new DeepBlueOperation(this.data, query_id, this.command, this.request_count, true);
+        return new DeepBlueOperation(this.data, query_id, this.command, true);
     }
     key() {
         return this.query_id;
@@ -20,18 +19,17 @@ class DeepBlueOperation {
 }
 exports.DeepBlueOperation = DeepBlueOperation;
 class DeepBlueParametersOperation {
-    constructor(operation, parameters, command, request_count, cached = false) {
+    constructor(operation, parameters, command, cached = false) {
         this.operation = operation;
         this.parameters = parameters;
         this.command = command;
-        this.request_count = request_count;
         this.cached = cached;
     }
-    clone(request_count = -1) {
-        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command, request_count, this.cached);
+    clone() {
+        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command, this.cached);
     }
     cacheIt(query_id) {
-        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command, this.request_count, true);
+        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command, true);
     }
     key() {
         return this.operation.key() + this.parameters.join();
@@ -39,19 +37,18 @@ class DeepBlueParametersOperation {
 }
 exports.DeepBlueParametersOperation = DeepBlueParametersOperation;
 class DeepBlueMultiParametersOperation {
-    constructor(op_one, op_two, parameters, command, request_count, cached = false) {
+    constructor(op_one, op_two, parameters, command, cached = false) {
         this.op_one = op_one;
         this.op_two = op_two;
         this.parameters = parameters;
         this.command = command;
-        this.request_count = request_count;
         this.cached = cached;
     }
-    clone(request_count = -1) {
-        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command, request_count, this.cached);
+    clone() {
+        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command, this.cached);
     }
     cacheIt(query_id) {
-        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command, this.request_count, true);
+        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command, true);
     }
     key() {
         return this.op_one.key() + this.op_two.key() + this.parameters.join();
@@ -59,15 +56,14 @@ class DeepBlueMultiParametersOperation {
 }
 exports.DeepBlueMultiParametersOperation = DeepBlueMultiParametersOperation;
 class DeepBlueRequest {
-    constructor(data, request_id, command, operation, request_count) {
+    constructor(data, request_id, command, operation) {
         this.data = data;
         this.request_id = request_id;
         this.command = command;
         this.operation = operation;
-        this.request_count = request_count;
     }
-    clone(request_count = -1) {
-        return new DeepBlueRequest(this.data, this.request_id, this.command, this.operation, request_count);
+    clone() {
+        return new DeepBlueRequest(this.data, this.request_id, this.command, this.operation);
     }
     key() {
         return this.request_id;
@@ -75,14 +71,13 @@ class DeepBlueRequest {
 }
 exports.DeepBlueRequest = DeepBlueRequest;
 class DeepBlueResult {
-    constructor(data, result, request, request_count) {
+    constructor(data, result, request) {
         this.data = data;
         this.result = result;
         this.request = request;
-        this.request_count = request_count;
     }
-    clone(request_count = -1) {
-        return new DeepBlueResult(this.data, this.result, this.request, request_count);
+    clone() {
+        return new DeepBlueResult(this.data, this.result, this.request);
     }
     resultAsString() {
         return this.result;

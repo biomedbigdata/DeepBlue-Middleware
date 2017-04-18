@@ -40,7 +40,7 @@ class Command {
                     xmlrpc_request_parameters.push(bool_value);
                 }
                 else {
-                    console.log("Internal error: Unknown variables type ", parameter_type);
+                    console.error("Internal error: Unknown variables type ", parameter_type);
                     return;
                 }
             }
@@ -61,11 +61,7 @@ class Command {
         var methodCall = Observable_1.Observable.bindCallback(client.methodCall);
         let subject = new Subject_1.Subject();
         client.methodCall(this.name, xmlrpc_parameters, (error, value) => {
-            console.log("COOOL");
-            console.log(value);
-            subject.next([value]);
-            subject.next(["aaaaaaaa", "addadda"]);
-            subject.next(["aaaaaaaa", "addadda"]);
+            subject.next(value);
             subject.complete();
         });
         return subject.asObservable();
@@ -74,6 +70,9 @@ class Command {
 class DeepBlueService {
     constructor() {
         this.idNamesQueryCache = new cache_1.DataCache();
+        this.intersectsQueryCache = new cache_1.MultiKeyDataCache();
+        this.requestCache = new cache_1.DataCache();
+        this.resultCache = new cache_1.DataCache();
     }
     init() {
         let client = xmlrpc.createClient(xmlrpc_host);
@@ -90,41 +89,95 @@ class DeepBlueService {
         });
         return subject.asObservable();
     }
-    execute(command_name, parameters) {
+    execute(command_name, parameters, progress_element) {
+        console.log(command_name);
         let command = this._commands[command_name];
-        console.log(command);
-        return command.makeRequest(parameters);
+        return command.makeRequest(parameters).map((body) => {
+            let status = body[0];
+            let response = body[1] || "";
+            progress_element.increment();
+            return [status, response];
+        });
     }
-    selectExperiment(experiment, progress_element, request_count) {
+    selectExperiment(experiment, progress_element) {
         if (!experiment) {
             return Observable_1.Observable.empty();
         }
-        if (this.idNamesQueryCache.get(experiment, request_count)) {
-            console.log("selectExperiment hit");
-            progress_element.increment(request_count);
-            let cached_operation = this.idNamesQueryCache.get(experiment, request_count);
+        if (this.idNamesQueryCache.get(experiment)) {
+            progress_element.increment();
+            let cached_operation = this.idNamesQueryCache.get(experiment);
             return Observable_1.Observable.of(cached_operation);
         }
         let params = new Object();
         params["experiment_name"] = experiment.name;
-        console.log(params);
-        console.log("params");
-        return this.execute("select_experiments", params).map((body) => {
-            console.log("NOPPPP");
-            let response = body[1] || "";
-            progress_element.increment(request_count);
-            console.log("123434444");
-            console.log(response);
-            return new operations_1.DeepBlueOperation(experiment, response, "select_experiment", request_count);
+        return this.execute("select_experiments", params, progress_element).map((response) => {
+            return new operations_1.DeepBlueOperation(experiment, response[1], "select_experiment");
         }).do((operation) => {
             this.idNamesQueryCache.put(experiment, operation);
         })
             .catch(this.handleError);
     }
+    intersection(query_data_id, query_filter_id, progress_element) {
+        let cache_key = [query_data_id, query_data_id];
+        if (this.intersectsQueryCache.get(cache_key)) {
+            progress_element.increment();
+            let cached_operation = this.intersectsQueryCache.get(cache_key);
+            return Observable_1.Observable.of(cached_operation);
+        }
+        let params = {};
+        params["query_data_id"] = query_data_id.query_id;
+        params["query_filter_id"] = query_filter_id.query_id;
+        return this.execute("intersection", params, progress_element).map((response) => {
+            return new operations_1.DeepBlueOperation(query_filter_id.data, response[1], "intersection");
+        });
+    }
+    count_regions(op_exp, progress_element) {
+        if (this.requestCache.get(op_exp)) {
+            progress_element.increment();
+            let cached_result = this.requestCache.get(op_exp);
+            return this.getResult(cached_result, progress_element);
+        }
+        else {
+            let params = new Object();
+            params["query_id"] = op_exp.query_id;
+            let request = this.execute("count_regions", params, progress_element).map((data) => {
+                let request = new operations_1.DeepBlueRequest(op_exp.data, data[1], "count_regions", op_exp);
+                this.requestCache.put(op_exp, request);
+                return request;
+            })
+                .flatMap((request_id) => {
+                return this.getResult(request_id, progress_element);
+            });
+            return request;
+        }
+    }
+    getResult(op_request, progress_element) {
+        if (this.resultCache.get(op_request)) {
+            progress_element.increment();
+            let cached_result = this.resultCache.get(op_request);
+            return Observable_1.Observable.of(cached_result);
+        }
+        let params = new Object();
+        params["request_id"] = op_request.request_id;
+        let pollSubject = new Subject_1.Subject();
+        let timer = Observable_1.Observable.timer(0, 250).concatMap(() => {
+            return this.execute("get_request_data", params, progress_element).map((data) => {
+                if (data[0] === "okay") {
+                    progress_element.increment();
+                    let op_result = new operations_1.DeepBlueResult(op_request.data, data, op_request);
+                    this.resultCache.put(op_request, op_result);
+                    timer.unsubscribe();
+                    pollSubject.next(op_result);
+                    pollSubject.complete();
+                }
+            });
+        }).subscribe();
+        return pollSubject.asObservable();
+    }
     handleError(error) {
         let errMsg;
         errMsg = error.message ? error.message : error.toString();
-        console.log(errMsg);
+        console.error(errMsg);
         return Observable_1.Observable.throw(errMsg);
     }
 }

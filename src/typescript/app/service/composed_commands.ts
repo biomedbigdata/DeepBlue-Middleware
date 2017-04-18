@@ -7,10 +7,10 @@ import { Subject } from 'rxjs/Subject'
 
 import { DeepBlueService } from '../service/deepblue';
 import { ProgressElement } from '../service/progresselement';
-import { DataCache } from '../service/cache';
+import { DataCache, MultiKeyDataCache } from '../service/cache';
 
 import { IdName } from '../domain/deepblue'
-import { DeepBlueOperation } from '../domain/operations'
+import { DeepBlueOperation, DeepBlueRequest, DeepBlueResult } from '../domain/operations';
 
 const composed_commands: Router = Router();
 
@@ -24,108 +24,120 @@ let dbs: DeepBlueService = new DeepBlueService();
 
 
 dbs.init().subscribe(() => {
-    console.log("INUITTTTT00");
-    dbs.execute("info", { "id": "me" }).subscribe((value: Object[]) => {
-        console.log(value);
-        console.log("XXXXXXXXXXXXXXXX000");
-    });
+
+    let cc = new ComposedCommands(dbs);
 
     let progress_bar = new ProgressElement();
-    let request_count = 10;
 
     let exp = new IdName("e100269", "HSC_PB_I31_covg.bedgraph");
+    let exp2 = new IdName("e100270", "Bcell_PB_I53_fracmeth.bedgraph");
+    let exp3 = new IdName("e103786", "wgEncodeBroadHmmK562HMM");
+    let exp4 = new IdName("e103787", "wgEncodeBroadHmmNhekHMM");
+    let exp5 = new IdName("e103795","E065_15_coreMarks_mnemonics.bed.bed");
+    let exp6 = new IdName("e103794", "wgEncodeBroadHmmGm12878HMM");
+    let exp7 = new IdName("e103795","E065_15_coreMarks_mnemonics.bed.bed");
+    let exp8 = new IdName("e100277","MK_BM_I22_covg.bedgraph");
 
-    dbs.selectExperiment(exp, progress_bar, request_count).subscribe((deepBlueOperation: DeepBlueOperation) => {
-        console.log(deepBlueOperation);
+    let ee = new IdName("e100291","HSC_PB_I30_covg.bedgraph");
+    let ff = new IdName("e100296","RNA_D1_MLP0_100.wig");
+
+    cc.countOverlaps([ff], [exp5, exp6, exp7, exp8, ee, ff]).subscribe((datum: DeepBlueResult[]) => {
+        console.log("FINISHED");
     });
-})
+});
 
-
-
-
-/*
 class ComposedCommands {
+    constructor(private deepBlueService: DeepBlueService) { }
 
-
-    deepBlueService: DeepBlueService;
-
-    constructor(private requestCount : number = 0) {    }
-
-    selectMultipleExperiments(experiments: IdName[], progress_element: ProgressElement, request_count: number): Observable<DeepBlueOperation[]> {
+    selectMultipleExperiments(experiments: IdName[], progress_element: ProgressElement): Observable<DeepBlueOperation[]> {
 
         let observableBatch: Observable<DeepBlueOperation>[] = [];
 
         experiments.forEach((experiment, key) => {
             console.log(experiment);
-            progress_element.increment(request_count);
-            observableBatch.push(this.deepBlueService.selectExperiment(experiment, progress_element, request_count));
+            observableBatch.push(this.deepBlueService.selectExperiment(experiment, progress_element));
         });
 
         return Observable.forkJoin(observableBatch);
     }
 
-    countOverlaps(queries: Array<String>, experiments: Array<String>) {
+    intersectWithSelected(current_operations: DeepBlueOperation[], selected_data: DeepBlueOperation[],
+        progress_element: ProgressElement): Observable<DeepBlueOperation[]> {
 
-        this.requestCount++;
-        let current_request = this.requestCount;
+        let observableBatch: Observable<DeepBlueOperation>[] = [];
+
+        current_operations.forEach((current_op) => {
+            selected_data.forEach((data) => {
+                let o = this.deepBlueService.intersection(current_op, data, progress_element);
+                observableBatch.push(o);
+            });
+        });
+
+        return Observable.forkJoin(observableBatch);
+    }
+
+
+    countRegionsBatch(query_ids: DeepBlueOperation[], progress_element: ProgressElement): Observable<DeepBlueResult[]> {
+        console.log("countRegion");
+        let observableBatch: Observable<DeepBlueResult>[] = [];
+
+        query_ids.forEach((op_exp, key) => {
+            let o: Observable<DeepBlueResult> = new Observable((observer) => {
+                this.deepBlueService.count_regions(op_exp, progress_element).subscribe((result) => {
+                    observer.next(result);
+                    observer.complete();
+                })
+            });
+
+            observableBatch.push(o);
+        });
+
+        return Observable.forkJoin(observableBatch);
+    }
+
+
+    countOverlaps(queries: Array<IdName>, experiments: Array<IdName>) : Observable<DeepBlueResult[]> {
 
         var start = new Date().getTime();
 
         let progress_element: ProgressElement = new ProgressElement();
         // Each experiment is started, selected, overlaped, count, get request data (4 times each)
         let total = queries.length * experiments.length;
+        progress_element.reset(total);
 
-        progress_element.reset(total, current_request);
+        let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
 
-        this.selectMultipleExperiments(experiments, progress_element, current_request).subscribe((selected_experiments: DeepBlueOperation[]) => {
-            if (selected_experiments.length == 0) {
-                // TODO: mark end
-                return;
-            }
-            if (selected_experiments[0].request_count != this.current_request) {
-                return;
-            }
+        this.selectMultipleExperiments(queries, progress_element).subscribe((query_data: DeepBlueOperation[]) => {
+            console.log("selectMultipleExperiments 1");
+            this.selectMultipleExperiments(experiments, progress_element).subscribe((selected_experiments: DeepBlueOperation[]) => {
+                console.log("selectMultipleExperiments 2");
 
-            let current: DeepBlueOperation[] = this.selectedData.getStacksTopOperation();
+                this.intersectWithSelected(query_data, selected_experiments, progress_element, ).subscribe((overlap_ids: DeepBlueOperation[]) => {
+                console.log("intersectWithSelected");
 
-            if (current == null) {
-                // Finish processing
-                return;
-            }
 
-            this.deepBlueService.intersectWithSelected(current, selected_experiments, this.progress_element, this.current_request).subscribe((overlap_ids: StackValue[]) => {
-                if (overlap_ids.length == 0) {
-                    // Finish processing
-                    return;
-                }
-                if (overlap_ids[0].getDeepBlueOperation().request_count != this.current_request) {
-                    return;
-                }
+                    this.countRegionsBatch(overlap_ids, progress_element).subscribe((datum: DeepBlueResult[]) => {
 
-                this.deepBlueService.countRegionsBatch(overlap_ids, this.progress_element, this.current_request).subscribe((datum: StackValue[]) => {
-                    if (datum.length == 0) {
-                        // Finish processing
-                        return;
-                    }
-                    if (datum[0].getDeepBlueOperation().request_count != this.current_request) {
-                        return;
-                    }
-
-                    var end = new Date().getTime();
-                    // Now calculate and output the difference
-                    console.log(end - start);
-                    this.currentlyProcessing = [];
-                })
+                        console.log("FINISHED");
+                        console.log(datum);
+                        var end = new Date().getTime();
+                        // Now calculate and output the difference
+                        console.log(end - start);
+                        response.next(datum);
+                        response.complete();
+                    });
+                });
             });
         });
+
+        return response.asObservable();
     }
 
     private handleError(error: Response | any) {
         let errMsg: string;
         if (error instanceof Response) {
             const body = error.json() || '';
-            const err = body.error || JSON.stringify(body);
-            errMsg = `${err.status} - ${err.statusText || ''} ${err}`
+            errMsg = JSON.stringify(body);
         } else {
             errMsg = error.message ? error.message : error.toString();
         }
@@ -134,6 +146,5 @@ class ComposedCommands {
     }
 }
 
-*/
 
 export default composed_commands;

@@ -4,17 +4,12 @@ class ProgressElement {
     constructor() {
         this.total_to_load = 0;
         this.total_loaded = 0;
-        this.request_count = -1;
     }
-    reset(total, request_count) {
+    reset(total) {
         this.total_to_load = total;
         this.total_loaded = 0;
-        this.request_count = request_count;
     }
-    increment(request_count) {
-        if (request_count != this.request_count) {
-            return;
-        }
+    increment() {
         this.total_loaded++;
         let next_value = Math.ceil(this.total_loaded * 100 / this.total_to_load);
     }

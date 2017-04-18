@@ -5,15 +5,13 @@ class DataCache {
         this._data = _data;
     }
     put(key, value) {
-        let cloneValue = value.clone(-1);
+        let cloneValue = value.clone();
         this._data.set(key.key(), cloneValue);
-        console.log(this._data);
     }
-    get(key, request_count) {
+    get(key) {
         let value = this._data.get(key.key());
         if (value) {
-            console.log("cache hit", value);
-            return value.clone(request_count);
+            return value.clone();
         }
         else {
             return null;
@@ -27,16 +25,14 @@ class MultiKeyDataCache {
     }
     put(keys, value) {
         let key_value = keys.map((k) => k.key()).join();
-        let cloneValue = value.clone(-1);
+        let cloneValue = value.clone();
         this._data.set(key_value, cloneValue);
-        console.log(this._data);
     }
-    get(keys, request_count) {
+    get(keys) {
         let key_value = keys.map((k) => k.key()).join();
         let value = this._data.get(key_value);
         if (value) {
-            console.log("multikey cache hit", value);
-            return value.clone(request_count);
+            return value.clone();
         }
         else {
             return null;
