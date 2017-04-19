@@ -15,10 +15,6 @@ var Command = function(name, parameters) {
   self.parameters = parameters;
 
   self.doRequest = function(req, res) {
-    console.log(self);
-    console.log("executing : " + name + " " + parameters);
-    console.log(req.query);
-
     var xmlrpc_request_parameters = [];
 
     for (pos in self.parameters) {

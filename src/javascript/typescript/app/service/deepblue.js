@@ -100,14 +100,18 @@ class DeepBlueService {
         });
     }
     selectExperiment(experiment, progress_element) {
+        console.log("selectExperiment", experiment);
         if (!experiment) {
             return Observable_1.Observable.empty();
         }
+        console.log("selectExperiment - checking cache", experiment);
         if (this.idNamesQueryCache.get(experiment)) {
+            console.log("selectExperiment - checking cache - has cache", experiment);
             progress_element.increment();
             let cached_operation = this.idNamesQueryCache.get(experiment);
             return Observable_1.Observable.of(cached_operation);
         }
+        console.log("selectExperiment - not in cache", experiment);
         let params = new Object();
         params["experiment_name"] = experiment.name;
         return this.execute("select_experiments", params, progress_element).map((response) => {

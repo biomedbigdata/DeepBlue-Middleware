@@ -4,7 +4,7 @@ import { Subject } from "rxjs/Subject";
 
 import { DataCache, MultiKeyDataCache } from '../service/cache';
 
-import { IdName } from '../domain/deepblue'
+import { IdName, Name } from '../domain/deepblue';
 import { DeepBlueOperation, DeepBlueRequest, DeepBlueResult } from '../domain/operations';
 
 import { ProgressElement } from '../service/progresselement';
@@ -79,7 +79,7 @@ export class DeepBlueService {
 
   private _commands: Map<string, Command>;
 
-  idNamesQueryCache: DataCache<IdName, DeepBlueOperation> = new DataCache<IdName, DeepBlueOperation>();
+  idNamesQueryCache: DataCache<Name, DeepBlueOperation> = new DataCache<Name, DeepBlueOperation>();
   intersectsQueryCache: MultiKeyDataCache<DeepBlueOperation, DeepBlueOperation> = new MultiKeyDataCache<DeepBlueOperation, DeepBlueOperation>();
   requestCache: DataCache<DeepBlueOperation, DeepBlueRequest> = new DataCache<DeepBlueOperation, DeepBlueRequest>();
   resultCache: DataCache<DeepBlueRequest, DeepBlueResult> = new DataCache<DeepBlueRequest, DeepBlueResult>()
@@ -121,17 +121,26 @@ export class DeepBlueService {
     });
   }
 
-  selectExperiment(experiment: IdName, progress_element: ProgressElement): Observable<DeepBlueOperation> {
+  selectExperiment(experiment: Name, progress_element: ProgressElement): Observable<DeepBlueOperation> {
 
+    console.log("selectExperiment", experiment);
     if (!experiment) {
       return Observable.empty<DeepBlueOperation>();
     }
 
+
+    console.log("selectExperiment - checking cache", experiment);
+
     if (this.idNamesQueryCache.get(experiment)) {
+      console.log("selectExperiment - checking cache - has cache", experiment);
       progress_element.increment();
       let cached_operation = this.idNamesQueryCache.get(experiment);
       return Observable.of(cached_operation);
     }
+
+
+    console.log("selectExperiment - not in cache", experiment);
+
 
     let params: Object = new Object();
     params["experiment_name"] = experiment.name;

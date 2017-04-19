@@ -8,7 +8,7 @@ var datatable = require('./datatable');
 var grid = require('./grid');
 var rest_to_xmlrpc = require('./rest_to_xmlrpc');
 var settings = require('./settings');
-var composed_commands = require('./typescript/app/service/composed_commands');
+var composed_commands_routes = require('./typescript/app/routes');
 
 var app = express();
 app.use(compression());
@@ -33,9 +33,8 @@ router.get('/datatable', datatable);
 router.post('/grid', grid);
 router.get('/grid', grid);
 
-//app.use('/composed_commands', composed_commands)
 
-console.log(composed_commands);
+app.use('/composed_commands', composed_commands_routes.ComposedCommandsRoutes.routes())
 
 app.use('/', router);
 

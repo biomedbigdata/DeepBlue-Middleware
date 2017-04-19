@@ -1,5 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+class Name {
+    constructor(name) {
+        this.name = name;
+    }
+    key() {
+        return this.name;
+    }
+    clone() {
+        return new Name(this.name);
+    }
+}
+exports.Name = Name;
 class IdName {
     constructor(id, name) {
         this.id = id;

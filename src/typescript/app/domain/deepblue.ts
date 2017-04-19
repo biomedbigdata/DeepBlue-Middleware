@@ -1,5 +1,18 @@
 import { IKey } from 'app/domain/interfaces';
 
+
+export class Name implements IKey {
+    constructor (public name: string) { }
+
+    key() : string {
+        return this.name;
+    }
+
+    clone() : Name {
+        return new Name(this.name);
+    }
+}
+
 export class IdName implements IKey{
     constructor (public id: string, public name: string) {  }
 

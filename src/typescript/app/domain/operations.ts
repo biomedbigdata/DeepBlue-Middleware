@@ -1,19 +1,20 @@
+import { Name } from './deepblue';
 import { ICloneable } from 'app/domain/interfaces'
 import { IKey } from 'app/domain/interfaces';
 import { IdName } from 'app/domain/deepblue';
 
 export class DeepBlueOperation implements IKey {
-    constructor(public data: IdName, public query_id: string, public command: string, public cached: boolean = false) { }
+    constructor(public data: Name, public query_id: string, public command: string, public cached: boolean = false) { }
 
     clone(): DeepBlueOperation {
-        return new DeepBlueOperation(this.data,this.query_id, this.command, this.cached);
+        return new DeepBlueOperation(this.data, this.query_id, this.command, this.cached);
     }
 
     cacheIt(query_id: string): DeepBlueOperation {
         return new DeepBlueOperation(this.data, query_id, this.command, true);
     }
 
-    key() : string {
+    key(): string {
         return this.query_id;
     }
 }
@@ -22,20 +23,20 @@ export class DeepBlueParametersOperation implements IKey {
     constructor(public operation: DeepBlueOperation, public parameters: string[], public command: string, public cached: boolean = false) { }
 
     clone(): DeepBlueParametersOperation {
-        return new DeepBlueParametersOperation(this.operation,this.parameters, this.command, this.cached);
+        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command, this.cached);
     }
 
     cacheIt(query_id: string): DeepBlueParametersOperation {
         return new DeepBlueParametersOperation(this.operation, this.parameters, this.command, true);
     }
 
-    key() : string {
+    key(): string {
         return this.operation.key() + this.parameters.join();
     }
 }
 
 export class DeepBlueMultiParametersOperation implements IKey {
-    constructor(public op_one: DeepBlueOperation, public op_two:DeepBlueOperation, public parameters: string[], public command: string, public cached: boolean = false) { }
+    constructor(public op_one: DeepBlueOperation, public op_two: DeepBlueOperation, public parameters: string[], public command: string, public cached: boolean = false) { }
 
     clone(): DeepBlueMultiParametersOperation {
         return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command, this.cached);
@@ -45,15 +46,15 @@ export class DeepBlueMultiParametersOperation implements IKey {
         return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command, true);
     }
 
-    key() : string {
+    key(): string {
         return this.op_one.key() + this.op_two.key() + this.parameters.join();
     }
 }
 
-export class DeepBlueRequest  implements IKey {
-    constructor(public data: IdName, public request_id: string, public command: string, public operation: DeepBlueOperation, ) { }
+export class DeepBlueRequest implements IKey {
+    constructor(public data: Name, public request_id: string, public command: string, public operation: DeepBlueOperation, ) { }
 
-    clone() : DeepBlueRequest {
+    clone(): DeepBlueRequest {
         return new DeepBlueRequest(this.data, this.request_id, this.command, this.operation)
     }
 
@@ -62,44 +63,44 @@ export class DeepBlueRequest  implements IKey {
     }
 }
 
-export class DeepBlueResult  implements ICloneable {
-    constructor(public data: IdName, public result: Object, public request: DeepBlueRequest) { }
+export class DeepBlueResult implements ICloneable {
+    constructor(public data: Name, public result: Object, public request: DeepBlueRequest) { }
 
-    clone() : DeepBlueResult {
+    clone(): DeepBlueResult {
         return new DeepBlueResult(this.data, this.result, this.request);
     }
 
-    resultAsString() : string {
-        return <string> this.result;
+    resultAsString(): string {
+        return <string>this.result;
     }
 
-    resultAsCount() : number {
-        return <number> this.result["count"];
+    resultAsCount(): number {
+        return <number>this.result["count"];
     }
 }
 
 
 export class StackValue {
-    constructor(public stack : number,
-        public value: DeepBlueOperation | DeepBlueParametersOperation | DeepBlueMultiParametersOperation | DeepBlueRequest | DeepBlueResult) {}
+    constructor(public stack: number,
+        public value: DeepBlueOperation | DeepBlueParametersOperation | DeepBlueMultiParametersOperation | DeepBlueRequest | DeepBlueResult) { }
 
-    getDeepBlueOperation() : DeepBlueOperation {
-        return <DeepBlueOperation> this.value;
+    getDeepBlueOperation(): DeepBlueOperation {
+        return <DeepBlueOperation>this.value;
     }
 
-    getDeepBlueParametersOperation() : DeepBlueParametersOperation {
-        return <DeepBlueParametersOperation> this.value;
+    getDeepBlueParametersOperation(): DeepBlueParametersOperation {
+        return <DeepBlueParametersOperation>this.value;
     }
 
-    getDeepBlueMultiParametersOperation() : DeepBlueMultiParametersOperation {
-        return <DeepBlueMultiParametersOperation> this.value;
+    getDeepBlueMultiParametersOperation(): DeepBlueMultiParametersOperation {
+        return <DeepBlueMultiParametersOperation>this.value;
     }
 
-    getDeepBlueRequest() : DeepBlueRequest {
-        return <DeepBlueRequest> this.value;
+    getDeepBlueRequest(): DeepBlueRequest {
+        return <DeepBlueRequest>this.value;
     }
 
-    getDeepBlueResult() : DeepBlueResult {
-        return <DeepBlueResult> this.value;
+    getDeepBlueResult(): DeepBlueResult {
+        return <DeepBlueResult>this.value;
     }
 }
