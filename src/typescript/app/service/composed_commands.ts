@@ -7,31 +7,6 @@ import { ProgressElement } from '../service/progresselement';
 import { IdName, Name } from '../domain/deepblue';
 import { DeepBlueOperation, DeepBlueResult } from '../domain/operations';
 
-/*
-dbs.init().subscribe(() => {
-
-    let cc = new ComposedCommands(dbs);
-
-    let progress_bar = new ProgressElement();
-
-    let exp = new IdName("e100269", "HSC_PB_I31_covg./bedgraph");
-    let exp2 = new IdName("e100270", "Bcell_PB_I53_fracmeth.bedgraph");
-    let exp3 = new IdName("e103786", "wgEncodeBroadHmmK562HMM");
-    let exp4 = new IdName("e103787", "wgEncodeBroadHmmNhekHMM");
-    let exp5 = new IdName("e103795", "E065_15_coreMarks_mnemonics.bed.bed");
-    let exp6 = new IdName("e103794", "wgEncodeBroadHmmGm12878HMM");
-    let exp7 = new IdName("e103795", "E065_15_coreMarks_mnemonics.bed.bed");
-    let exp8 = new IdName("e100277", "MK_BM_I22_covg.bedgraph");
-
-    let ee = new IdName("e100291", "HSC_PB_I30_covg.bedgraph");
-    let ff = new IdName("e100296", "RNA_D1_MLP0_100.wig");
-
-    cc.countOverlaps([ff], [exp5, exp6, exp7, exp8, ee, ff]).subscribe((datum: DeepBlueResult[]) => {
-        console.log("FINISHED");
-    });
-});
-*/
-
 export class Manager {
 
     private static dbs: DeepBlueService = new DeepBlueService();
@@ -64,8 +39,7 @@ export class ComposedCommands {
         console.log("selectMultipleExperiments");
         let observableBatch: Observable<DeepBlueOperation>[] = [];
 
-        experiments.forEach((experiment : Name) => {
-            console.log("Selecting:",experiment);
+        experiments.forEach((experiment: Name) => {
             observableBatch.push(this.deepBlueService.selectExperiment(experiment, progress_element));
         });
 
@@ -108,33 +82,31 @@ export class ComposedCommands {
 
 
     countOverlaps(data_query_id: DeepBlueOperation[], experiments_name: Name[]): Observable<DeepBlueResult[]> {
-
         console.log("countOverlaps");
 
         var start = new Date().getTime();
-
         let progress_element: ProgressElement = new ProgressElement();
-        // Each experiment is started, selected, overlaped, count, get request data (4 times each)
         let total = data_query_id.length * experiments_name.length;
         progress_element.reset(total);
 
         let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
+        console.log(response);
 
         this.selectMultipleExperiments(experiments_name, progress_element).subscribe((selected_experiments: DeepBlueOperation[]) => {
             console.log("selectMultipleExperiments 2");
-
+            console.log(response);
             this.intersectWithSelected(data_query_id, selected_experiments, progress_element, ).subscribe((overlap_ids: DeepBlueOperation[]) => {
                 console.log("intersectWithSelected");
+                console.log(response);
 
                 this.countRegionsBatch(overlap_ids, progress_element).subscribe((datum: DeepBlueResult[]) => {
-
-                    console.log("FINISHED");
-                    console.log(datum);
                     var end = new Date().getTime();
-                    // Now calculate and output the difference
-                    console.log(end - start);
-                    response.next(datum);
-                    response.complete();
+                    console.log("FINISHED", end - start);
+                    console.log(response);
+                    setTimeout(() => {
+                        response.next(datum);
+                        response.complete();
+                    });
                 });
             });
         });

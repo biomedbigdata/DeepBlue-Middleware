@@ -34,7 +34,7 @@ router.post('/grid', grid);
 router.get('/grid', grid);
 
 
-app.use('/composed_commands', composed_commands_routes.ComposedCommandsRoutes.routes())
+app.use('/composed_commands', composed_commands_routes.ComposedCommandsRoutes.routes());
 
 app.use('/', router);
 

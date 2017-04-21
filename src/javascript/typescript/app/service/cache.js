@@ -14,7 +14,6 @@ class DataCache {
             return value.clone();
         }
         else {
-            console.log("CACHE MISS");
             return null;
         }
     }

@@ -15,7 +15,6 @@ export class DataCache<T extends IKey, V extends ICloneable> {
         if (value) {
             return value.clone();
         } else {
-            console.log("CACHE MISS");
             return null;
         }
     }

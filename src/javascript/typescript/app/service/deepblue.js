@@ -100,18 +100,14 @@ class DeepBlueService {
         });
     }
     selectExperiment(experiment, progress_element) {
-        console.log("selectExperiment", experiment);
         if (!experiment) {
             return Observable_1.Observable.empty();
         }
-        console.log("selectExperiment - checking cache", experiment);
         if (this.idNamesQueryCache.get(experiment)) {
-            console.log("selectExperiment - checking cache - has cache", experiment);
             progress_element.increment();
             let cached_operation = this.idNamesQueryCache.get(experiment);
             return Observable_1.Observable.of(cached_operation);
         }
-        console.log("selectExperiment - not in cache", experiment);
         let params = new Object();
         params["experiment_name"] = experiment.name;
         return this.execute("select_experiments", params, progress_element).map((response) => {
@@ -131,9 +127,12 @@ class DeepBlueService {
         let params = {};
         params["query_data_id"] = query_data_id.query_id;
         params["query_filter_id"] = query_filter_id.query_id;
-        return this.execute("intersection", params, progress_element).map((response) => {
+        return this.execute("intersection", params, progress_element)
+            .map((response) => {
             return new operations_1.DeepBlueOperation(query_filter_id.data, response[1], "intersection");
-        });
+        })
+            .do((operation) => this.intersectsQueryCache.put(cache_key, operation))
+            .catch(this.handleError);
     }
     count_regions(op_exp, progress_element) {
         if (this.requestCache.get(op_exp)) {
