@@ -7,7 +7,7 @@ class RequestManager {
     }
     startRequest() {
         let request_id = this.request_count++;
-        this.requests[request_id.toLocaleString()] = "received";
+        this.requests[request_id.toLocaleString()] = "new";
         return request_id.toLocaleString();
     }
     getRequest(request_id) {

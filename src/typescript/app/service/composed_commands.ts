@@ -5,7 +5,7 @@ import { DeepBlueService } from '../service/deepblue';
 import { ProgressElement } from '../service/progresselement';
 
 import { IdName, Name } from '../domain/deepblue';
-import { DeepBlueOperation, DeepBlueResult } from '../domain/operations';
+import { DeepBlueIntersection, DeepBlueOperation, DeepBlueResult } from '../domain/operations';
 
 export class Manager {
 
@@ -47,9 +47,9 @@ export class ComposedCommands {
     }
 
     intersectWithSelected(current_operations: DeepBlueOperation[], selected_data: DeepBlueOperation[],
-        progress_element: ProgressElement): Observable<DeepBlueOperation[]> {
+        progress_element: ProgressElement): Observable<DeepBlueIntersection[]> {
 
-        let observableBatch: Observable<DeepBlueOperation>[] = [];
+        let observableBatch: Observable<DeepBlueIntersection>[] = [];
 
         current_operations.forEach((current_op) => {
             selected_data.forEach((data) => {
@@ -90,19 +90,15 @@ export class ComposedCommands {
         progress_element.reset(total);
 
         let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
-        console.log(response);
 
         this.selectMultipleExperiments(experiments_name, progress_element).subscribe((selected_experiments: DeepBlueOperation[]) => {
             console.log("selectMultipleExperiments 2");
-            console.log(response);
             this.intersectWithSelected(data_query_id, selected_experiments, progress_element, ).subscribe((overlap_ids: DeepBlueOperation[]) => {
                 console.log("intersectWithSelected");
-                console.log(response);
 
                 this.countRegionsBatch(overlap_ids, progress_element).subscribe((datum: DeepBlueResult[]) => {
                     var end = new Date().getTime();
                     console.log("FINISHED", end - start);
-                    console.log(response);
                     setTimeout(() => {
                         response.next(datum);
                         response.complete();

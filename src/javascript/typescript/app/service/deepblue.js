@@ -111,7 +111,7 @@ class DeepBlueService {
         let params = new Object();
         params["experiment_name"] = experiment.name;
         return this.execute("select_experiments", params, progress_element).map((response) => {
-            return new operations_1.DeepBlueOperation(experiment, response[1], "select_experiment");
+            return new operations_1.DeepBlueSelectData(experiment, response[1], "select_experiment");
         }).do((operation) => {
             this.idNamesQueryCache.put(experiment, operation);
         })
@@ -125,11 +125,11 @@ class DeepBlueService {
             return Observable_1.Observable.of(cached_operation);
         }
         let params = {};
-        params["query_data_id"] = query_data_id.query_id;
-        params["query_filter_id"] = query_filter_id.query_id;
+        params["query_data_id"] = query_data_id.queryId();
+        params["query_filter_id"] = query_filter_id.queryId();
         return this.execute("intersection", params, progress_element)
             .map((response) => {
-            return new operations_1.DeepBlueOperation(query_filter_id.data, response[1], "intersection");
+            return new operations_1.DeepBlueIntersection(query_data_id, query_filter_id, response[1]);
         })
             .do((operation) => this.intersectsQueryCache.put(cache_key, operation))
             .catch(this.handleError);
@@ -142,9 +142,9 @@ class DeepBlueService {
         }
         else {
             let params = new Object();
-            params["query_id"] = op_exp.query_id;
+            params["query_id"] = op_exp.queryId();
             let request = this.execute("count_regions", params, progress_element).map((data) => {
-                let request = new operations_1.DeepBlueRequest(op_exp.data, data[1], "count_regions", op_exp);
+                let request = new operations_1.DeepBlueRequest(op_exp, data[1], "count_regions", op_exp);
                 this.requestCache.put(op_exp, request);
                 return request;
             })
@@ -167,7 +167,7 @@ class DeepBlueService {
             return this.execute("get_request_data", params, progress_element).map((data) => {
                 if (data[0] === "okay") {
                     progress_element.increment();
-                    let op_result = new operations_1.DeepBlueResult(op_request.data, data, op_request);
+                    let op_result = new operations_1.DeepBlueResult(op_request, data, op_request);
                     this.resultCache.put(op_request, op_result);
                     timer.unsubscribe();
                     pollSubject.next(op_result);

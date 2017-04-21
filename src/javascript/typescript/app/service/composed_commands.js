@@ -65,17 +65,13 @@ class ComposedCommands {
         let total = data_query_id.length * experiments_name.length;
         progress_element.reset(total);
         let response = new rxjs_1.Subject();
-        console.log(response);
         this.selectMultipleExperiments(experiments_name, progress_element).subscribe((selected_experiments) => {
             console.log("selectMultipleExperiments 2");
-            console.log(response);
             this.intersectWithSelected(data_query_id, selected_experiments, progress_element).subscribe((overlap_ids) => {
                 console.log("intersectWithSelected");
-                console.log(response);
                 this.countRegionsBatch(overlap_ids, progress_element).subscribe((datum) => {
                     var end = new Date().getTime();
                     console.log("FINISHED", end - start);
-                    console.log(response);
                     setTimeout(() => {
                         response.next(datum);
                         response.complete();

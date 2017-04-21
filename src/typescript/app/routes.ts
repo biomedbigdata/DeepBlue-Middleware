@@ -1,6 +1,6 @@
 import { RequestManager } from './service/requests_manager';
 import { Name } from './domain/deepblue';
-import { DeepBlueOperation, DeepBlueRequest, DeepBlueResult } from './domain/operations';
+import { DeepBlueOperation, DeepBlueRequest, DeepBlueResult, DeepBlueSelectData } from './domain/operations';
 import { Router } from 'express';
 
 import { DeepBlueService } from './service/deepblue';
@@ -20,7 +20,16 @@ export class ComposedCommandsRoutes {
 
   private static getRequest(req: express.Request, res: express.Response, next: express.NextFunction) {
     let request_id = req.query["request_id"];
-    res.send(ComposedCommandsRoutes.requestManager.getRequest(request_id));
+
+    let request_data = ComposedCommandsRoutes.requestManager.getRequest(request_id);
+
+    if (request_data === "new") {
+      res.send(["error", "still processing"]);
+    } else {
+      res.send(["okay", request_data]);
+    }
+
+
   }
 
   private static countOverlaps(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -31,7 +40,7 @@ export class ComposedCommandsRoutes {
 
       let request_id = ComposedCommandsRoutes.requestManager.startRequest();
 
-      res.send(request_id);
+      res.send(["okay", request_id]);
 
       if (!(Array.isArray(queries_id))) {
         queries_id = [queries_id];
@@ -43,17 +52,25 @@ export class ComposedCommandsRoutes {
 
       Experiments.info(experiments_id).subscribe((experiments: Object[]) => {
         let deepblue_query_ops: DeepBlueOperation[] =
-          queries_id.map((query_id: string, i: number) => new DeepBlueOperation(new Name(i.toLocaleString()), query_id, "DIVE data"));
+          queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(i.toLocaleString()), query_id, "DIVE data"));
         let experiments_name: Name[] = experiments.map((v: Object) => new Name(v["name"]));
 
-        var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name).subscribe((result: DeepBlueResult[]) => {
-          console.log("FINISHED COUNT OVERLAPS COMPOSITE");
-          ComposedCommandsRoutes.requestManager.storeRequest(request_id, result);
+        var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name).subscribe((results: DeepBlueResult[]) => {
+
+          //ComposedCommandsRoutes.requestManager.storeRequest(request_id, result);
+
+          let rr = [];
+          for (let i = 0; i < results.length; i++) {
+            let result : DeepBlueResult = results[i];
+            let pos = result.getDataName();
+            console.log(pos);
+          }
         });
 
       });
     });
   }
+
 
   public static routes(): express.Router {
     //get router

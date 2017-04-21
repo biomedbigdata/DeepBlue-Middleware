@@ -1,54 +1,74 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-class DeepBlueOperation {
-    constructor(data, query_id, command, cached = false) {
-        this.data = data;
+class DeepBlueSelectData {
+    constructor(_data, query_id, command) {
+        this._data = _data;
         this.query_id = query_id;
         this.command = command;
-        this.cached = cached;
     }
     clone() {
-        return new DeepBlueOperation(this.data, this.query_id, this.command, this.cached);
+        return new DeepBlueSelectData(this._data, this.query_id, this.command);
     }
-    cacheIt(query_id) {
-        return new DeepBlueOperation(this.data, query_id, this.command, true);
+    queryId() {
+        return this.query_id;
+    }
+    data() {
+        return this._data;
     }
     key() {
         return this.query_id;
     }
+    getDataName() {
+        return this._data.name;
+    }
 }
-exports.DeepBlueOperation = DeepBlueOperation;
+exports.DeepBlueSelectData = DeepBlueSelectData;
 class DeepBlueParametersOperation {
-    constructor(operation, parameters, command, cached = false) {
+    constructor(operation, parameters, command) {
         this.operation = operation;
         this.parameters = parameters;
         this.command = command;
-        this.cached = cached;
     }
     clone() {
-        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command, this.cached);
-    }
-    cacheIt(query_id) {
-        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command, true);
+        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command);
     }
     key() {
         return this.operation.key() + this.parameters.join();
     }
 }
 exports.DeepBlueParametersOperation = DeepBlueParametersOperation;
+class DeepBlueIntersection {
+    constructor(_data, filter, query_id) {
+        this._data = _data;
+        this.filter = filter;
+        this.query_id = query_id;
+    }
+    clone() {
+        return new DeepBlueIntersection(this._data, this.filter, this.query_id);
+    }
+    queryId() {
+        return this.query_id;
+    }
+    data() {
+        return this._data;
+    }
+    key() {
+        return this._data.queryId() + '_' + this.filter.queryId();
+    }
+    getDataName() {
+        return this._data.getDataName();
+    }
+}
+exports.DeepBlueIntersection = DeepBlueIntersection;
 class DeepBlueMultiParametersOperation {
-    constructor(op_one, op_two, parameters, command, cached = false) {
+    constructor(op_one, op_two, parameters, command) {
         this.op_one = op_one;
         this.op_two = op_two;
         this.parameters = parameters;
         this.command = command;
-        this.cached = cached;
     }
     clone() {
-        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command, this.cached);
-    }
-    cacheIt(query_id) {
-        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command, true);
+        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command);
     }
     key() {
         return this.op_one.key() + this.op_two.key() + this.parameters.join();
@@ -56,28 +76,34 @@ class DeepBlueMultiParametersOperation {
 }
 exports.DeepBlueMultiParametersOperation = DeepBlueMultiParametersOperation;
 class DeepBlueRequest {
-    constructor(data, request_id, command, operation) {
-        this.data = data;
+    constructor(_data, request_id, command, operation) {
+        this._data = _data;
         this.request_id = request_id;
         this.command = command;
         this.operation = operation;
     }
     clone() {
-        return new DeepBlueRequest(this.data, this.request_id, this.command, this.operation);
+        return new DeepBlueRequest(this._data, this.request_id, this.command, this.operation);
     }
     key() {
         return this.request_id;
     }
+    data() {
+        return this._data;
+    }
+    getDataName() {
+        return this._data.getDataName();
+    }
 }
 exports.DeepBlueRequest = DeepBlueRequest;
 class DeepBlueResult {
-    constructor(data, result, request) {
-        this.data = data;
+    constructor(_data, result, request) {
+        this._data = _data;
         this.result = result;
         this.request = request;
     }
     clone() {
-        return new DeepBlueResult(this.data, this.result, this.request);
+        return new DeepBlueResult(this._data, this.result, this.request);
     }
     resultAsString() {
         return this.result;
@@ -85,27 +111,11 @@ class DeepBlueResult {
     resultAsCount() {
         return this.result["count"];
     }
+    data() {
+        return this._data;
+    }
+    getDataName() {
+        return this._data.getDataName();
+    }
 }
 exports.DeepBlueResult = DeepBlueResult;
-class StackValue {
-    constructor(stack, value) {
-        this.stack = stack;
-        this.value = value;
-    }
-    getDeepBlueOperation() {
-        return this.value;
-    }
-    getDeepBlueParametersOperation() {
-        return this.value;
-    }
-    getDeepBlueMultiParametersOperation() {
-        return this.value;
-    }
-    getDeepBlueRequest() {
-        return this.value;
-    }
-    getDeepBlueResult() {
-        return this.value;
-    }
-}
-exports.StackValue = StackValue;

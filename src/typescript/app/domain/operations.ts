@@ -3,31 +3,44 @@ import { ICloneable } from 'app/domain/interfaces'
 import { IKey } from 'app/domain/interfaces';
 import { IdName } from 'app/domain/deepblue';
 
-export class DeepBlueOperation implements IKey {
-    constructor(public data: Name, public query_id: string, public command: string, public cached: boolean = false) { }
 
-    clone(): DeepBlueOperation {
-        return new DeepBlueOperation(this.data, this.query_id, this.command, this.cached);
+export interface DeepBlueOperation extends IKey {
+    queryId(): string;
+
+    data(): DeepBlueOperation | Name;
+
+    getDataName() : string;
+}
+
+export class DeepBlueSelectData implements DeepBlueOperation {
+    constructor(private _data: Name, public query_id: string, public command: string) { }
+
+    clone(): DeepBlueSelectData {
+        return new DeepBlueSelectData(this._data, this.query_id, this.command);
     }
 
-    cacheIt(query_id: string): DeepBlueOperation {
-        return new DeepBlueOperation(this.data, query_id, this.command, true);
+    queryId(): string {
+        return this.query_id;
+    }
+
+    data(): DeepBlueOperation | Name {
+        return this._data;
     }
 
     key(): string {
         return this.query_id;
     }
+
+    getDataName() : string {
+        return this._data.name;
+    }
 }
 
 export class DeepBlueParametersOperation implements IKey {
-    constructor(public operation: DeepBlueOperation, public parameters: string[], public command: string, public cached: boolean = false) { }
+    constructor(public operation: DeepBlueOperation, public parameters: string[], public command: string) { }
 
     clone(): DeepBlueParametersOperation {
-        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command, this.cached);
-    }
-
-    cacheIt(query_id: string): DeepBlueParametersOperation {
-        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command, true);
+        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command);
     }
 
     key(): string {
@@ -35,15 +48,35 @@ export class DeepBlueParametersOperation implements IKey {
     }
 }
 
-export class DeepBlueMultiParametersOperation implements IKey {
-    constructor(public op_one: DeepBlueOperation, public op_two: DeepBlueOperation, public parameters: string[], public command: string, public cached: boolean = false) { }
+export class DeepBlueIntersection implements DeepBlueOperation {
+    constructor(private _data: DeepBlueOperation, public filter: DeepBlueOperation, public query_id: string) { }
 
-    clone(): DeepBlueMultiParametersOperation {
-        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command, this.cached);
+    clone(): DeepBlueIntersection {
+        return new DeepBlueIntersection(this._data, this.filter, this.query_id);
     }
 
-    cacheIt(query_id: string): DeepBlueMultiParametersOperation {
-        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command, true);
+    queryId(): string {
+        return this.query_id;
+    }
+
+    data(): DeepBlueOperation | Name {
+        return this._data;
+    }
+
+    key(): string {
+        return this._data.queryId() + '_' + this.filter.queryId();
+    }
+
+    getDataName() : string {
+        return this._data.getDataName();
+    }
+}
+
+export class DeepBlueMultiParametersOperation implements IKey {
+    constructor(public op_one: DeepBlueOperation, public op_two: DeepBlueOperation, public parameters: string[], public command: string) { }
+
+    clone(): DeepBlueMultiParametersOperation {
+        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command);
     }
 
     key(): string {
@@ -52,22 +85,31 @@ export class DeepBlueMultiParametersOperation implements IKey {
 }
 
 export class DeepBlueRequest implements IKey {
-    constructor(public data: Name, public request_id: string, public command: string, public operation: DeepBlueOperation, ) { }
+    constructor(private _data: DeepBlueOperation, public request_id: string, public command: string, public operation: DeepBlueOperation, ) { }
 
     clone(): DeepBlueRequest {
-        return new DeepBlueRequest(this.data, this.request_id, this.command, this.operation)
+        return new DeepBlueRequest(this._data, this.request_id, this.command, this.operation)
     }
 
     key(): string {
         return this.request_id;
     }
+
+    data(): DeepBlueOperation {
+        return this._data;
+    }
+
+    getDataName() : string {
+        return this._data.getDataName();
+    }
+
 }
 
 export class DeepBlueResult implements ICloneable {
-    constructor(public data: Name, public result: Object, public request: DeepBlueRequest) { }
+    constructor(private _data: DeepBlueRequest, public result: Object, public request: DeepBlueRequest) { }
 
     clone(): DeepBlueResult {
-        return new DeepBlueResult(this.data, this.result, this.request);
+        return new DeepBlueResult(this._data, this.result, this.request);
     }
 
     resultAsString(): string {
@@ -77,30 +119,12 @@ export class DeepBlueResult implements ICloneable {
     resultAsCount(): number {
         return <number>this.result["count"];
     }
-}
 
-
-export class StackValue {
-    constructor(public stack: number,
-        public value: DeepBlueOperation | DeepBlueParametersOperation | DeepBlueMultiParametersOperation | DeepBlueRequest | DeepBlueResult) { }
-
-    getDeepBlueOperation(): DeepBlueOperation {
-        return <DeepBlueOperation>this.value;
+    data(): DeepBlueRequest {
+        return this._data;
     }
 
-    getDeepBlueParametersOperation(): DeepBlueParametersOperation {
-        return <DeepBlueParametersOperation>this.value;
-    }
-
-    getDeepBlueMultiParametersOperation(): DeepBlueMultiParametersOperation {
-        return <DeepBlueMultiParametersOperation>this.value;
-    }
-
-    getDeepBlueRequest(): DeepBlueRequest {
-        return <DeepBlueRequest>this.value;
-    }
-
-    getDeepBlueResult(): DeepBlueResult {
-        return <DeepBlueResult>this.value;
+    getDataName() : string {
+        return this._data.getDataName();
     }
 }

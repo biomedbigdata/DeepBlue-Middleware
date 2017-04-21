@@ -11,7 +11,7 @@ export class RequestManager {
 
   startRequest() : string {
     let request_id = this.request_count++;
-    this.requests[request_id.toLocaleString()] = "received";
+    this.requests[request_id.toLocaleString()] = "new";
     return request_id.toLocaleString();
   }
 
@@ -19,7 +19,7 @@ export class RequestManager {
     return this.requests[request_id];
   }
 
-  storeRequest(request_id: string, data: DeepBlueResult[] | string) {
+  storeRequest(request_id: string, data: DeepBlueResult[]) {
     this.requests[request_id] = data;
   }
 
