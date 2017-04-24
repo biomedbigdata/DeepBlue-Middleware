@@ -35,13 +35,14 @@ class ComposedCommandsRoutes {
                 let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(i.toLocaleString()), query_id, "DIVE data"));
                 let experiments_name = experiments.map((v) => new deepblue_1.Name(v["name"]));
                 var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name).subscribe((results) => {
-                    //ComposedCommandsRoutes.requestManager.storeRequest(request_id, result);
                     let rr = [];
                     for (let i = 0; i < results.length; i++) {
                         let result = results[i];
-                        let pos = result.getDataName();
-                        console.log(pos);
+                        let resultObj = new operations_1.DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(), result.getFilterName(), result.getFilterQuery(), result.resultAsCount());
+                        rr.push(resultObj);
+                        console.log(rr);
                     }
+                    ComposedCommandsRoutes.requestManager.storeRequest(request_id, rr);
                 });
             });
         });

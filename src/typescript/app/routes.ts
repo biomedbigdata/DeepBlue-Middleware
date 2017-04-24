@@ -1,6 +1,12 @@
 import { RequestManager } from './service/requests_manager';
 import { Name } from './domain/deepblue';
-import { DeepBlueOperation, DeepBlueRequest, DeepBlueResult, DeepBlueSelectData } from './domain/operations';
+import {
+  DeepBlueMiddlewareOverlapResult,
+  DeepBlueOperation,
+  DeepBlueRequest,
+  DeepBlueResult,
+  DeepBlueSelectData
+} from './domain/operations';
 import { Router } from 'express';
 
 import { DeepBlueService } from './service/deepblue';
@@ -57,14 +63,18 @@ export class ComposedCommandsRoutes {
 
         var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name).subscribe((results: DeepBlueResult[]) => {
 
-          //ComposedCommandsRoutes.requestManager.storeRequest(request_id, result);
-
           let rr = [];
           for (let i = 0; i < results.length; i++) {
-            let result : DeepBlueResult = results[i];
-            let pos = result.getDataName();
-            console.log(pos);
+            let result: DeepBlueResult = results[i];
+
+            let resultObj = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(),
+              result.getFilterName(), result.getFilterQuery(),
+              result.resultAsCount());
+            rr.push(resultObj);
+            console.log(rr);
           }
+
+          ComposedCommandsRoutes.requestManager.storeRequest(request_id, rr);
         });
 
       });

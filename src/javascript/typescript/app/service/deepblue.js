@@ -167,7 +167,7 @@ class DeepBlueService {
             return this.execute("get_request_data", params, progress_element).map((data) => {
                 if (data[0] === "okay") {
                     progress_element.increment();
-                    let op_result = new operations_1.DeepBlueResult(op_request, data, op_request);
+                    let op_result = new operations_1.DeepBlueResult(op_request, data);
                     this.resultCache.put(op_request, op_result);
                     timer.unsubscribe();
                     pollSubject.next(op_result);

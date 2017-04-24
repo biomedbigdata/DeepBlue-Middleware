@@ -9,7 +9,13 @@ export interface DeepBlueOperation extends IKey {
 
     data(): DeepBlueOperation | Name;
 
-    getDataName() : string;
+    getDataName(): string;
+
+    getDataQuery(): string;
+
+    getFilterName(): string;
+
+    getFilterQuery(): string;
 }
 
 export class DeepBlueSelectData implements DeepBlueOperation {
@@ -31,28 +37,28 @@ export class DeepBlueSelectData implements DeepBlueOperation {
         return this.query_id;
     }
 
-    getDataName() : string {
+    getDataName(): string {
         return this._data.name;
     }
-}
 
-export class DeepBlueParametersOperation implements IKey {
-    constructor(public operation: DeepBlueOperation, public parameters: string[], public command: string) { }
-
-    clone(): DeepBlueParametersOperation {
-        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command);
+    getDataQuery(): string {
+        return this.query_id;
     }
 
-    key(): string {
-        return this.operation.key() + this.parameters.join();
+    getFilterName(): string {
+        return "";
+    }
+
+    getFilterQuery(): string {
+        return "";
     }
 }
 
 export class DeepBlueIntersection implements DeepBlueOperation {
-    constructor(private _data: DeepBlueOperation, public filter: DeepBlueOperation, public query_id: string) { }
+    constructor(private _data: DeepBlueOperation, public _filter: DeepBlueOperation, public query_id: string) { }
 
     clone(): DeepBlueIntersection {
-        return new DeepBlueIntersection(this._data, this.filter, this.query_id);
+        return new DeepBlueIntersection(this._data, this._filter, this.query_id);
     }
 
     queryId(): string {
@@ -64,23 +70,23 @@ export class DeepBlueIntersection implements DeepBlueOperation {
     }
 
     key(): string {
-        return this._data.queryId() + '_' + this.filter.queryId();
+        return this._data.queryId() + '_' + this._filter.queryId();
     }
 
-    getDataName() : string {
+    getDataName(): string {
         return this._data.getDataName();
     }
-}
 
-export class DeepBlueMultiParametersOperation implements IKey {
-    constructor(public op_one: DeepBlueOperation, public op_two: DeepBlueOperation, public parameters: string[], public command: string) { }
-
-    clone(): DeepBlueMultiParametersOperation {
-        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command);
+    getDataQuery(): string {
+        return this._data.getDataQuery();
     }
 
-    key(): string {
-        return this.op_one.key() + this.op_two.key() + this.parameters.join();
+    getFilterName(): string {
+        return this._filter.getDataName();
+    }
+
+    getFilterQuery(): string {
+        return this._filter.getDataQuery();
     }
 }
 
@@ -99,17 +105,28 @@ export class DeepBlueRequest implements IKey {
         return this._data;
     }
 
-    getDataName() : string {
+    getDataName(): string {
         return this._data.getDataName();
     }
 
+    getDataQuery(): string {
+        return this._data.getDataQuery();
+    }
+
+    getFilterName(): string {
+        return this._data.getFilterName();
+    }
+
+    getFilterQuery(): string {
+        return this._data.getFilterQuery();
+    }
 }
 
 export class DeepBlueResult implements ICloneable {
-    constructor(private _data: DeepBlueRequest, public result: Object, public request: DeepBlueRequest) { }
+    constructor(private _data: DeepBlueRequest, public result: Object) { }
 
     clone(): DeepBlueResult {
-        return new DeepBlueResult(this._data, this.result, this.request);
+        return new DeepBlueResult(this._data, this.result);
     }
 
     resultAsString(): string {
@@ -117,14 +134,54 @@ export class DeepBlueResult implements ICloneable {
     }
 
     resultAsCount(): number {
-        return <number>this.result["count"];
+        return <number>this.result[1]["count"];
     }
 
     data(): DeepBlueRequest {
         return this._data;
     }
 
-    getDataName() : string {
+    getDataName(): string {
         return this._data.getDataName();
+    }
+
+    getDataQuery(): string {
+        return this._data.getDataQuery();
+    }
+
+
+    getFilterName(): string {
+        return this._data.getFilterName();
+    }
+
+    getFilterQuery(): string {
+        return this._data.getFilterQuery();
+    }
+}
+
+export class DeepBlueMiddlewareOverlapResult {
+    constructor(public data_name: string, public data_query: string,
+        public filter_name: string, public filter_query: string,
+        public count: number) {
+    }
+
+    getDataName() : string {
+        return this.data_name;
+    }
+
+    getDataQuery() : string {
+        return this.data_query;
+    }
+
+    getFilterName() : string {
+        return this.filter_name;
+    }
+
+    getFilterQuery(): string {
+        return this.filter_query;
+    }
+
+    getCount() : number {
+        return this.count;
     }
 }

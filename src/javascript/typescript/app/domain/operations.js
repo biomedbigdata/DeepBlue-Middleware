@@ -21,30 +21,25 @@ class DeepBlueSelectData {
     getDataName() {
         return this._data.name;
     }
+    getDataQuery() {
+        return this.query_id;
+    }
+    getFilterName() {
+        return "";
+    }
+    getFilterQuery() {
+        return "";
+    }
 }
 exports.DeepBlueSelectData = DeepBlueSelectData;
-class DeepBlueParametersOperation {
-    constructor(operation, parameters, command) {
-        this.operation = operation;
-        this.parameters = parameters;
-        this.command = command;
-    }
-    clone() {
-        return new DeepBlueParametersOperation(this.operation, this.parameters, this.command);
-    }
-    key() {
-        return this.operation.key() + this.parameters.join();
-    }
-}
-exports.DeepBlueParametersOperation = DeepBlueParametersOperation;
 class DeepBlueIntersection {
-    constructor(_data, filter, query_id) {
+    constructor(_data, _filter, query_id) {
         this._data = _data;
-        this.filter = filter;
+        this._filter = _filter;
         this.query_id = query_id;
     }
     clone() {
-        return new DeepBlueIntersection(this._data, this.filter, this.query_id);
+        return new DeepBlueIntersection(this._data, this._filter, this.query_id);
     }
     queryId() {
         return this.query_id;
@@ -53,28 +48,22 @@ class DeepBlueIntersection {
         return this._data;
     }
     key() {
-        return this._data.queryId() + '_' + this.filter.queryId();
+        return this._data.queryId() + '_' + this._filter.queryId();
     }
     getDataName() {
         return this._data.getDataName();
     }
+    getDataQuery() {
+        return this._data.getDataQuery();
+    }
+    getFilterName() {
+        return this._filter.getDataName();
+    }
+    getFilterQuery() {
+        return this._filter.getDataQuery();
+    }
 }
 exports.DeepBlueIntersection = DeepBlueIntersection;
-class DeepBlueMultiParametersOperation {
-    constructor(op_one, op_two, parameters, command) {
-        this.op_one = op_one;
-        this.op_two = op_two;
-        this.parameters = parameters;
-        this.command = command;
-    }
-    clone() {
-        return new DeepBlueMultiParametersOperation(this.op_one, this.op_two, this.parameters, this.command);
-    }
-    key() {
-        return this.op_one.key() + this.op_two.key() + this.parameters.join();
-    }
-}
-exports.DeepBlueMultiParametersOperation = DeepBlueMultiParametersOperation;
 class DeepBlueRequest {
     constructor(_data, request_id, command, operation) {
         this._data = _data;
@@ -94,22 +83,30 @@ class DeepBlueRequest {
     getDataName() {
         return this._data.getDataName();
     }
+    getDataQuery() {
+        return this._data.getDataQuery();
+    }
+    getFilterName() {
+        return this._data.getFilterName();
+    }
+    getFilterQuery() {
+        return this._data.getFilterQuery();
+    }
 }
 exports.DeepBlueRequest = DeepBlueRequest;
 class DeepBlueResult {
-    constructor(_data, result, request) {
+    constructor(_data, result) {
         this._data = _data;
         this.result = result;
-        this.request = request;
     }
     clone() {
-        return new DeepBlueResult(this._data, this.result, this.request);
+        return new DeepBlueResult(this._data, this.result);
     }
     resultAsString() {
         return this.result;
     }
     resultAsCount() {
-        return this.result["count"];
+        return this.result[1]["count"];
     }
     data() {
         return this._data;
@@ -117,5 +114,39 @@ class DeepBlueResult {
     getDataName() {
         return this._data.getDataName();
     }
+    getDataQuery() {
+        return this._data.getDataQuery();
+    }
+    getFilterName() {
+        return this._data.getFilterName();
+    }
+    getFilterQuery() {
+        return this._data.getFilterQuery();
+    }
 }
 exports.DeepBlueResult = DeepBlueResult;
+class DeepBlueMiddlewareOverlapResult {
+    constructor(data_name, data_query, filter_name, filter_query, count) {
+        this.data_name = data_name;
+        this.data_query = data_query;
+        this.filter_name = filter_name;
+        this.filter_query = filter_query;
+        this.count = count;
+    }
+    getDataName() {
+        return this.data_name;
+    }
+    getDataQuery() {
+        return this.data_query;
+    }
+    getFilterName() {
+        return this.filter_name;
+    }
+    getFilterQuery() {
+        return this.filter_query;
+    }
+    getCount() {
+        return this.count;
+    }
+}
+exports.DeepBlueMiddlewareOverlapResult = DeepBlueMiddlewareOverlapResult;
