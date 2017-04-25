@@ -70,7 +70,7 @@ export class DeepBlueIntersection implements DeepBlueOperation {
     }
 
     key(): string {
-        return this._data.queryId() + '_' + this._filter.queryId();
+        return "intersect_" + this._data.queryId() + '_' + this._filter.queryId();
     }
 
     getDataName(): string {
@@ -91,10 +91,10 @@ export class DeepBlueIntersection implements DeepBlueOperation {
 }
 
 export class DeepBlueRequest implements IKey {
-    constructor(private _data: DeepBlueOperation, public request_id: string, public command: string, public operation: DeepBlueOperation, ) { }
+    constructor(private _data: DeepBlueOperation, public request_id: string, public command: string) { }
 
     clone(): DeepBlueRequest {
-        return new DeepBlueRequest(this._data, this.request_id, this.command, this.operation)
+        return new DeepBlueRequest(this._data, this.request_id, this.command)
     }
 
     key(): string {
@@ -124,8 +124,6 @@ export class DeepBlueRequest implements IKey {
 
 export class DeepBlueResult implements ICloneable {
     constructor(private _data: DeepBlueRequest, public result: Object) {
-        console.log(_data);
-        console.log(result);
     }
 
     clone(): DeepBlueResult {

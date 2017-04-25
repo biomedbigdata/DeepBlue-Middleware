@@ -155,7 +155,7 @@ export class DeepBlueService {
     return this.execute("select_experiments", params, progress_element).map((response: [string, any]) => {
       return new DeepBlueSelectData(experiment, response[1], "select_experiment");
     }).do((operation) => {
-      this.idNamesQueryCache.put(experiment, operation)
+      this.idNamesQueryCache.put(experiment, operation);
     })
       .catch(this.handleError);
   }
@@ -163,12 +163,12 @@ export class DeepBlueService {
   intersection(query_data_id: DeepBlueOperation, query_filter_id: DeepBlueOperation,
     progress_element: ProgressElement): Observable<DeepBlueIntersection> {
 
-    let cache_key = [query_data_id, query_data_id];
+    let cache_key = [query_data_id, query_filter_id];
 
     if (this.intersectsQueryCache.get(cache_key)) {
       progress_element.increment();
-      let cached_operation = this.intersectsQueryCache.get(cache_key);
-      return Observable.of(cached_operation);
+      let cached_intersection = this.intersectsQueryCache.get(cache_key);
+      return Observable.of(cached_intersection);
     }
 
     let params = {};
@@ -193,7 +193,7 @@ export class DeepBlueService {
       params["query_id"] = op_exp.queryId();
 
       let request: Observable<DeepBlueResult> = this.execute("count_regions", params, progress_element).map((data: [string, any]) => {
-        let request = new DeepBlueRequest(op_exp, data[1], "count_regions", op_exp);
+        let request = new DeepBlueRequest(op_exp, data[1], "count_regions");
         this.requestCache.put(op_exp, request);
         return request;
       })

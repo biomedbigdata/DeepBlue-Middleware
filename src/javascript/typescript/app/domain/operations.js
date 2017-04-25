@@ -48,7 +48,7 @@ class DeepBlueIntersection {
         return this._data;
     }
     key() {
-        return this._data.queryId() + '_' + this._filter.queryId();
+        return "intersect_" + this._data.queryId() + '_' + this._filter.queryId();
     }
     getDataName() {
         return this._data.getDataName();
@@ -65,14 +65,13 @@ class DeepBlueIntersection {
 }
 exports.DeepBlueIntersection = DeepBlueIntersection;
 class DeepBlueRequest {
-    constructor(_data, request_id, command, operation) {
+    constructor(_data, request_id, command) {
         this._data = _data;
         this.request_id = request_id;
         this.command = command;
-        this.operation = operation;
     }
     clone() {
-        return new DeepBlueRequest(this._data, this.request_id, this.command, this.operation);
+        return new DeepBlueRequest(this._data, this.request_id, this.command);
     }
     key() {
         return this.request_id;
@@ -98,8 +97,6 @@ class DeepBlueResult {
     constructor(_data, result) {
         this._data = _data;
         this.result = result;
-        console.log(_data);
-        console.log(result);
     }
     clone() {
         return new DeepBlueResult(this._data, this.result);

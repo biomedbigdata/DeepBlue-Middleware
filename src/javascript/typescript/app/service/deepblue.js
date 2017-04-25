@@ -132,11 +132,11 @@ class DeepBlueService {
             .catch(this.handleError);
     }
     intersection(query_data_id, query_filter_id, progress_element) {
-        let cache_key = [query_data_id, query_data_id];
+        let cache_key = [query_data_id, query_filter_id];
         if (this.intersectsQueryCache.get(cache_key)) {
             progress_element.increment();
-            let cached_operation = this.intersectsQueryCache.get(cache_key);
-            return Observable_1.Observable.of(cached_operation);
+            let cached_intersection = this.intersectsQueryCache.get(cache_key);
+            return Observable_1.Observable.of(cached_intersection);
         }
         let params = {};
         params["query_data_id"] = query_data_id.queryId();
@@ -158,7 +158,7 @@ class DeepBlueService {
             let params = new Object();
             params["query_id"] = op_exp.queryId();
             let request = this.execute("count_regions", params, progress_element).map((data) => {
-                let request = new operations_1.DeepBlueRequest(op_exp, data[1], "count_regions", op_exp);
+                let request = new operations_1.DeepBlueRequest(op_exp, data[1], "count_regions");
                 this.requestCache.put(op_exp, request);
                 return request;
             })
