@@ -1,3 +1,4 @@
+import { Utils } from './utils';
 import { Observable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
 import { Subject } from "rxjs/Subject";
@@ -64,22 +65,36 @@ class Command {
     return xmlrpc_request_parameters;
   }
 
-
   makeRequest(parameters: Object): Observable<string[]> {
     let xmlrpc_parameters = this.build_xmlrpc_request(parameters);
     var client = xmlrpc.createClient(xmlrpc_host);
     var methodCall = Observable.bindCallback(client.methodCall);
 
     let subject: Subject<string[]> = new Subject<string[]>();
-    client.methodCall(this.name, xmlrpc_parameters, (error: Object, value: any) => {
-      subject.next(value);
-      subject.complete();
-    });
+
+    let isProcessing = false;
+
+    let timer = Observable.timer(0, Utils.rnd(0, 250)).do(() => {
+      if (isProcessing) {
+        return;
+      }
+      isProcessing = true;
+      client.methodCall(this.name, xmlrpc_parameters, (err: Object, value: any) => {
+        if (err) {
+          console.error(this.name, xmlrpc_parameters, err);
+          isProcessing = false;
+          return;
+        }
+        subject.next(value);
+        subject.complete();
+        isProcessing = false;
+        timer.unsubscribe();
+      });
+    }).subscribe();
 
     return subject.asObservable();
   }
 }
-
 
 export class DeepBlueService {
 
@@ -114,11 +129,7 @@ export class DeepBlueService {
   execute(command_name: string, parameters: Object,
     progress_element: ProgressElement): Observable<[string | any]> {
 
-    console.log(command_name);
-
     let command: Command = this._commands[command_name];
-
-
     return command.makeRequest(parameters).map((body: string[]) => {
       let status: string = body[0];
       let response: any = body[1] || "";
@@ -140,6 +151,7 @@ export class DeepBlueService {
 
     let params: Object = new Object();
     params["experiment_name"] = experiment.name;
+
     return this.execute("select_experiments", params, progress_element).map((response: [string, any]) => {
       return new DeepBlueSelectData(experiment, response[1], "select_experiment");
     }).do((operation) => {
@@ -204,20 +216,35 @@ export class DeepBlueService {
     params["request_id"] = op_request.request_id;
 
     let pollSubject = new Subject<DeepBlueResult>();
+    let client = xmlrpc.createClient(xmlrpc_host);
 
-    let timer = Observable.timer(0, 250).concatMap(() => {
-      return this.execute("get_request_data", params, progress_element).map((data: [string, any]) => {
-        if (data[0] === "okay") {
+    let isProcessing = false;
+
+    let timer = Observable.timer(0, Utils.rnd(0, 500)).do(() => {
+      if (isProcessing) {
+        return;
+      }
+      isProcessing = true;
+      client.methodCall("get_request_data", [op_request.request_id, 'anonymous_key'], (err: Object, value: any) => {
+        if (err) {
+          console.error(err);
+          isProcessing = false;
+          return;
+        }
+
+        if (value[0] === "okay") {
           progress_element.increment();
-          let op_result = new DeepBlueResult(op_request, data);
+          let op_result = new DeepBlueResult(op_request, value[1]);
           this.resultCache.put(op_request, op_result)
           timer.unsubscribe();
           pollSubject.next(op_result);
           pollSubject.complete();
+        } else {
+          isProcessing = false;
         }
-      })
-    }).subscribe();
 
+      });
+    }).subscribe();
 
     return pollSubject.asObservable();
   }

@@ -27,6 +27,7 @@ class ComposedCommands {
         this.deepBlueService = deepBlueService;
     }
     selectMultipleExperiments(experiments, progress_element) {
+        let total = 0;
         console.log("selectMultipleExperiments");
         let observableBatch = [];
         experiments.forEach((experiment) => {
@@ -65,6 +66,7 @@ class ComposedCommands {
         let total = data_query_id.length * experiments_name.length;
         progress_element.reset(total);
         let response = new rxjs_1.Subject();
+        console.log(experiments_name);
         this.selectMultipleExperiments(experiments_name, progress_element).subscribe((selected_experiments) => {
             console.log("selectMultipleExperiments 2");
             this.intersectWithSelected(data_query_id, selected_experiments, progress_element).subscribe((overlap_ids) => {
@@ -75,6 +77,7 @@ class ComposedCommands {
                     setTimeout(() => {
                         response.next(datum);
                         response.complete();
+                        console.log("complete");
                     });
                 });
             });

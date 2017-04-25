@@ -9,11 +9,14 @@ import {
 } from './domain/operations';
 import { Router } from 'express';
 
+import { Utils } from './service/utils';
+
 import { DeepBlueService } from './service/deepblue';
 
 import { Manager } from './service/composed_commands';
 import { ComposedCommands } from './service/composed_commands';
 import { Experiments } from './service/experiments';
+
 
 const composed_commands: Router = Router();
 
@@ -34,8 +37,6 @@ export class ComposedCommandsRoutes {
     } else {
       res.send(["okay", request_data]);
     }
-
-
   }
 
   private static countOverlaps(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -51,6 +52,7 @@ export class ComposedCommandsRoutes {
       if (!(Array.isArray(queries_id))) {
         queries_id = [queries_id];
       }
+
 
       if (!(Array.isArray(experiments_id))) {
         experiments_id = [experiments_id];

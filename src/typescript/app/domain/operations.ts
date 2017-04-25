@@ -123,7 +123,10 @@ export class DeepBlueRequest implements IKey {
 }
 
 export class DeepBlueResult implements ICloneable {
-    constructor(private _data: DeepBlueRequest, public result: Object) { }
+    constructor(private _data: DeepBlueRequest, public result: Object) {
+        console.log(_data);
+        console.log(result);
+    }
 
     clone(): DeepBlueResult {
         return new DeepBlueResult(this._data, this.result);
@@ -134,7 +137,7 @@ export class DeepBlueResult implements ICloneable {
     }
 
     resultAsCount(): number {
-        return <number>this.result[1]["count"];
+        return <number>this.result["count"];
     }
 
     data(): DeepBlueRequest {
@@ -165,15 +168,15 @@ export class DeepBlueMiddlewareOverlapResult {
         public count: number) {
     }
 
-    getDataName() : string {
+    getDataName(): string {
         return this.data_name;
     }
 
-    getDataQuery() : string {
+    getDataQuery(): string {
         return this.data_query;
     }
 
-    getFilterName() : string {
+    getFilterName(): string {
         return this.filter_name;
     }
 
@@ -181,7 +184,7 @@ export class DeepBlueMiddlewareOverlapResult {
         return this.filter_query;
     }
 
-    getCount() : number {
+    getCount(): number {
         return this.count;
     }
 }

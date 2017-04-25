@@ -98,6 +98,8 @@ class DeepBlueResult {
     constructor(_data, result) {
         this._data = _data;
         this.result = result;
+        console.log(_data);
+        console.log(result);
     }
     clone() {
         return new DeepBlueResult(this._data, this.result);
@@ -106,7 +108,7 @@ class DeepBlueResult {
         return this.result;
     }
     resultAsCount() {
-        return this.result[1]["count"];
+        return this.result["count"];
     }
     data() {
         return this._data;

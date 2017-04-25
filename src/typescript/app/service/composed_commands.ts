@@ -36,6 +36,7 @@ export class ComposedCommands {
 
     selectMultipleExperiments(experiments: Name[], progress_element: ProgressElement): Observable<DeepBlueOperation[]> {
 
+        let total = 0;
         console.log("selectMultipleExperiments");
         let observableBatch: Observable<DeepBlueOperation>[] = [];
 
@@ -91,6 +92,8 @@ export class ComposedCommands {
 
         let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
 
+        console.log(experiments_name);
+
         this.selectMultipleExperiments(experiments_name, progress_element).subscribe((selected_experiments: DeepBlueOperation[]) => {
             console.log("selectMultipleExperiments 2");
             this.intersectWithSelected(data_query_id, selected_experiments, progress_element, ).subscribe((overlap_ids: DeepBlueOperation[]) => {
@@ -102,6 +105,7 @@ export class ComposedCommands {
                     setTimeout(() => {
                         response.next(datum);
                         response.complete();
+                        console.log("complete");
                     });
                 });
             });
