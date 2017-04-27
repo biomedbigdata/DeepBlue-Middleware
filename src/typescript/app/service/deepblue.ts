@@ -133,6 +133,9 @@ export class DeepBlueService {
     return command.makeRequest(parameters).map((body: string[]) => {
       let status: string = body[0];
       let response: any = body[1] || "";
+      if (status === "error") {
+        console.error(command_name, parameters, response);
+      }
       progress_element.increment();
       return [status, response];
     });

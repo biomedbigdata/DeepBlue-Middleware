@@ -109,6 +109,9 @@ class DeepBlueService {
         return command.makeRequest(parameters).map((body) => {
             let status = body[0];
             let response = body[1] || "";
+            if (status === "error") {
+                console.error(command_name, parameters, response);
+            }
             progress_element.increment();
             return [status, response];
         });
