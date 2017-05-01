@@ -1,26 +1,20 @@
+import { RequestStatus } from '../domain/status';
 import { DeepBlueResult } from '../domain/operations';
 
-
-
 export class RequestManager {
-
-  requests = new Map<number, DeepBlueResult | string>();
+  requests = new Map<number, RequestStatus>();
 
   constructor(private request_count: number = 0) {
   }
 
-  startRequest() : string {
+  startRequest() : RequestStatus {
     let request_id = this.request_count++;
-    this.requests[request_id.toLocaleString()] = "new";
-    return request_id.toLocaleString();
+    let request_status = new RequestStatus(request_id);
+    this.requests[request_id.toLocaleString()] = request_status;
+    return request_status;
   }
 
-  getRequest(request_id: string) : DeepBlueResult[] | string {
+  getRequest(request_id: string) : RequestStatus {
     return this.requests[request_id];
   }
-
-  storeRequest(request_id: string, data: DeepBlueResult[]) {
-    this.requests[request_id] = data;
-  }
-
 }

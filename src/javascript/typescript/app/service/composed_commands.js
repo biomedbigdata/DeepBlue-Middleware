@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Observable_1 = require("rxjs/Observable");
 const rxjs_1 = require("rxjs");
 const deepblue_1 = require("../service/deepblue");
-const progresselement_1 = require("../service/progresselement");
 class Manager {
     constructor() { }
     static getComposedCommands() {
@@ -26,31 +25,29 @@ class ComposedCommands {
     constructor(deepBlueService) {
         this.deepBlueService = deepBlueService;
     }
-    selectMultipleExperiments(experiments, progress_element) {
+    selectMultipleExperiments(experiments, status) {
         let total = 0;
-        console.log("selectMultipleExperiments");
         let observableBatch = [];
         experiments.forEach((experiment) => {
-            observableBatch.push(this.deepBlueService.selectExperiment(experiment, progress_element));
+            observableBatch.push(this.deepBlueService.selectExperiment(experiment, status));
         });
         return Observable_1.Observable.forkJoin(observableBatch);
     }
-    intersectWithSelected(current_operations, selected_data, progress_element) {
+    intersectWithSelected(current_operations, selected_data, status) {
         let observableBatch = [];
         current_operations.forEach((current_op) => {
             selected_data.forEach((data) => {
-                let o = this.deepBlueService.intersection(current_op, data, progress_element);
+                let o = this.deepBlueService.intersection(current_op, data, status);
                 observableBatch.push(o);
             });
         });
         return Observable_1.Observable.forkJoin(observableBatch);
     }
-    countRegionsBatch(query_ids, progress_element) {
-        console.log("countRegion");
+    countRegionsBatch(query_ids, status) {
         let observableBatch = [];
         query_ids.forEach((op_exp, key) => {
             let o = new Observable_1.Observable((observer) => {
-                this.deepBlueService.count_regions(op_exp, progress_element).subscribe((result) => {
+                this.deepBlueService.count_regions(op_exp, status).subscribe((result) => {
                     observer.next(result);
                     observer.complete();
                 });
@@ -59,25 +56,21 @@ class ComposedCommands {
         });
         return Observable_1.Observable.forkJoin(observableBatch);
     }
-    countOverlaps(data_query_id, experiments_name) {
-        console.log("countOverlaps");
+    countOverlaps(data_query_id, experiments_name, status) {
         var start = new Date().getTime();
-        let progress_element = new progresselement_1.ProgressElement();
-        let total = data_query_id.length * experiments_name.length;
-        progress_element.reset(total);
+        let total = data_query_id.length * experiments_name.length * 4;
+        status.reset(total);
         let response = new rxjs_1.Subject();
-        console.log(experiments_name);
-        this.selectMultipleExperiments(experiments_name, progress_element).subscribe((selected_experiments) => {
-            console.log("selectMultipleExperiments 2");
-            this.intersectWithSelected(data_query_id, selected_experiments, progress_element).subscribe((overlap_ids) => {
-                console.log("intersectWithSelected");
-                this.countRegionsBatch(overlap_ids, progress_element).subscribe((datum) => {
+        status.setStep("Selecting experiments regions");
+        this.selectMultipleExperiments(experiments_name, status).subscribe((selected_experiments) => {
+            status.setStep("Overlaping regions");
+            this.intersectWithSelected(data_query_id, selected_experiments, status).subscribe((overlap_ids) => {
+                status.setStep("Intersecting regions");
+                this.countRegionsBatch(overlap_ids, status).subscribe((datum) => {
                     var end = new Date().getTime();
-                    console.log("FINISHED", end - start);
                     setTimeout(() => {
                         response.next(datum);
                         response.complete();
-                        console.log("complete");
                     });
                 });
             });
@@ -93,7 +86,6 @@ class ComposedCommands {
         else {
             errMsg = error.message ? error.message : error.toString();
         }
-        console.log(errMsg);
         return Observable_1.Observable.throw(errMsg);
     }
 }

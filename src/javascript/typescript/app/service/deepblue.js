@@ -104,76 +104,76 @@ class DeepBlueService {
         });
         return subject.asObservable();
     }
-    execute(command_name, parameters, progress_element) {
+    execute(command_name, parameters, status) {
         let command = this._commands[command_name];
         return command.makeRequest(parameters).map((body) => {
-            let status = body[0];
+            let command_status = body[0];
             let response = body[1] || "";
-            if (status === "error") {
+            if (command_status === "error") {
                 console.error(command_name, parameters, response);
             }
-            progress_element.increment();
+            status.increment();
             return [status, response];
         });
     }
-    selectExperiment(experiment, progress_element) {
+    selectExperiment(experiment, status) {
         if (!experiment) {
             return Observable_1.Observable.empty();
         }
         if (this.idNamesQueryCache.get(experiment)) {
-            progress_element.increment();
+            status.increment();
             let cached_operation = this.idNamesQueryCache.get(experiment);
             return Observable_1.Observable.of(cached_operation);
         }
         let params = new Object();
         params["experiment_name"] = experiment.name;
-        return this.execute("select_experiments", params, progress_element).map((response) => {
+        return this.execute("select_experiments", params, status).map((response) => {
             return new operations_1.DeepBlueSelectData(experiment, response[1], "select_experiment");
         }).do((operation) => {
             this.idNamesQueryCache.put(experiment, operation);
         })
             .catch(this.handleError);
     }
-    intersection(query_data_id, query_filter_id, progress_element) {
+    intersection(query_data_id, query_filter_id, status) {
         let cache_key = [query_data_id, query_filter_id];
         if (this.intersectsQueryCache.get(cache_key)) {
-            progress_element.increment();
+            status.increment();
             let cached_intersection = this.intersectsQueryCache.get(cache_key);
             return Observable_1.Observable.of(cached_intersection);
         }
         let params = {};
         params["query_data_id"] = query_data_id.queryId();
         params["query_filter_id"] = query_filter_id.queryId();
-        return this.execute("intersection", params, progress_element)
+        return this.execute("intersection", params, status)
             .map((response) => {
             return new operations_1.DeepBlueIntersection(query_data_id, query_filter_id, response[1]);
         })
             .do((operation) => this.intersectsQueryCache.put(cache_key, operation))
             .catch(this.handleError);
     }
-    count_regions(op_exp, progress_element) {
+    count_regions(op_exp, status) {
         if (this.requestCache.get(op_exp)) {
-            progress_element.increment();
+            status.increment();
             let cached_result = this.requestCache.get(op_exp);
-            return this.getResult(cached_result, progress_element);
+            return this.getResult(cached_result, status);
         }
         else {
             let params = new Object();
             params["query_id"] = op_exp.queryId();
-            let request = this.execute("count_regions", params, progress_element).map((data) => {
+            let request = this.execute("count_regions", params, status).map((data) => {
                 let request = new operations_1.DeepBlueRequest(op_exp, data[1], "count_regions");
                 this.requestCache.put(op_exp, request);
                 return request;
             })
                 .flatMap((request_id) => {
-                return this.getResult(request_id, progress_element);
+                return this.getResult(request_id, status);
             });
             return request;
         }
     }
-    getResult(op_request, progress_element) {
+    getResult(op_request, status) {
         if (this.resultCache.get(op_request)) {
-            progress_element.increment();
+            status.increment();
             let cached_result = this.resultCache.get(op_request);
             return Observable_1.Observable.of(cached_result);
         }
@@ -194,7 +194,7 @@ class DeepBlueService {
                     return;
                 }
                 if (value[0] === "okay") {
-                    progress_element.increment();
+                    status.increment();
                     let op_result = new operations_1.DeepBlueResult(op_request, value[1]);
                     this.resultCache.put(op_request, op_result);
                     timer.unsubscribe();

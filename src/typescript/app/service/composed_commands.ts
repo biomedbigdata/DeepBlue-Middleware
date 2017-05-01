@@ -1,8 +1,8 @@
+import { RequestStatus } from '../domain/status';
 import { Observable } from 'rxjs/Observable'
 import { Subject } from "rxjs";
 
 import { DeepBlueService } from '../service/deepblue';
-import { ProgressElement } from '../service/progresselement';
 
 import { IdName, Name } from '../domain/deepblue';
 import { DeepBlueIntersection, DeepBlueOperation, DeepBlueResult } from '../domain/operations';
@@ -34,27 +34,26 @@ export class Manager {
 export class ComposedCommands {
     constructor(private deepBlueService: DeepBlueService) { }
 
-    selectMultipleExperiments(experiments: Name[], progress_element: ProgressElement): Observable<DeepBlueOperation[]> {
+    selectMultipleExperiments(experiments: Name[], status: RequestStatus): Observable<DeepBlueOperation[]> {
 
         let total = 0;
-        console.log("selectMultipleExperiments");
         let observableBatch: Observable<DeepBlueOperation>[] = [];
 
         experiments.forEach((experiment: Name) => {
-            observableBatch.push(this.deepBlueService.selectExperiment(experiment, progress_element));
+            observableBatch.push(this.deepBlueService.selectExperiment(experiment, status));
         });
 
         return Observable.forkJoin(observableBatch);
     }
 
     intersectWithSelected(current_operations: DeepBlueOperation[], selected_data: DeepBlueOperation[],
-        progress_element: ProgressElement): Observable<DeepBlueIntersection[]> {
+        status: RequestStatus): Observable<DeepBlueIntersection[]> {
 
         let observableBatch: Observable<DeepBlueIntersection>[] = [];
 
         current_operations.forEach((current_op) => {
             selected_data.forEach((data) => {
-                let o = this.deepBlueService.intersection(current_op, data, progress_element);
+                let o = this.deepBlueService.intersection(current_op, data, status);
                 observableBatch.push(o);
             });
         });
@@ -63,13 +62,12 @@ export class ComposedCommands {
     }
 
 
-    countRegionsBatch(query_ids: DeepBlueOperation[], progress_element: ProgressElement): Observable<DeepBlueResult[]> {
-        console.log("countRegion");
+    countRegionsBatch(query_ids: DeepBlueOperation[], status: RequestStatus): Observable<DeepBlueResult[]> {
         let observableBatch: Observable<DeepBlueResult>[] = [];
 
         query_ids.forEach((op_exp, key) => {
             let o: Observable<DeepBlueResult> = new Observable((observer) => {
-                this.deepBlueService.count_regions(op_exp, progress_element).subscribe((result) => {
+                this.deepBlueService.count_regions(op_exp, status).subscribe((result) => {
                     observer.next(result);
                     observer.complete();
                 })
@@ -82,30 +80,26 @@ export class ComposedCommands {
     }
 
 
-    countOverlaps(data_query_id: DeepBlueOperation[], experiments_name: Name[]): Observable<DeepBlueResult[]> {
-        console.log("countOverlaps");
-
+    countOverlaps(data_query_id: DeepBlueOperation[], experiments_name: Name[], status: RequestStatus): Observable<DeepBlueResult[]> {
         var start = new Date().getTime();
-        let progress_element: ProgressElement = new ProgressElement();
-        let total = data_query_id.length * experiments_name.length;
-        progress_element.reset(total);
+        let total = data_query_id.length * experiments_name.length * 4;
+        status.reset(total);
 
         let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
 
-        console.log(experiments_name);
+        status.setStep("Selecting experiments regions");
 
-        this.selectMultipleExperiments(experiments_name, progress_element).subscribe((selected_experiments: DeepBlueOperation[]) => {
-            console.log("selectMultipleExperiments 2");
-            this.intersectWithSelected(data_query_id, selected_experiments, progress_element, ).subscribe((overlap_ids: DeepBlueOperation[]) => {
-                console.log("intersectWithSelected");
+        this.selectMultipleExperiments(experiments_name, status).subscribe((selected_experiments: DeepBlueOperation[]) => {
+            status.setStep("Overlaping regions");
 
-                this.countRegionsBatch(overlap_ids, progress_element).subscribe((datum: DeepBlueResult[]) => {
+            this.intersectWithSelected(data_query_id, selected_experiments, status).subscribe((overlap_ids: DeepBlueOperation[]) => {
+                status.setStep("Intersecting regions");
+
+                this.countRegionsBatch(overlap_ids, status).subscribe((datum: DeepBlueResult[]) => {
                     var end = new Date().getTime();
-                    console.log("FINISHED", end - start);
                     setTimeout(() => {
                         response.next(datum);
                         response.complete();
-                        console.log("complete");
                     });
                 });
             });
@@ -122,7 +116,6 @@ export class ComposedCommands {
         } else {
             errMsg = error.message ? error.message : error.toString();
         }
-        console.log(errMsg);
         return Observable.throw(errMsg);
     }
 }

@@ -1,3 +1,4 @@
+import { RequestStatus } from './domain/status';
 import { RequestManager } from './service/requests_manager';
 import { Name } from './domain/deepblue';
 import {
@@ -30,12 +31,12 @@ export class ComposedCommandsRoutes {
   private static getRequest(req: express.Request, res: express.Response, next: express.NextFunction) {
     let request_id = req.query["request_id"];
 
-    let request_data = ComposedCommandsRoutes.requestManager.getRequest(request_id);
+    let request_data: RequestStatus = ComposedCommandsRoutes.requestManager.getRequest(request_id);
 
-    if (request_data === "new") {
-      res.send(["error", "still processing"]);
+    if (request_data.finished) {
+      res.send(["okay", request_data.getData()]);
     } else {
-      res.send(["okay", request_data]);
+      res.send(["error", request_data.getText()]);
     }
   }
 
@@ -45,14 +46,15 @@ export class ComposedCommandsRoutes {
       let queries_id = req.query["queries_id"];
       let experiments_id = req.query["experiments_id"];
 
-      let request_id = ComposedCommandsRoutes.requestManager.startRequest();
+      let status = ComposedCommandsRoutes.requestManager.startRequest();
 
-      res.send(["okay", request_id]);
+      console.log("@@@@@@@@@@@@@@@");
+      console.log(status.request_id);
+      res.send(["okay", status.request_id.toLocaleString()]);
 
       if (!(Array.isArray(queries_id))) {
         queries_id = [queries_id];
       }
-
 
       if (!(Array.isArray(experiments_id))) {
         experiments_id = [experiments_id];
@@ -63,20 +65,16 @@ export class ComposedCommandsRoutes {
           queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(i.toLocaleString()), query_id, "DIVE data"));
         let experiments_name: Name[] = experiments.map((v: Object) => new Name(v["name"]));
 
-        var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name).subscribe((results: DeepBlueResult[]) => {
-
+        var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, status).subscribe((results: DeepBlueResult[]) => {
           let rr = [];
           for (let i = 0; i < results.length; i++) {
             let result: DeepBlueResult = results[i];
-
             let resultObj = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(),
               result.getFilterName(), result.getFilterQuery(),
               result.resultAsCount());
             rr.push(resultObj);
-            console.log(rr);
           }
-
-          ComposedCommandsRoutes.requestManager.storeRequest(request_id, rr);
+          status.finish(rr);
         });
 
       });
