@@ -101,9 +101,13 @@ export class DeepBlueService {
   private _commands: Map<string, Command>;
 
   idNamesQueryCache = new DataCache<Name, DeepBlueOperation>();
+
+  /*
   intersectsQueryCache = new MultiKeyDataCache<DeepBlueOperation, DeepBlueIntersection>();
+
   requestCache = new DataCache<DeepBlueOperation, DeepBlueRequest>();
   resultCache = new DataCache<DeepBlueRequest, DeepBlueResult>()
+  */
 
   constructor() { }
 
@@ -164,6 +168,7 @@ export class DeepBlueService {
 ocessing
   intersection(query_data_id: DeepBlueOperation, query_filter_id: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueIntersection> {
 
+    /*
     let cache_key = [query_data_id, query_filter_id];
 
     if (this.intersectsQueryCache.get(cache_key)) {
@@ -171,6 +176,7 @@ ocessing
       let cached_intersection = this.intersectsQueryCache.get(cache_key);
       return Observable.of(cached_intersection);
     }
+    */
 
     let params = {};
     params["query_data_id"] = query_data_id.queryId();
@@ -179,23 +185,27 @@ ocessing
       .map((response: [string, any]) => {
         return new DeepBlueIntersection(query_data_id, query_filter_id, response[1])
       })
+      /*
       .do((operation: DeepBlueIntersection) => this.intersectsQueryCache.put(cache_key, operation))
+      */
       .catch(this.handleError);
   }
 
   count_regions(op_exp: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueResult> {
+    /*
     if (this.requestCache.get(op_exp)) {
       status.increment();
       let cached_result = this.requestCache.get(op_exp);
       return this.getResult(cached_result, status);
 
-    } else {
+    } else */
+     {
       let params = new Object();
       params["query_id"] = op_exp.queryId();
 
       let request: Observable<DeepBlueResult> = this.execute("count_regions", params, status).map((data: [string, any]) => {
         let request = new DeepBlueRequest(op_exp, data[1], "count_regions");
-        this.requestCache.put(op_exp, request);
+        //this.requestCache.put(op_exp, request);
         return request;
       })
         .flatMap((request_id) => {
@@ -207,11 +217,14 @@ ocessing
   }
 
   getResult(op_request: DeepBlueRequest, status: RequestStatus): Observable<DeepBlueResult> {
+
+    /*
     if (this.resultCache.get(op_request)) {
       status.increment();
       let cached_result = this.resultCache.get(op_request);
       return Observable.of(cached_result);
     }
+    */
 
     let params = new Object();
     params["request_id"] = op_request.request_id;
@@ -236,7 +249,7 @@ ocessing
         if (value[0] === "okay") {
           status.increment();
           let op_result = new DeepBlueResult(op_request, value[1]);
-          this.resultCache.put(op_request, op_result)
+          //this.resultCache.put(op_request, op_result);
           timer.unsubscribe();
           pollSubject.next(op_result);
           pollSubject.complete();

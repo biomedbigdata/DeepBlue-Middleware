@@ -36,7 +36,13 @@ export class ComposedCommandsRoutes {
     if (request_data.finished) {
       res.send(["okay", request_data.getData()]);
     } else {
-      res.send(["error", request_data.getText()]);
+      res.send(["error",
+        {
+          step: request_data.getStep(),
+          total: request_data.getTotal(),
+          processed: request_data.getProcessed()
+        }
+      ]);
     }
   }
 

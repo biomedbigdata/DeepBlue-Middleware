@@ -28,6 +28,12 @@ class RequestStatus {
     getStep() {
         return this.step;
     }
+    getProcessed() {
+        return this.total_loaded;
+    }
+    getTotal() {
+        return this.total_to_load;
+    }
     setData(data) {
         this.data = data;
     }

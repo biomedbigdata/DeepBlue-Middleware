@@ -42,6 +42,15 @@ export class RequestStatus {
     return this.step;
   }
 
+  getProcessed() : number {
+    return this.total_loaded;
+  }
+
+  getTotal() : number {
+    return this.total_to_load;
+  }
+
+
   setData(data: DeepBlueResult[]) {
     this.data = data;
   }
