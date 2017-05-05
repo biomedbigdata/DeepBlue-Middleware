@@ -7,7 +7,7 @@ class DeepBlueSelectData {
         this.command = command;
     }
     clone() {
-        return new DeepBlueSelectData(this._data, this.query_id, this.command);
+        return new DeepBlueSelectData(this._data.clone(), this.query_id, this.command);
     }
     queryId() {
         return this.query_id;
@@ -39,7 +39,7 @@ class DeepBlueIntersection {
         this.query_id = query_id;
     }
     clone() {
-        return new DeepBlueIntersection(this._data, this._filter, this.query_id);
+        return new DeepBlueIntersection(this._data.clone(), this._filter.clone(), this.query_id);
     }
     queryId() {
         return this.query_id;
@@ -71,7 +71,7 @@ class DeepBlueRequest {
         this.command = command;
     }
     clone() {
-        return new DeepBlueRequest(this._data, this.request_id, this.command);
+        return new DeepBlueRequest(this._data.clone(), this.request_id, this.command);
     }
     key() {
         return this.request_id;
@@ -99,7 +99,7 @@ class DeepBlueResult {
         this.result = result;
     }
     clone() {
-        return new DeepBlueResult(this._data, this.result);
+        return new DeepBlueResult(this._data.clone(), this.result);
     }
     resultAsString() {
         return this.result;

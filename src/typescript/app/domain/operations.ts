@@ -22,7 +22,11 @@ export class DeepBlueSelectData implements DeepBlueOperation {
     constructor(private _data: Name, public query_id: string, public command: string) { }
 
     clone(): DeepBlueSelectData {
-        return new DeepBlueSelectData(this._data, this.query_id, this.command);
+        return new DeepBlueSelectData(
+            this._data.clone(),
+            this.query_id,
+            this.command
+        );
     }
 
     queryId(): string {
@@ -58,7 +62,11 @@ export class DeepBlueIntersection implements DeepBlueOperation {
     constructor(private _data: DeepBlueOperation, public _filter: DeepBlueOperation, public query_id: string) { }
 
     clone(): DeepBlueIntersection {
-        return new DeepBlueIntersection(this._data, this._filter, this.query_id);
+        return new DeepBlueIntersection(
+            this._data.clone(),
+            this._filter.clone(),
+            this.query_id
+        );
     }
 
     queryId(): string {
@@ -94,7 +102,11 @@ export class DeepBlueRequest implements IKey {
     constructor(private _data: DeepBlueOperation, public request_id: string, public command: string) { }
 
     clone(): DeepBlueRequest {
-        return new DeepBlueRequest(this._data, this.request_id, this.command)
+        return new DeepBlueRequest(
+            this._data.clone(),
+            this.request_id,
+            this.command
+        );
     }
 
     key(): string {
@@ -127,7 +139,10 @@ export class DeepBlueResult implements ICloneable {
     }
 
     clone(): DeepBlueResult {
-        return new DeepBlueResult(this._data, this.result);
+        return new DeepBlueResult(
+            this._data.clone(),
+            this.result
+        );
     }
 
     resultAsString(): string {

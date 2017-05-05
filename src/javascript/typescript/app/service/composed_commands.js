@@ -64,7 +64,6 @@ class ComposedCommands {
         status.setStep("Selecting experiments regions");
         this.selectMultipleExperiments(experiments_name, status).subscribe((selected_experiments) => {
             status.setStep("Overlaping regions");
-            console.log("Overlapping regions", data_query_id, selected_experiments);
             this.intersectWithSelected(data_query_id, selected_experiments, status).subscribe((overlap_ids) => {
                 status.setStep("Intersecting regions");
                 this.countRegionsBatch(overlap_ids, status).subscribe((datum) => {
