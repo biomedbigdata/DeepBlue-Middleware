@@ -84,13 +84,12 @@ class Command {
 }
 class DeepBlueService {
     /*
-    intersectsQueryCache = new MultiKeyDataCache<DeepBlueOperation, DeepBlueIntersection>();
-  
     requestCache = new DataCache<DeepBlueOperation, DeepBlueRequest>();
     resultCache = new DataCache<DeepBlueRequest, DeepBlueResult>()
     */
     constructor() {
         this.idNamesQueryCache = new cache_1.DataCache();
+        this.intersectsQueryCache = new cache_1.MultiKeyDataCache();
     }
     init() {
         let client = xmlrpc.createClient(xmlrpc_host);
@@ -123,9 +122,9 @@ class DeepBlueService {
         if (!experiment) {
             return Observable_1.Observable.empty();
         }
-        if (this.idNamesQueryCache.get(experiment)) {
+        let cached_operation = this.idNamesQueryCache.get(experiment);
+        if (cached_operation) {
             status.increment();
-            let cached_operation = this.idNamesQueryCache.get(experiment);
             return Observable_1.Observable.of(cached_operation);
         }
         let params = new Object();
@@ -138,15 +137,13 @@ class DeepBlueService {
             .catch(this.handleError);
     }
     intersection(query_data_id, query_filter_id, status) {
-        /*
         let cache_key = [query_data_id, query_filter_id];
-    
-        if (this.intersectsQueryCache.get(cache_key)) {
-          status.increment();
-          let cached_intersection = this.intersectsQueryCache.get(cache_key);
-          return Observable.of(cached_intersection);
+        let cached_intersection = this.intersectsQueryCache.get(cache_key);
+        if (cached_intersection) {
+            status.increment();
+            console.log(cached_intersection);
+            return Observable_1.Observable.of(cached_intersection);
         }
-        */
         let params = {};
         params["query_data_id"] = query_data_id.queryId();
         params["query_filter_id"] = query_filter_id.queryId();
@@ -154,6 +151,7 @@ class DeepBlueService {
             .map((response) => {
             return new operations_1.DeepBlueIntersection(query_data_id, query_filter_id, response[1]);
         })
+            .do((operation) => this.intersectsQueryCache.put(cache_key, operation))
             .catch(this.handleError);
     }
     count_regions(op_exp, status) {
