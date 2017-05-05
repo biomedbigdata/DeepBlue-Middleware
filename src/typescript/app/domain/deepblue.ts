@@ -25,15 +25,6 @@ export class IdName implements IKey{
     }
 }
 
-export class IdNameCount extends IdName {
-    count: number;
-
-    constructor (data: string[] ) {
-        super(data[0], data[1]);
-        this.count = parseInt(data[2]);
-    }
-}
-
 export class EpigeneticMark extends IdName {
     constructor (data: string[] ) {
         super(data[0], data[1])

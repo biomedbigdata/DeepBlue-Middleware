@@ -25,13 +25,6 @@ class IdName {
     }
 }
 exports.IdName = IdName;
-class IdNameCount extends IdName {
-    constructor(data) {
-        super(data[0], data[1]);
-        this.count = parseInt(data[2]);
-    }
-}
-exports.IdNameCount = IdNameCount;
 class EpigeneticMark extends IdName {
     constructor(data) {
         super(data[0], data[1]);
