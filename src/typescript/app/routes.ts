@@ -68,7 +68,7 @@ export class ComposedCommandsRoutes {
 
       Experiments.info(experiments_id).subscribe((experiments: Object[]) => {
         let deepblue_query_ops: DeepBlueOperation[] =
-          queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(i.toLocaleString()), query_id, "DIVE data"));
+          queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
         let experiments_name: Name[] = experiments.map((v: Object) => new Name(v["name"]));
 
         var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, status).subscribe((results: DeepBlueResult[]) => {
