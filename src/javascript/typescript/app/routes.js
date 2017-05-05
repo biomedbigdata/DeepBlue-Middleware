@@ -40,7 +40,7 @@ class ComposedCommandsRoutes {
                 experiments_id = [experiments_id];
             }
             experiments_1.Experiments.info(experiments_id).subscribe((experiments) => {
-                let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(i.toLocaleString()), query_id, "DIVE data"));
+                let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
                 let experiments_name = experiments.map((v) => new deepblue_1.Name(v["name"]));
                 var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, status).subscribe((results) => {
                     let rr = [];
