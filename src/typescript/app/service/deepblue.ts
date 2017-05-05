@@ -104,10 +104,10 @@ export class DeepBlueService {
 
 
   intersectsQueryCache = new MultiKeyDataCache<DeepBlueOperation, DeepBlueIntersection>();
-  /*
+
   requestCache = new DataCache<DeepBlueOperation, DeepBlueRequest>();
   resultCache = new DataCache<DeepBlueRequest, DeepBlueResult>()
-  */
+
 
   constructor() { }
 
@@ -159,13 +159,32 @@ export class DeepBlueService {
     params["experiment_name"] = experiment.name;
 
     return this.execute("select_experiments", params, status).map((response: [string, any]) => {
+      status.increment();
       return new DeepBlueSelectData(experiment, response[1], "select_experiment");
     }).do((operation) => {
       this.idNamesQueryCache.put(experiment, operation);
-    })
-      .catch(this.handleError);
+    }).catch(this.handleError);
   }
-ocessing
+
+  selectGenes(gene_model_name: Name, status: RequestStatus): Observable<DeepBlueOperation> {
+    let cached_operation = this.idNamesQueryCache.get(gene_model_name);
+    if (cached_operation) {
+      status.increment();
+      return Observable.of(cached_operation);
+    }
+
+    const params: Object = new Object();
+    params['gene_model'] = gene_model_name.name;
+
+    return this.execute("select_genes", params, status).map((response: [string, any]) => {
+      status.increment();
+      return new DeepBlueSelectData(gene_model_name, response[1], 'select_genes');
+    }).do((operation) => {
+      this.idNamesQueryCache.put(gene_model_name, operation);
+    }).catch(this.handleError);
+  }
+
+
   intersection(query_data_id: DeepBlueOperation, query_filter_id: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueIntersection> {
 
     let cache_key = [query_data_id, query_filter_id];
@@ -191,14 +210,13 @@ ocessing
   }
 
   count_regions(op_exp: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueResult> {
-    /*
+
     if (this.requestCache.get(op_exp)) {
       status.increment();
       let cached_result = this.requestCache.get(op_exp);
       return this.getResult(cached_result, status);
 
-    } else */
-     {
+    } else {
       let params = new Object();
       params["query_id"] = op_exp.queryId();
 
@@ -217,13 +235,11 @@ ocessing
 
   getResult(op_request: DeepBlueRequest, status: RequestStatus): Observable<DeepBlueResult> {
 
-    /*
     if (this.resultCache.get(op_request)) {
       status.increment();
       let cached_result = this.resultCache.get(op_request);
       return Observable.of(cached_result);
     }
-    */
 
     let params = new Object();
     params["request_id"] = op_request.request_id;

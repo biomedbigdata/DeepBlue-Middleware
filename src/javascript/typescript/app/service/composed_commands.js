@@ -77,6 +77,26 @@ class ComposedCommands {
         });
         return response.asObservable();
     }
+    countGenesOverlaps(data_query_id, gene_model, status) {
+        var start = new Date().getTime();
+        let total = data_query_id.length * data_query_id.length * 3;
+        status.reset(total);
+        let response = new rxjs_1.Subject();
+        status.setStep("Selecting genes regions");
+        this.deepBlueService.selectGenes(gene_model, status).subscribe((selected_genes) => {
+            this.intersectWithSelected(data_query_id, [selected_genes], status).subscribe((overlap_ids) => {
+                status.setStep("Intersecting regions");
+                this.countRegionsBatch(overlap_ids, status).subscribe((datum) => {
+                    var end = new Date().getTime();
+                    setTimeout(() => {
+                        response.next(datum);
+                        response.complete();
+                    });
+                });
+            });
+        });
+        return response.asObservable();
+    }
     handleError(error) {
         let errMsg;
         if (error instanceof Response) {

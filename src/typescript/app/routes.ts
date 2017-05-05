@@ -1,6 +1,6 @@
 import { RequestStatus } from './domain/status';
 import { RequestManager } from './service/requests_manager';
-import { Name } from './domain/deepblue';
+import { IdName, Name } from './domain/deepblue';
 import {
   DeepBlueMiddlewareOverlapResult,
   DeepBlueOperation,
@@ -54,8 +54,6 @@ export class ComposedCommandsRoutes {
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
 
-      console.log("@@@@@@@@@@@@@@@");
-      console.log(status.request_id);
       res.send(["okay", status.request_id.toLocaleString()]);
 
       if (!(Array.isArray(queries_id))) {
@@ -87,6 +85,38 @@ export class ComposedCommandsRoutes {
     });
   }
 
+  private static countGenesOverlaps(req: express.Request, res: express.Response, next: express.NextFunction) {
+    Manager.getComposedCommands().subscribe((cc: ComposedCommands) => {
+
+      let queries_id = req.query["queries_id"];
+      let gene_model_name : string = req.query["gene_model_name"];
+
+      let status = ComposedCommandsRoutes.requestManager.startRequest();
+
+      res.send(["okay", status.request_id.toLocaleString()]);
+
+      if (!(Array.isArray(queries_id))) {
+        queries_id = [queries_id];
+      }
+
+      let deepblue_query_ops: DeepBlueOperation[] =
+        queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
+
+      var ccos = cc.countGenesOverlaps(deepblue_query_ops, new Name(gene_model_name), status).subscribe((results: DeepBlueResult[]) => {
+        let rr = [];
+        for (let i = 0; i < results.length; i++) {
+          let result: DeepBlueResult = results[i];
+          let resultObj = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(),
+            result.getFilterName(), result.getFilterQuery(),
+            result.resultAsCount());
+          rr.push(resultObj);
+        }
+        status.finish(rr);
+      });
+
+    });
+  }
+
 
   public static routes(): express.Router {
     //get router
@@ -94,6 +124,7 @@ export class ComposedCommandsRoutes {
     router = express.Router();
 
     router.get("/count_overlaps", this.countOverlaps);
+    router.get("/count_genes_overlaps", this.countGenesOverlaps);
     router.get("/get_request", this.getRequest)
 
     return router;

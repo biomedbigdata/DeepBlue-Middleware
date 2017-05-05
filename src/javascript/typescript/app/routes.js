@@ -30,8 +30,6 @@ class ComposedCommandsRoutes {
             let queries_id = req.query["queries_id"];
             let experiments_id = req.query["experiments_id"];
             let status = ComposedCommandsRoutes.requestManager.startRequest();
-            console.log("@@@@@@@@@@@@@@@");
-            console.log(status.request_id);
             res.send(["okay", status.request_id.toLocaleString()]);
             if (!(Array.isArray(queries_id))) {
                 queries_id = [queries_id];
@@ -54,11 +52,33 @@ class ComposedCommandsRoutes {
             });
         });
     }
+    static countGenesOverlaps(req, res, next) {
+        composed_commands_1.Manager.getComposedCommands().subscribe((cc) => {
+            let queries_id = req.query["queries_id"];
+            let gene_model_name = req.query["gene_model_name"];
+            let status = ComposedCommandsRoutes.requestManager.startRequest();
+            res.send(["okay", status.request_id.toLocaleString()]);
+            if (!(Array.isArray(queries_id))) {
+                queries_id = [queries_id];
+            }
+            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
+            var ccos = cc.countGenesOverlaps(deepblue_query_ops, new deepblue_1.Name(gene_model_name), status).subscribe((results) => {
+                let rr = [];
+                for (let i = 0; i < results.length; i++) {
+                    let result = results[i];
+                    let resultObj = new operations_1.DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(), result.getFilterName(), result.getFilterQuery(), result.resultAsCount());
+                    rr.push(resultObj);
+                }
+                status.finish(rr);
+            });
+        });
+    }
     static routes() {
         //get router
         let router;
         router = express.Router();
         router.get("/count_overlaps", this.countOverlaps);
+        router.get("/count_genes_overlaps", this.countGenesOverlaps);
         router.get("/get_request", this.getRequest);
         return router;
     }

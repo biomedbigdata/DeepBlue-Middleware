@@ -83,13 +83,11 @@ class Command {
     }
 }
 class DeepBlueService {
-    /*
-    requestCache = new DataCache<DeepBlueOperation, DeepBlueRequest>();
-    resultCache = new DataCache<DeepBlueRequest, DeepBlueResult>()
-    */
     constructor() {
         this.idNamesQueryCache = new cache_1.DataCache();
         this.intersectsQueryCache = new cache_1.MultiKeyDataCache();
+        this.requestCache = new cache_1.DataCache();
+        this.resultCache = new cache_1.DataCache();
     }
     init() {
         let client = xmlrpc.createClient(xmlrpc_host);
@@ -130,11 +128,26 @@ class DeepBlueService {
         let params = new Object();
         params["experiment_name"] = experiment.name;
         return this.execute("select_experiments", params, status).map((response) => {
+            status.increment();
             return new operations_1.DeepBlueSelectData(experiment, response[1], "select_experiment");
         }).do((operation) => {
             this.idNamesQueryCache.put(experiment, operation);
-        })
-            .catch(this.handleError);
+        }).catch(this.handleError);
+    }
+    selectGenes(gene_model_name, status) {
+        let cached_operation = this.idNamesQueryCache.get(gene_model_name);
+        if (cached_operation) {
+            status.increment();
+            return Observable_1.Observable.of(cached_operation);
+        }
+        const params = new Object();
+        params['gene_model'] = gene_model_name.name;
+        return this.execute("select_genes", params, status).map((response) => {
+            status.increment();
+            return new operations_1.DeepBlueSelectData(gene_model_name, response[1], 'select_genes');
+        }).do((operation) => {
+            this.idNamesQueryCache.put(gene_model_name, operation);
+        }).catch(this.handleError);
     }
     intersection(query_data_id, query_filter_id, status) {
         let cache_key = [query_data_id, query_filter_id];
@@ -155,14 +168,12 @@ class DeepBlueService {
             .catch(this.handleError);
     }
     count_regions(op_exp, status) {
-        /*
         if (this.requestCache.get(op_exp)) {
-          status.increment();
-          let cached_result = this.requestCache.get(op_exp);
-          return this.getResult(cached_result, status);
-    
-        } else */
-        {
+            status.increment();
+            let cached_result = this.requestCache.get(op_exp);
+            return this.getResult(cached_result, status);
+        }
+        else {
             let params = new Object();
             params["query_id"] = op_exp.queryId();
             let request = this.execute("count_regions", params, status).map((data) => {
@@ -177,13 +188,11 @@ class DeepBlueService {
         }
     }
     getResult(op_request, status) {
-        /*
         if (this.resultCache.get(op_request)) {
-          status.increment();
-          let cached_result = this.resultCache.get(op_request);
-          return Observable.of(cached_result);
+            status.increment();
+            let cached_result = this.resultCache.get(op_request);
+            return Observable_1.Observable.of(cached_result);
         }
-        */
         let params = new Object();
         params["request_id"] = op_request.request_id;
         let pollSubject = new Subject_1.Subject();

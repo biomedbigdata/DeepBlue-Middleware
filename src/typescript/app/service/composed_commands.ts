@@ -108,6 +108,34 @@ export class ComposedCommands {
         return response.asObservable();
     }
 
+    countGenesOverlaps(data_query_id: DeepBlueOperation[], gene_model: Name, status: RequestStatus): Observable<DeepBlueResult[]> {
+        var start = new Date().getTime();
+
+        let total = data_query_id.length * data_query_id.length * 3;
+        status.reset(total);
+
+        let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
+
+        status.setStep("Selecting genes regions");
+
+        this.deepBlueService.selectGenes(gene_model, status).subscribe((selected_genes: DeepBlueOperation) => {
+
+            this.intersectWithSelected(data_query_id, [selected_genes], status).subscribe((overlap_ids: DeepBlueOperation[]) => {
+                status.setStep("Intersecting regions");
+
+                this.countRegionsBatch(overlap_ids, status).subscribe((datum: DeepBlueResult[]) => {
+                    var end = new Date().getTime();
+                    setTimeout(() => {
+                        response.next(datum);
+                        response.complete();
+                    });
+                });
+            });
+        });
+
+        return response.asObservable();
+    }
+
     private handleError(error: Response | any) {
         let errMsg: string;
         if (error instanceof Response) {
