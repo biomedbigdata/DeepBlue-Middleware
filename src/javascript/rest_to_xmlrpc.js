@@ -22,7 +22,6 @@ var Command = function(name, parameters) {
       var parameter_name = parameter[0];
       var parameter_type = parameter[1];
       var multiple = parameter[2];
-      console.log("param: " + parameter_name + " " + req.query[parameter_name] + " type " + parameter_type);
       if (parameter_name in req.query) {
         var raw_value = req.query[parameter_name];
         if (parameter_type == "string") {
@@ -49,7 +48,6 @@ var Command = function(name, parameters) {
         }
       }
     }
-    console.log(xmlrpc_request_parameters);
 
     client.methodCall(name, xmlrpc_request_parameters, function(error, value) {
       if (error) {
