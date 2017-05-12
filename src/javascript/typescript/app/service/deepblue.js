@@ -178,14 +178,26 @@ class DeepBlueService {
             params["query_id"] = op_exp.queryId();
             let request = this.execute("count_regions", params, status).map((data) => {
                 let request = new operations_1.DeepBlueRequest(op_exp, data[1], "count_regions");
-                //this.requestCache.put(op_exp, request);
+                this.requestCache.put(op_exp, request);
                 return request;
-            })
-                .flatMap((request_id) => {
+            }).flatMap((request_id) => {
                 return this.getResult(request_id, status);
             });
             return request;
         }
+    }
+    calculate_enrichment(data, gene_model_name, status) {
+        const params = new Object();
+        params['query_id'] = data.queryId();
+        params['gene_model'] = gene_model_name.name;
+        let request = this.execute("calculate_enrichment", params, status).map((response) => {
+            status.increment();
+            return new operations_1.DeepBlueRequest(data, response[1], 'calculate_enrichment');
+        }).flatMap((request_id) => {
+            console.log(request_id);
+            return this.getResult(request_id, status);
+        }).catch(this.handleError);
+        return request;
     }
     getResult(op_request, status) {
         if (this.resultCache.get(op_request)) {
@@ -212,8 +224,9 @@ class DeepBlueService {
                 if (value[0] === "okay") {
                     status.increment();
                     let op_result = new operations_1.DeepBlueResult(op_request, value[1]);
-                    //this.resultCache.put(op_request, op_result);
+                    this.resultCache.put(op_request, op_result);
                     timer.unsubscribe();
+                    console.log(op_result);
                     pollSubject.next(op_result);
                     pollSubject.complete();
                 }

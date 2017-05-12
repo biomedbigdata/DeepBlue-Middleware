@@ -2,6 +2,7 @@ import { RequestStatus } from './domain/status';
 import { RequestManager } from './service/requests_manager';
 import { IdName, Name } from './domain/deepblue';
 import {
+  DeepBlueMiddlewareGOEnrichtmentResult,
   DeepBlueMiddlewareOverlapResult,
   DeepBlueOperation,
   DeepBlueRequest,
@@ -118,6 +119,38 @@ export class ComposedCommandsRoutes {
   }
 
 
+  private static calculateEnrichment(req: express.Request, res: express.Response, next: express.NextFunction) {
+    Manager.getComposedCommands().subscribe((cc: ComposedCommands) => {
+
+      let queries_id = req.query["queries_id"];
+      let gene_model_name : string = req.query["gene_model_name"];
+
+      let status = ComposedCommandsRoutes.requestManager.startRequest();
+
+      res.send(["okay", status.request_id.toLocaleString()]);
+
+      if (!(Array.isArray(queries_id))) {
+        queries_id = [queries_id];
+      }
+
+      let deepblue_query_ops: DeepBlueOperation[] =
+        queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
+
+      var ccos = cc.calculateEnrichment(deepblue_query_ops, new Name(gene_model_name), status).subscribe((results: DeepBlueResult[]) => {
+        let rr = [];
+        for (let i = 0; i < results.length; i++) {
+          let result: DeepBlueResult = results[i];
+          console.log(result);
+          let resultObj = new DeepBlueMiddlewareGOEnrichtmentResult(result.getDataName(), gene_model_name, result.resultAsTuples());
+          rr.push(resultObj);
+        }
+        status.finish(rr);
+      });
+
+    });
+  }
+
+
   public static routes(): express.Router {
     //get router
     let router: express.Router;
@@ -125,6 +158,7 @@ export class ComposedCommandsRoutes {
 
     router.get("/count_overlaps", this.countOverlaps);
     router.get("/count_genes_overlaps", this.countGenesOverlaps);
+    router.get("/calculate_enrichment", this.calculateEnrichment);
     router.get("/get_request", this.getRequest)
 
     return router;

@@ -107,6 +107,9 @@ class DeepBlueResult {
     resultAsCount() {
         return this.result["count"];
     }
+    resultAsTuples() {
+        return this.result;
+    }
     data() {
         return this._data;
     }
@@ -149,3 +152,20 @@ class DeepBlueMiddlewareOverlapResult {
     }
 }
 exports.DeepBlueMiddlewareOverlapResult = DeepBlueMiddlewareOverlapResult;
+class DeepBlueMiddlewareGOEnrichtmentResult {
+    constructor(data_name, gene_model, results) {
+        this.data_name = data_name;
+        this.gene_model = gene_model;
+        this.results = results;
+    }
+    getDataName() {
+        return this.data_name;
+    }
+    getGeneModel() {
+        return this.gene_model;
+    }
+    getResults() {
+        return this.results;
+    }
+}
+exports.DeepBlueMiddlewareGOEnrichtmentResult = DeepBlueMiddlewareGOEnrichtmentResult;

@@ -153,6 +153,10 @@ export class DeepBlueResult implements ICloneable {
         return <number>this.result["count"];
     }
 
+    resultAsTuples() : Object[] {
+        return <Object[]>this.result;
+    }
+
     data(): DeepBlueRequest {
         return this._data;
     }
@@ -199,5 +203,22 @@ export class DeepBlueMiddlewareOverlapResult {
 
     getCount(): number {
         return this.count;
+    }
+}
+
+export class DeepBlueMiddlewareGOEnrichtmentResult {
+    constructor(public data_name: string, public gene_model: string,
+        public results: Object[]) { }
+
+    getDataName(): string {
+        return this.data_name;
+    }
+
+    getGeneModel(): string {
+        return this.gene_model;
+    }
+
+    getResults(): Object[] {
+        return this.results;
     }
 }
