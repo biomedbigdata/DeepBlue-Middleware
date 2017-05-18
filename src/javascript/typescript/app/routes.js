@@ -4,7 +4,7 @@ const requests_manager_1 = require("./service/requests_manager");
 const deepblue_1 = require("./domain/deepblue");
 const operations_1 = require("./domain/operations");
 const express_1 = require("express");
-const composed_commands_1 = require("./service/composed_commands");
+const manager_1 = require("./service/manager");
 const experiments_1 = require("./service/experiments");
 const composed_commands = express_1.Router();
 const express = require("express");
@@ -26,9 +26,17 @@ class ComposedCommandsRoutes {
         }
     }
     static countOverlaps(req, res, next) {
-        composed_commands_1.Manager.getComposedCommands().subscribe((cc) => {
+        manager_1.Manager.getComposedCommands().subscribe((cc) => {
             let queries_id = req.query["queries_id"];
             let experiments_id = req.query["experiments_id"];
+            if (!(queries_id)) {
+                res.send(['error', '"queried_id" not informed']);
+                return;
+            }
+            if (!(experiments_id)) {
+                res.send(['error', '"experiments_id" not informed']);
+                return;
+            }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             res.send(["okay", status.request_id.toLocaleString()]);
             if (!(Array.isArray(queries_id))) {
@@ -53,7 +61,7 @@ class ComposedCommandsRoutes {
         });
     }
     static countGenesOverlaps(req, res, next) {
-        composed_commands_1.Manager.getComposedCommands().subscribe((cc) => {
+        manager_1.Manager.getComposedCommands().subscribe((cc) => {
             let queries_id = req.query["queries_id"];
             let gene_model_name = req.query["gene_model_name"];
             let status = ComposedCommandsRoutes.requestManager.startRequest();
@@ -74,9 +82,15 @@ class ComposedCommandsRoutes {
         });
     }
     static calculateEnrichment(req, res, next) {
-        composed_commands_1.Manager.getComposedCommands().subscribe((cc) => {
+        manager_1.Manager.getComposedCommands().subscribe((cc) => {
             let queries_id = req.query["queries_id"];
             let gene_model_name = req.query["gene_model_name"];
+            if (!(queries_id)) {
+                res.send(["error", "queries_id is missing"]);
+            }
+            if (!(gene_model_name)) {
+                res.send(["error", "gene_model_name is missing"]);
+            }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             res.send(["okay", status.request_id.toLocaleString()]);
             if (!(Array.isArray(queries_id))) {
@@ -87,11 +101,23 @@ class ComposedCommandsRoutes {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
-                    console.log(result);
                     let resultObj = new operations_1.DeepBlueMiddlewareGOEnrichtmentResult(result.getDataName(), gene_model_name, result.resultAsTuples());
                     rr.push(resultObj);
                 }
                 status.finish(rr);
+            });
+        });
+    }
+    static geneModelsByGenome(req, res, next) {
+        manager_1.Manager.getComposedQueries().subscribe((cq) => {
+            let genome = req.query["genome"];
+            if (!(genome)) {
+                res.send(["error", "genome is missing"]);
+            }
+            let status = ComposedCommandsRoutes.requestManager.startRequest();
+            cq.geneModelsByGenome(new deepblue_1.Name(genome), status).subscribe((gene_models) => {
+                res.send(["okay", gene_models]);
+                status.finish(null);
             });
         });
     }
@@ -103,6 +129,7 @@ class ComposedCommandsRoutes {
         router.get("/count_genes_overlaps", this.countGenesOverlaps);
         router.get("/calculate_enrichment", this.calculateEnrichment);
         router.get("/get_request", this.getRequest);
+        router.get("/gene_models_by_genome", this.geneModelsByGenome);
         return router;
     }
 }

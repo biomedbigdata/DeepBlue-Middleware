@@ -89,6 +89,10 @@ export class FullMetadata extends IdName {
     columns() : Object {
         return this.values["columns"];
     }
+
+    clone() : FullMetadata {
+        return new FullMetadata(this.values);
+    }
 }
 
 
@@ -98,15 +102,13 @@ export class FullAnnotation extends FullMetadata {
     }
 }
 
-export class FullGeneModel extends FullMetadata {
-    constructor(data: Object) {
-        super(data);
-    }
-}
-
 export class FullExperiment extends FullMetadata {
     constructor (data: Object) {
         super(data);
+    }
+
+    genome() : string {
+        return this.values["genone"];
     }
 
     sample_info(): Object {
@@ -131,5 +133,11 @@ export class FullExperiment extends FullMetadata {
 
     project() : string {
         return this.values["project"];
+    }
+}
+
+export class FullGeneModel extends FullMetadata {
+    constructor(data: Object) {
+        super(data);
     }
 }

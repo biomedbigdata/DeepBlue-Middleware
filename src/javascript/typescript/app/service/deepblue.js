@@ -4,6 +4,7 @@ const utils_1 = require("./utils");
 const Observable_1 = require("rxjs/Observable");
 const Subject_1 = require("rxjs/Subject");
 const cache_1 = require("../service/cache");
+const deepblue_1 = require("../domain/deepblue");
 const operations_1 = require("../domain/operations");
 require("rxjs/Rx");
 const xmlrpc = require("xmlrpc");
@@ -84,6 +85,7 @@ class Command {
 }
 class DeepBlueService {
     constructor() {
+        this.IdObjectCache = new cache_1.DataCache();
         this.idNamesQueryCache = new cache_1.DataCache();
         this.intersectsQueryCache = new cache_1.MultiKeyDataCache();
         this.requestCache = new cache_1.DataCache();
@@ -154,7 +156,6 @@ class DeepBlueService {
         let cached_intersection = this.intersectsQueryCache.get(cache_key);
         if (cached_intersection) {
             status.increment();
-            console.log(cached_intersection);
             return Observable_1.Observable.of(cached_intersection);
         }
         let params = {};
@@ -199,11 +200,44 @@ class DeepBlueService {
         }).catch(this.handleError);
         return request;
     }
-    getResult(op_request, status) {
-        if (this.resultCache.get(op_request)) {
+    list_gene_models(status) {
+        const params = new Object();
+        return this.execute("list_gene_models", params, status).map((response) => {
+            const data = response[1] || [];
+            return data.map((value) => {
+                return new deepblue_1.GeneModel(value);
+            }).sort((a, b) => a.name.localeCompare(b.name));
+        });
+    }
+    info(id_name, status) {
+        let object = this.IdObjectCache.get(id_name);
+        if (object) {
+            console.log("info cache found: ", object);
             status.increment();
-            let cached_result = this.resultCache.get(op_request);
-            return Observable_1.Observable.of(cached_result);
+            return Observable_1.Observable.of(object);
+        }
+        return this.execute("info", id_name, status).map((response) => {
+            console.log("info stuff:", response[1]);
+            return new deepblue_1.FullMetadata(response[1][0]);
+        })
+            .do((info_object) => {
+            console.log("cacgubg::m", info_object);
+            this.IdObjectCache.put(id_name, info_object);
+        });
+    }
+    infos(id_names, status) {
+        let total = 0;
+        let observableBatch = [];
+        id_names.forEach((id_name) => {
+            observableBatch.push(this.info(id_name, status));
+        });
+        return Observable_1.Observable.forkJoin(observableBatch);
+    }
+    getResult(op_request, status) {
+        let result = this.resultCache.get(op_request);
+        if (result) {
+            status.increment();
+            return Observable_1.Observable.of(result);
         }
         let params = new Object();
         params["request_id"] = op_request.request_id;

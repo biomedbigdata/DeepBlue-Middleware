@@ -2,25 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Observable_1 = require("rxjs/Observable");
 const rxjs_1 = require("rxjs");
-const deepblue_1 = require("../service/deepblue");
-class Manager {
-    constructor() { }
-    static getComposedCommands() {
-        if (this.composed_commands) {
-            return Observable_1.Observable.of(this.composed_commands);
-        }
-        let subject = new rxjs_1.Subject();
-        this.dbs.init().subscribe(() => {
-            this.composed_commands = new ComposedCommands(this.dbs);
-            subject.next(this.composed_commands);
-            subject.complete();
-        });
-        return subject.asObservable();
-    }
-}
-Manager.dbs = new deepblue_1.DeepBlueService();
-Manager.composed_commands = null;
-exports.Manager = Manager;
 class ComposedCommands {
     constructor(deepBlueService) {
         this.deepBlueService = deepBlueService;

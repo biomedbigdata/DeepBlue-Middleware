@@ -7,30 +7,6 @@ import { DeepBlueService } from '../service/deepblue';
 import { IdName, Name } from '../domain/deepblue';
 import { DeepBlueIntersection, DeepBlueOperation, DeepBlueResult } from '../domain/operations';
 
-export class Manager {
-
-    private static dbs: DeepBlueService = new DeepBlueService();
-    private static composed_commands: ComposedCommands = null;
-
-    constructor() { }
-
-    static getComposedCommands(): Observable<ComposedCommands> {
-
-        if (this.composed_commands) {
-            return Observable.of(this.composed_commands);
-        }
-
-        let subject = new Subject<ComposedCommands>();
-        this.dbs.init().subscribe(() => {
-            this.composed_commands = new ComposedCommands(this.dbs);
-            subject.next(this.composed_commands);
-            subject.complete();
-        })
-        return subject.asObservable();
-    }
-}
-
-
 export class ComposedCommands {
     constructor(private deepBlueService: DeepBlueService) { }
 

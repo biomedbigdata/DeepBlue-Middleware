@@ -1,6 +1,7 @@
+import { ComposedQueries } from './service/composed_queries';
 import { RequestStatus } from './domain/status';
 import { RequestManager } from './service/requests_manager';
-import { IdName, Name } from './domain/deepblue';
+import { FullGeneModel, FullMetadata, IdName, Name } from './domain/deepblue';
 import {
   DeepBlueMiddlewareGOEnrichtmentResult,
   DeepBlueMiddlewareOverlapResult,
@@ -15,7 +16,7 @@ import { Utils } from './service/utils';
 
 import { DeepBlueService } from './service/deepblue';
 
-import { Manager } from './service/composed_commands';
+import { Manager } from './service/manager';
 import { ComposedCommands } from './service/composed_commands';
 import { Experiments } from './service/experiments';
 
@@ -52,6 +53,16 @@ export class ComposedCommandsRoutes {
 
       let queries_id = req.query["queries_id"];
       let experiments_id = req.query["experiments_id"];
+
+      if (!(queries_id)) {
+        res.send(['error', '"queried_id" not informed']);
+        return;
+      }
+
+      if (!(experiments_id)) {
+        res.send(['error', '"experiments_id" not informed']);
+        return;
+      }
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
 
@@ -90,7 +101,7 @@ export class ComposedCommandsRoutes {
     Manager.getComposedCommands().subscribe((cc: ComposedCommands) => {
 
       let queries_id = req.query["queries_id"];
-      let gene_model_name : string = req.query["gene_model_name"];
+      let gene_model_name: string = req.query["gene_model_name"];
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
 
@@ -123,7 +134,15 @@ export class ComposedCommandsRoutes {
     Manager.getComposedCommands().subscribe((cc: ComposedCommands) => {
 
       let queries_id = req.query["queries_id"];
-      let gene_model_name : string = req.query["gene_model_name"];
+      let gene_model_name: string = req.query["gene_model_name"];
+
+      if (!(queries_id)) {
+        res.send(["error", "queries_id is missing"]);
+      }
+
+      if (!(gene_model_name)) {
+        res.send(["error", "gene_model_name is missing"]);
+      }
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
 
@@ -140,7 +159,6 @@ export class ComposedCommandsRoutes {
         let rr = [];
         for (let i = 0; i < results.length; i++) {
           let result: DeepBlueResult = results[i];
-          console.log(result);
           let resultObj = new DeepBlueMiddlewareGOEnrichtmentResult(result.getDataName(), gene_model_name, result.resultAsTuples());
           rr.push(resultObj);
         }
@@ -151,6 +169,23 @@ export class ComposedCommandsRoutes {
   }
 
 
+  private static geneModelsByGenome(req: express.Request, res: express.Response, next: express.NextFunction) {
+    Manager.getComposedQueries().subscribe((cq: ComposedQueries) => {
+
+      let genome: string = req.query["genome"];
+
+      if (!(genome)) {
+        res.send(["error", "genome is missing"]);
+      }
+
+      let status = ComposedCommandsRoutes.requestManager.startRequest();
+      cq.geneModelsByGenome(new Name(genome), status).subscribe((gene_models: FullGeneModel[]) => {
+        res.send(["okay", gene_models]);
+        status.finish(null);
+      });
+    });
+  }
+
   public static routes(): express.Router {
     //get router
     let router: express.Router;
@@ -160,6 +195,7 @@ export class ComposedCommandsRoutes {
     router.get("/count_genes_overlaps", this.countGenesOverlaps);
     router.get("/calculate_enrichment", this.calculateEnrichment);
     router.get("/get_request", this.getRequest)
+    router.get("/gene_models_by_genome", this.geneModelsByGenome);
 
     return router;
   }
