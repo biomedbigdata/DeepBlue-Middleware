@@ -138,10 +138,12 @@ export class ComposedCommandsRoutes {
 
       if (!(queries_id)) {
         res.send(["error", "queries_id is missing"]);
+        return;
       }
 
       if (!(gene_model_name)) {
         res.send(["error", "gene_model_name is missing"]);
+        return;
       }
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
