@@ -258,6 +258,24 @@ export class DeepBlueService {
     }
   }
 
+  distinct_column_values(data: DeepBlueOperation, field: string, status: RequestStatus): Observable<string[]> {
+    const params: Object = new Object();
+    params['query_id'] = data.queryId();
+    params['field'] = field;
+
+    let request: Observable<string[]> = this.execute("distinct_column_values", params, status).map((response: [string, any]) => {
+      status.increment();
+      console.log(response);
+      return new DeepBlueRequest(data, response[1], 'distinct_column_values');
+    }).flatMap((request_id) => {
+      console.log(request_id);
+      return this.getResult(request_id, status);
+    }).catch(this.handleError);
+
+    return request;
+
+  }
+
   calculate_enrichment(data: DeepBlueOperation, gene_model_name: Name, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
     params['query_id'] = data.queryId();
@@ -331,7 +349,7 @@ export class DeepBlueService {
 
     let isProcessing = false;
 
-    let timer = Observable.timer(0, Utils.rnd(0, 500)).do(() => {
+    let timer = Observable.timer(0, Utils.rnd(500, 1000)).do(() => {
       if (isProcessing) {
         return;
       }

@@ -37,7 +37,6 @@ export class ComposedCommands {
         return Observable.forkJoin(observableBatch);
     }
 
-
     countRegionsBatch(query_ids: DeepBlueOperation[], status: RequestStatus): Observable<DeepBlueResult[]> {
         let observableBatch: Observable<DeepBlueResult>[] = [];
 
@@ -129,7 +128,6 @@ export class ComposedCommands {
 
         return Observable.forkJoin(observableBatch);
     }
-
 
     private handleError(error: Response | any) {
         let errMsg: string;

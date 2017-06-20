@@ -1,13 +1,63 @@
-import { Name } from './deepblue';
+import { EpigeneticMark, Name } from './deepblue';
 import { ICloneable } from 'app/domain/interfaces'
 import { IKey } from 'app/domain/interfaces';
 import { IdName } from 'app/domain/deepblue';
 
+export class DeepBlueParameters implements IKey {
+    constructor(public genome: string, public type: string, public epigenetic_mark: string,
+        public biosource: string, public sample: string, public technique: string, public project: string) { }
+
+    key(): string {
+        let key = "";
+        if (this.genome) key += this.genome;
+        if (this.type) key += this.type;
+        if (this.epigenetic_mark) key += this.epigenetic_mark;
+        if (this.biosource) key += this.biosource;
+        if (this.sample) key += this.sample;
+        if (this.technique) key += this.technique;
+        if (this.project) key += this.project;
+        return key;
+    }
+
+    clone(): DeepBlueParameters {
+        return new DeepBlueParameters(this.genome, this.type,
+            this.epigenetic_mark, this.biosource, this.sample,
+            this.technique, this.project);
+    }
+
+    asKeyValue(): Object {
+        const params: Object = new Object();
+
+        if (this.genome) {
+            params['genome'] = this.genome;
+        }
+        if (this.type) {
+            params['type'] = this.type;
+        }
+        if (this.epigenetic_mark) {
+            params['epigenetic_mark'] = this.epigenetic_mark;
+        }
+        if (this.biosource) {
+            params['biosource'] = this.biosource;
+        }
+        if (this.sample) {
+            params['sample'] = this.sample;
+        }
+        if (this.technique) {
+            params['technique'] = this.technique;
+        }
+        if (this.project) {
+            params['project'] = this.project;
+        }
+
+        return params;
+    }
+}
 
 export interface DeepBlueOperation extends IKey {
     queryId(): string;
 
-    data(): DeepBlueOperation | Name;
+    data(): Name | DeepBlueOperation | DeepBlueParameters;
 
     getDataName(): string;
 
@@ -19,7 +69,8 @@ export interface DeepBlueOperation extends IKey {
 }
 
 export class DeepBlueSelectData implements DeepBlueOperation {
-    constructor(private _data: Name, public query_id: string, public command: string) { }
+    constructor(private _data: Name | DeepBlueOperation | DeepBlueParameters,
+        public query_id: string, public command: string) { }
 
     clone(): DeepBlueSelectData {
         return new DeepBlueSelectData(
@@ -33,7 +84,7 @@ export class DeepBlueSelectData implements DeepBlueOperation {
         return this.query_id;
     }
 
-    data(): DeepBlueOperation | Name {
+    data(): Name | DeepBlueOperation | DeepBlueParameters {
         return this._data;
     }
 
@@ -42,7 +93,10 @@ export class DeepBlueSelectData implements DeepBlueOperation {
     }
 
     getDataName(): string {
-        return this._data.name;
+        if (this._data instanceof Name) {
+            return this._data.name;
+        }
+        return this._data.key();
     }
 
     getDataQuery(): string {
@@ -73,7 +127,7 @@ export class DeepBlueIntersection implements DeepBlueOperation {
         return this.query_id;
     }
 
-    data(): DeepBlueOperation | Name {
+    data(): Name | DeepBlueOperation | DeepBlueParameters {
         return this._data;
     }
 
@@ -153,7 +207,7 @@ export class DeepBlueResult implements ICloneable {
         return <number>this.result["count"];
     }
 
-    resultAsTuples() : Object[] {
+    resultAsTuples(): Object[] {
         return <Object[]>this.result;
     }
 

@@ -195,6 +195,20 @@ class DeepBlueService {
             return request;
         }
     }
+    distinct_column_values(data, field, status) {
+        const params = new Object();
+        params['query_id'] = data.queryId();
+        params['field'] = field;
+        let request = this.execute("distinct_column_values", params, status).map((response) => {
+            status.increment();
+            console.log(response);
+            return new operations_1.DeepBlueRequest(data, response[1], 'distinct_column_values');
+        }).flatMap((request_id) => {
+            console.log(request_id);
+            return this.getResult(request_id, status);
+        }).catch(this.handleError);
+        return request;
+    }
     calculate_enrichment(data, gene_model_name, status) {
         const params = new Object();
         params['query_id'] = data.queryId();
@@ -252,7 +266,7 @@ class DeepBlueService {
         let pollSubject = new Subject_1.Subject();
         let client = xmlrpc.createClient(xmlrpc_host);
         let isProcessing = false;
-        let timer = Observable_1.Observable.timer(0, utils_1.Utils.rnd(0, 500)).do(() => {
+        let timer = Observable_1.Observable.timer(0, utils_1.Utils.rnd(500, 1000)).do(() => {
             if (isProcessing) {
                 return;
             }

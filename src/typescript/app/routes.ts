@@ -167,7 +167,7 @@ export class ComposedCommandsRoutes {
         status.finish(rr);
       });
 
-    });
+      });
   }
 
 
@@ -188,6 +188,23 @@ export class ComposedCommandsRoutes {
     });
   }
 
+  private static chromatinStatesByGenome(req: express.Request, res: express.Response, next: express.NextFunction) {
+    Manager.getComposedQueries().subscribe((cq: ComposedQueries) => {
+
+      let genome: string = req.query["genome"];
+
+      if (!(genome)) {
+        res.send(["error", "genome is missing"]);
+      }
+
+      let status = ComposedCommandsRoutes.requestManager.startRequest();
+      cq.chromatinStatesByGenome(new Name(genome), status).subscribe((csss: string[]) => {
+        res.send(["okay", csss]);
+        status.finish(null);
+      });
+    });
+  }
+
   public static routes(): express.Router {
     //get router
     let router: express.Router;
@@ -198,6 +215,7 @@ export class ComposedCommandsRoutes {
     router.get("/calculate_enrichment", this.calculateEnrichment);
     router.get("/get_request", this.getRequest)
     router.get("/gene_models_by_genome", this.geneModelsByGenome);
+    router.get("/chromatin_states_by_genome", this.chromatinStatesByGenome);
 
     return router;
   }

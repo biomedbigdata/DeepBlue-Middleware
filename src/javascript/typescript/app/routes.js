@@ -123,6 +123,19 @@ class ComposedCommandsRoutes {
             });
         });
     }
+    static chromatinStatesByGenome(req, res, next) {
+        manager_1.Manager.getComposedQueries().subscribe((cq) => {
+            let genome = req.query["genome"];
+            if (!(genome)) {
+                res.send(["error", "genome is missing"]);
+            }
+            let status = ComposedCommandsRoutes.requestManager.startRequest();
+            cq.chromatinStatesByGenome(new deepblue_1.Name(genome), status).subscribe((csss) => {
+                res.send(["okay", csss]);
+                status.finish(null);
+            });
+        });
+    }
     static routes() {
         //get router
         let router;
@@ -132,6 +145,7 @@ class ComposedCommandsRoutes {
         router.get("/calculate_enrichment", this.calculateEnrichment);
         router.get("/get_request", this.getRequest);
         router.get("/gene_models_by_genome", this.geneModelsByGenome);
+        router.get("/chromatin_states_by_genome", this.chromatinStatesByGenome);
         return router;
     }
 }

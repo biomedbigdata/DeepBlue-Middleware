@@ -23,5 +23,18 @@ class ComposedQueries {
         });
         return response.asObservable();
     }
+    chromatinStatesByGenome(genome, status) {
+        let response = new rxjs_1.Subject();
+        this.deepBlueService.select_regions_from_metadata(genome.name, null, "Chromatin State Segmentation", null, null, null, null, status).subscribe((experiments_query) => {
+            this.deepBlueService.distinct_column_values(experiments_query, "NAME", status).subscribe((csss) => {
+                setTimeout(() => {
+                    console.log(csss);
+                    response.next(csss);
+                    response.complete();
+                });
+            });
+        });
+        return response.asObservable();
+    }
 }
 exports.ComposedQueries = ComposedQueries;

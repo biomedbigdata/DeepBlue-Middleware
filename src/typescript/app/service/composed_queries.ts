@@ -1,11 +1,23 @@
-import { RequestStatus } from '../domain/status';
 import { Observable } from 'rxjs/Observable'
 import { Subject } from "rxjs";
 
-import { DeepBlueService } from '../service/deepblue';
+import {
+  Experiment,
+  FullGeneModel,
+  FullMetadata,
+  IdName,
+  Name
+} from '../domain/deepblue';
 
-import { FullGeneModel, FullMetadata, IdName, Name } from '../domain/deepblue';
-import { DeepBlueIntersection, DeepBlueOperation, DeepBlueResult } from '../domain/operations';
+import { RequestStatus } from '../domain/status';
+import { DeepBlueService } from '../service/deepblue';
+import { Experiments } from './experiments';
+import {
+  DeepBlueIntersection,
+  DeepBlueOperation,
+  DeepBlueResult,
+  DeepBlueSelectData
+} from '../domain/operations';
 
 export class ComposedQueries {
 
@@ -28,6 +40,23 @@ export class ComposedQueries {
           });
 
           response.next(filteredGeneModels);
+          response.complete();
+        });
+      });
+    });
+
+    return response.asObservable();
+  }
+
+  chromatinStatesByGenome(genome: Name, status: RequestStatus): Observable<string[]> {
+
+    let response = new Subject<string[]>();
+
+    this.deepBlueService.select_regions_from_metadata(genome.name, null, "Chromatin State Segmentation", null, null, null, null, status).subscribe((experiments_query: DeepBlueSelectData) => {
+      this.deepBlueService.distinct_column_values(experiments_query, "NAME", status).subscribe((csss: string[]) => {
+        setTimeout(() => {
+          console.log(csss);
+          response.next(csss);
           response.complete();
         });
       });

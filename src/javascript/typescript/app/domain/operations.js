@@ -1,5 +1,64 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const deepblue_1 = require("./deepblue");
+class DeepBlueParameters {
+    constructor(genome, type, epigenetic_mark, biosource, sample, technique, project) {
+        this.genome = genome;
+        this.type = type;
+        this.epigenetic_mark = epigenetic_mark;
+        this.biosource = biosource;
+        this.sample = sample;
+        this.technique = technique;
+        this.project = project;
+    }
+    key() {
+        let key = "";
+        if (this.genome)
+            key += this.genome;
+        if (this.type)
+            key += this.type;
+        if (this.epigenetic_mark)
+            key += this.epigenetic_mark;
+        if (this.biosource)
+            key += this.biosource;
+        if (this.sample)
+            key += this.sample;
+        if (this.technique)
+            key += this.technique;
+        if (this.project)
+            key += this.project;
+        return key;
+    }
+    clone() {
+        return new DeepBlueParameters(this.genome, this.type, this.epigenetic_mark, this.biosource, this.sample, this.technique, this.project);
+    }
+    asKeyValue() {
+        const params = new Object();
+        if (this.genome) {
+            params['genome'] = this.genome;
+        }
+        if (this.type) {
+            params['type'] = this.type;
+        }
+        if (this.epigenetic_mark) {
+            params['epigenetic_mark'] = this.epigenetic_mark;
+        }
+        if (this.biosource) {
+            params['biosource'] = this.biosource;
+        }
+        if (this.sample) {
+            params['sample'] = this.sample;
+        }
+        if (this.technique) {
+            params['technique'] = this.technique;
+        }
+        if (this.project) {
+            params['project'] = this.project;
+        }
+        return params;
+    }
+}
+exports.DeepBlueParameters = DeepBlueParameters;
 class DeepBlueSelectData {
     constructor(_data, query_id, command) {
         this._data = _data;
@@ -19,7 +78,10 @@ class DeepBlueSelectData {
         return this.query_id;
     }
     getDataName() {
-        return this._data.name;
+        if (this._data instanceof deepblue_1.Name) {
+            return this._data.name;
+        }
+        return this._data.key();
     }
     getDataQuery() {
         return this.query_id;
