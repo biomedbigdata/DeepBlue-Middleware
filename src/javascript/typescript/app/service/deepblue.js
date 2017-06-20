@@ -136,6 +136,14 @@ class DeepBlueService {
             this.idNamesQueryCache.put(experiment, operation);
         }).catch(this.handleError);
     }
+    select_regions_from_metadata(genome, type, epigenetic_mark, biosource, sample, technique, project, status) {
+        const params = new operations_1.DeepBlueParameters(genome, type, epigenetic_mark, biosource, sample, technique, project);
+        console.log(params);
+        return this.execute("select_regions", params, status).map((response) => {
+            status.increment();
+            return new operations_1.DeepBlueSelectData(params, response[1], "select_regions_from_metadata");
+        }).catch(this.handleError);
+    }
     selectGenes(gene_model_name, status) {
         let cached_operation = this.idNamesQueryCache.get(gene_model_name);
         if (cached_operation) {

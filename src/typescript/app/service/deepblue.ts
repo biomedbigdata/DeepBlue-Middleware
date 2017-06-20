@@ -6,14 +6,23 @@ import { Subject } from "rxjs/Subject";
 
 import { DataCache, MultiKeyDataCache } from '../service/cache';
 
-import { FullGeneModel, FullMetadata, GeneModel, IdName, Name } from '../domain/deepblue';
+import {
+  Experiment,
+  FullGeneModel,
+  FullMetadata,
+  GeneModel,
+  IdName,
+  Name
+} from '../domain/deepblue';
+
 import {
   DeepBlueIntersection,
   DeepBlueMiddlewareOverlapResult,
   DeepBlueOperation,
   DeepBlueRequest,
   DeepBlueResult,
-  DeepBlueSelectData
+  DeepBlueSelectData,
+  DeepBlueParameters
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -167,6 +176,21 @@ export class DeepBlueService {
     }).do((operation) => {
       this.idNamesQueryCache.put(experiment, operation);
     }).catch(this.handleError);
+  }
+
+  select_regions_from_metadata(genome: string, type: string, epigenetic_mark: string,
+    biosource: string, sample: string, technique: string, project: string,
+    status: RequestStatus): Observable<DeepBlueOperation> {
+
+    const params = new DeepBlueParameters(genome, type, epigenetic_mark, biosource, sample, technique, project);
+
+    console.log(params);
+
+    return this.execute("select_regions", params, status).map((response: [string, any]) => {
+      status.increment();
+      return new DeepBlueSelectData(params, response[1], "select_regions_from_metadata");
+    }).catch(this.handleError);
+
   }
 
   selectGenes(gene_model_name: Name, status: RequestStatus): Observable<DeepBlueOperation> {
