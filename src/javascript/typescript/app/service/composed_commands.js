@@ -24,6 +24,14 @@ class ComposedCommands {
         });
         return Observable_1.Observable.forkJoin(observableBatch);
     }
+    filterWithSelected(current_operations, filter, status) {
+        let observableBatch = [];
+        current_operations.forEach((current_op) => {
+            let o = this.deepBlueService.filter_regions(current_op, filter, status);
+            observableBatch.push(o);
+        });
+        return Observable_1.Observable.forkJoin(observableBatch);
+    }
     countRegionsBatch(query_ids, status) {
         let observableBatch = [];
         query_ids.forEach((op_exp, key) => {
@@ -37,7 +45,23 @@ class ComposedCommands {
         });
         return Observable_1.Observable.forkJoin(observableBatch);
     }
-    countOverlaps(data_query_id, experiments_name, status) {
+    applyFilter(current_operations, filters, status) {
+        if (filters.length == 0) {
+            return Observable_1.Observable.of(current_operations);
+        }
+        else {
+            let filter = filters.shift();
+            let subject = new rxjs_1.Subject();
+            this.filterWithSelected(current_operations, filter, status).subscribe((new_operation) => {
+                return this.applyFilter(new_operation, filters, status).subscribe((queries_filtered) => {
+                    subject.next(queries_filtered);
+                    subject.complete();
+                });
+            });
+            return subject.asObservable();
+        }
+    }
+    countOverlaps(data_query_id, experiments_name, filters, status) {
         var start = new Date().getTime();
         let total = data_query_id.length * experiments_name.length * 4;
         status.reset(total);
@@ -45,13 +69,15 @@ class ComposedCommands {
         status.setStep("Selecting experiments regions");
         this.selectMultipleExperiments(experiments_name, status).subscribe((selected_experiments) => {
             status.setStep("Overlaping regions");
-            this.intersectWithSelected(data_query_id, selected_experiments, status).subscribe((overlap_ids) => {
-                status.setStep("Intersecting regions");
-                this.countRegionsBatch(overlap_ids, status).subscribe((datum) => {
-                    var end = new Date().getTime();
-                    setTimeout(() => {
-                        response.next(datum);
-                        response.complete();
+            this.applyFilter(selected_experiments, filters, status).subscribe((filtered_data_id) => {
+                this.intersectWithSelected(data_query_id, filtered_data_id, status).subscribe((overlap_ids) => {
+                    status.setStep("Intersecting regions");
+                    this.countRegionsBatch(overlap_ids, status).subscribe((datum) => {
+                        var end = new Date().getTime();
+                        setTimeout(() => {
+                            response.next(datum);
+                            response.complete();
+                        });
                     });
                 });
             });

@@ -152,6 +152,47 @@ export class DeepBlueIntersection implements DeepBlueOperation {
     }
 }
 
+export class DeepBlueFilter implements DeepBlueOperation {
+    constructor(private _data: DeepBlueOperation, public _params: FilterParameter, public query_id: string) { }
+
+    queryId(): string {
+        return this.query_id;
+    };
+
+    data(): Name | DeepBlueOperation | DeepBlueParameters {
+        return this._data
+    }
+
+    getDataName(): string {
+        return this._data.getDataName();
+    }
+
+    getDataQuery(): string {
+        return this._data.getDataName();
+    }
+
+    getFilterName(): string {
+        return "filter_regions";
+    }
+
+    getFilterQuery(): string {
+        return this._params.toString();
+    }
+
+    key(): string {
+        return "filter_" + this._data.queryId() + '_' + this._params.toString();
+    }
+
+    clone(): DeepBlueFilter {
+        return new DeepBlueFilter(
+            this._data.clone(),
+            this._params.clone(),
+            this.query_id
+        );
+    }
+
+}
+
 export class DeepBlueRequest implements IKey {
     constructor(private _data: DeepBlueOperation, public request_id: string, public command: string) { }
 
@@ -276,3 +317,31 @@ export class DeepBlueMiddlewareGOEnrichtmentResult {
         return this.results;
     }
 }
+
+export class FilterParameter {
+    constructor(public field: string, public operation: string, public value: string, public type: string) { }
+
+    static fromObject(o: Object) : FilterParameter {
+        return new FilterParameter(o['field'], o['operation'], o['value'], o['type']);
+    }
+    asKeyValue(): Object {
+        let params = {};
+
+        params["field"] = this.field;
+        params["operation"] = this.operation;
+        params["value"] = this.value;
+        params["type"] = this.type;
+
+        return params;
+    }
+
+    toString() {
+        return this.asKeyValue().toString();
+    }
+
+    clone(): FilterParameter {
+        return new FilterParameter(this.field, this.operation, this.value, this.type);
+    }
+
+}
+

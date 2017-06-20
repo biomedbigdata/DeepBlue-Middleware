@@ -29,6 +29,13 @@ class ComposedCommandsRoutes {
         manager_1.Manager.getComposedCommands().subscribe((cc) => {
             let queries_id = req.query["queries_id"];
             let experiments_id = req.query["experiments_id"];
+            let filters = req.query["filters"];
+            if (filters) {
+                filters = JSON.parse(filters).map((f) => operations_1.FilterParameter.fromObject(f));
+            }
+            else {
+                filters = [];
+            }
             if (!(queries_id)) {
                 res.send(['error', '"queried_id" not informed']);
                 return;
@@ -48,7 +55,7 @@ class ComposedCommandsRoutes {
             experiments_1.Experiments.info(experiments_id).subscribe((experiments) => {
                 let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
                 let experiments_name = experiments.map((v) => new deepblue_1.Name(v["name"]));
-                var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, status).subscribe((results) => {
+                var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, filters, status).subscribe((results) => {
                     let rr = [];
                     for (let i = 0; i < results.length; i++) {
                         let result = results[i];

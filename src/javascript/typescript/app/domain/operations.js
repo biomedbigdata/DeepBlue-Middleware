@@ -126,6 +126,39 @@ class DeepBlueIntersection {
     }
 }
 exports.DeepBlueIntersection = DeepBlueIntersection;
+class DeepBlueFilter {
+    constructor(_data, _params, query_id) {
+        this._data = _data;
+        this._params = _params;
+        this.query_id = query_id;
+    }
+    queryId() {
+        return this.query_id;
+    }
+    ;
+    data() {
+        return this._data;
+    }
+    getDataName() {
+        return this._data.getDataName();
+    }
+    getDataQuery() {
+        return this._data.getDataName();
+    }
+    getFilterName() {
+        return "filter_regions";
+    }
+    getFilterQuery() {
+        return this._params.toString();
+    }
+    key() {
+        return "filter_" + this._data.queryId() + '_' + this._params.toString();
+    }
+    clone() {
+        return new DeepBlueFilter(this._data.clone(), this._params.clone(), this.query_id);
+    }
+}
+exports.DeepBlueFilter = DeepBlueFilter;
 class DeepBlueRequest {
     constructor(_data, request_id, command) {
         this._data = _data;
@@ -231,3 +264,29 @@ class DeepBlueMiddlewareGOEnrichtmentResult {
     }
 }
 exports.DeepBlueMiddlewareGOEnrichtmentResult = DeepBlueMiddlewareGOEnrichtmentResult;
+class FilterParameter {
+    constructor(field, operation, value, type) {
+        this.field = field;
+        this.operation = operation;
+        this.value = value;
+        this.type = type;
+    }
+    static fromObject(o) {
+        return new FilterParameter(o['field'], o['operation'], o['value'], o['type']);
+    }
+    asKeyValue() {
+        let params = {};
+        params["field"] = this.field;
+        params["operation"] = this.operation;
+        params["value"] = this.value;
+        params["type"] = this.type;
+        return params;
+    }
+    toString() {
+        return this.asKeyValue().toString();
+    }
+    clone() {
+        return new FilterParameter(this.field, this.operation, this.value, this.type);
+    }
+}
+exports.FilterParameter = FilterParameter;

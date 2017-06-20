@@ -22,7 +22,9 @@ import {
   DeepBlueRequest,
   DeepBlueResult,
   DeepBlueSelectData,
-  DeepBlueParameters
+  DeepBlueParameters,
+  DeepBlueFilter,
+  FilterParameter
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -184,13 +186,20 @@ export class DeepBlueService {
 
     const params = new DeepBlueParameters(genome, type, epigenetic_mark, biosource, sample, technique, project);
 
-    console.log(params);
-
     return this.execute("select_regions", params, status).map((response: [string, any]) => {
       status.increment();
       return new DeepBlueSelectData(params, response[1], "select_regions_from_metadata");
     }).catch(this.handleError);
+  }
 
+  filter_regions(query_data_id: DeepBlueOperation, filter: FilterParameter, status: RequestStatus): Observable<DeepBlueOperation> {
+    let params = filter.asKeyValue();
+    params["query_id"] = query_data_id.queryId();
+
+    return this.execute("filter_regions", params, status).map((response: [string, any]) => {
+      status.increment();
+      return new DeepBlueFilter(query_data_id, filter, response[1]);
+    }).catch(this.handleError);
   }
 
   selectGenes(gene_model_name: Name, status: RequestStatus): Observable<DeepBlueOperation> {
@@ -246,7 +255,7 @@ export class DeepBlueService {
       let params = new Object();
       params["query_id"] = op_exp.queryId();
 
-      let request: Observable<DeepBlueResult> = this.execute("count_regions", params, status).map((data: [string, any]) => {
+      return this.execute("count_regions", params, status).map((data: [string, any]) => {
         let request = new DeepBlueRequest(op_exp, data[1], "count_regions");
         this.requestCache.put(op_exp, request);
         return request;
@@ -254,7 +263,6 @@ export class DeepBlueService {
         return this.getResult(request_id, status);
       })
 
-      return request;
     }
   }
 
@@ -263,7 +271,7 @@ export class DeepBlueService {
     params['query_id'] = data.queryId();
     params['field'] = field;
 
-    let request: Observable<string[]> = this.execute("distinct_column_values", params, status).map((response: [string, any]) => {
+    return this.execute("distinct_column_values", params, status).map((response: [string, any]) => {
       status.increment();
       console.log(response);
       return new DeepBlueRequest(data, response[1], 'distinct_column_values');
@@ -272,8 +280,6 @@ export class DeepBlueService {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
 
-    return request;
-
   }
 
   calculate_enrichment(data: DeepBlueOperation, gene_model_name: Name, status: RequestStatus): Observable<DeepBlueResult> {
@@ -281,7 +287,7 @@ export class DeepBlueService {
     params['query_id'] = data.queryId();
     params['gene_model'] = gene_model_name.name;
 
-    let request: Observable<DeepBlueResult> = this.execute("calculate_enrichment", params, status).map((response: [string, any]) => {
+    return this.execute("calculate_enrichment", params, status).map((response: [string, any]) => {
       status.increment();
       return new DeepBlueRequest(data, response[1], 'calculate_enrichment');
     }).flatMap((request_id) => {
@@ -289,7 +295,6 @@ export class DeepBlueService {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
 
-    return request;
   }
 
   list_gene_models(status: RequestStatus): Observable<IdName[]> {

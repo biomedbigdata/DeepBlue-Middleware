@@ -1,15 +1,24 @@
 import { ComposedQueries } from './service/composed_queries';
 import { RequestStatus } from './domain/status';
 import { RequestManager } from './service/requests_manager';
-import { FullGeneModel, FullMetadata, IdName, Name } from './domain/deepblue';
+
+import {
+  FullGeneModel,
+  FullMetadata,
+  IdName,
+  Name
+} from './domain/deepblue';
+
 import {
   DeepBlueMiddlewareGOEnrichtmentResult,
   DeepBlueMiddlewareOverlapResult,
   DeepBlueOperation,
   DeepBlueRequest,
   DeepBlueResult,
-  DeepBlueSelectData
+  DeepBlueSelectData,
+  FilterParameter
 } from './domain/operations';
+
 import { Router } from 'express';
 
 import { Utils } from './service/utils';
@@ -53,6 +62,13 @@ export class ComposedCommandsRoutes {
 
       let queries_id = req.query["queries_id"];
       let experiments_id = req.query["experiments_id"];
+      let filters = req.query["filters"];
+
+      if (filters) {
+        filters = JSON.parse(filters).map((f) => FilterParameter.fromObject(f));
+      } else {
+        filters = [];
+      }
 
       if (!(queries_id)) {
         res.send(['error', '"queried_id" not informed']);
@@ -81,7 +97,7 @@ export class ComposedCommandsRoutes {
           queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
         let experiments_name: Name[] = experiments.map((v: Object) => new Name(v["name"]));
 
-        var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, status).subscribe((results: DeepBlueResult[]) => {
+        var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, filters, status).subscribe((results: DeepBlueResult[]) => {
           let rr = [];
           for (let i = 0; i < results.length; i++) {
             let result: DeepBlueResult = results[i];
@@ -95,6 +111,7 @@ export class ComposedCommandsRoutes {
 
       });
     });
+
   }
 
   private static countGenesOverlaps(req: express.Request, res: express.Response, next: express.NextFunction) {
