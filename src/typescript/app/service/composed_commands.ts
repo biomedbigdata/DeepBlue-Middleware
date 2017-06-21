@@ -75,7 +75,6 @@ export class ComposedCommands {
     }
 
     applyFilter(current_operations: DeepBlueOperation[], filters: FilterParameter[], status: RequestStatus): Observable<DeepBlueFilter[]> {
-
         if (filters.length == 0) {
             return Observable.of(current_operations);
         } else {
@@ -83,7 +82,6 @@ export class ComposedCommands {
 
             let subject = new Subject<DeepBlueFilter[]>();
             this.filterWithSelected(current_operations, filter, status).subscribe((new_operation: DeepBlueOperation[]) => {
-
                 return this.applyFilter(new_operation, filters, status).subscribe((queries_filtered: DeepBlueFilter[]) => {
                     subject.next(queries_filtered);
                     subject.complete();
@@ -107,7 +105,6 @@ export class ComposedCommands {
             status.setStep("Overlaping regions");
 
             this.applyFilter(selected_experiments, filters, status).subscribe((filtered_data_id: DeepBlueFilter[]) => {
-
                 this.intersectWithSelected(data_query_id, filtered_data_id, status).subscribe((overlap_ids: DeepBlueOperation[]) => {
                     status.setStep("Intersecting regions");
 

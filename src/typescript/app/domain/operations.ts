@@ -180,7 +180,7 @@ export class DeepBlueFilter implements DeepBlueOperation {
     }
 
     key(): string {
-        return "filter_" + this._data.queryId() + '_' + this._params.toString();
+        return "filter_" + this.queryId();
     }
 
     clone(): DeepBlueFilter {
@@ -336,7 +336,7 @@ export class FilterParameter {
     }
 
     toString() {
-        return this.asKeyValue().toString();
+        return JSON.stringify(this.asKeyValue());
     }
 
     clone(): FilterParameter {

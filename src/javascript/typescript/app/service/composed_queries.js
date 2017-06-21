@@ -10,10 +10,7 @@ class ComposedQueries {
         this.deepBlueService.list_gene_models(status).subscribe((id_names) => {
             this.deepBlueService.infos(id_names, status).subscribe((fullMetadata) => {
                 setTimeout(() => {
-                    console.log(fullMetadata);
                     const filteredGeneModels = fullMetadata.filter((geneModel) => {
-                        console.log("genemodel genome", geneModel.genome());
-                        console.log("genome.name", genome.name);
                         return geneModel.genome().toLocaleLowerCase() === genome.name.toLocaleLowerCase();
                     });
                     response.next(filteredGeneModels);
@@ -28,7 +25,6 @@ class ComposedQueries {
         this.deepBlueService.select_regions_from_metadata(genome.name, null, "Chromatin State Segmentation", null, null, null, null, status).subscribe((experiments_query) => {
             this.deepBlueService.distinct_column_values(experiments_query, "NAME", status).subscribe((csss) => {
                 setTimeout(() => {
-                    console.log(csss);
                     response.next(csss);
                     response.complete();
                 });

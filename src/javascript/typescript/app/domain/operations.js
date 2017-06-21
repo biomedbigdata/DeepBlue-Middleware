@@ -152,7 +152,7 @@ class DeepBlueFilter {
         return this._params.toString();
     }
     key() {
-        return "filter_" + this._data.queryId() + '_' + this._params.toString();
+        return "filter_" + this.queryId();
     }
     clone() {
         return new DeepBlueFilter(this._data.clone(), this._params.clone(), this.query_id);
@@ -283,7 +283,7 @@ class FilterParameter {
         return params;
     }
     toString() {
-        return this.asKeyValue().toString();
+        return JSON.stringify(this.asKeyValue());
     }
     clone() {
         return new FilterParameter(this.field, this.operation, this.value, this.type);

@@ -207,10 +207,8 @@ class DeepBlueService {
         params['field'] = field;
         return this.execute("distinct_column_values", params, status).map((response) => {
             status.increment();
-            console.log(response);
             return new operations_1.DeepBlueRequest(data, response[1], 'distinct_column_values');
         }).flatMap((request_id) => {
-            console.log(request_id);
             return this.getResult(request_id, status);
         }).catch(this.handleError);
     }
@@ -222,7 +220,6 @@ class DeepBlueService {
             status.increment();
             return new operations_1.DeepBlueRequest(data, response[1], 'calculate_enrichment');
         }).flatMap((request_id) => {
-            console.log(request_id);
             return this.getResult(request_id, status);
         }).catch(this.handleError);
     }
@@ -238,16 +235,13 @@ class DeepBlueService {
     info(id_name, status) {
         let object = this.IdObjectCache.get(id_name);
         if (object) {
-            console.log("info cache found: ", object);
             status.increment();
             return Observable_1.Observable.of(object);
         }
         return this.execute("info", id_name, status).map((response) => {
-            console.log("info stuff:", response[1]);
             return new deepblue_1.FullMetadata(response[1][0]);
         })
             .do((info_object) => {
-            console.log("cacgubg::m", info_object);
             this.IdObjectCache.put(id_name, info_object);
         });
     }
@@ -286,7 +280,6 @@ class DeepBlueService {
                     let op_result = new operations_1.DeepBlueResult(op_request, value[1]);
                     this.resultCache.put(op_request, op_result);
                     timer.unsubscribe();
-                    console.log(op_result);
                     pollSubject.next(op_result);
                     pollSubject.complete();
                 }
