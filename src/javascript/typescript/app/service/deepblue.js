@@ -115,7 +115,7 @@ class DeepBlueService {
                 console.error(command_name, parameters, response);
             }
             status.increment();
-            return [status, response];
+            return [command_status, response];
         });
     }
     selectExperiment(experiment, status) {
@@ -212,13 +212,13 @@ class DeepBlueService {
             return this.getResult(request_id, status);
         }).catch(this.handleError);
     }
-    calculate_enrichment(data, gene_model_name, status) {
+    enrich_regions_go_terms(data, gene_model_name, status) {
         const params = new Object();
         params['query_id'] = data.queryId();
         params['gene_model'] = gene_model_name.name;
-        return this.execute("calculate_enrichment", params, status).map((response) => {
+        return this.execute("enrich_regions_go_terms", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueRequest(data, response[1], 'calculate_enrichment');
+            return new operations_1.DeepBlueRequest(data, response[1], 'enrich_regions_go_terms');
         }).flatMap((request_id) => {
             return this.getResult(request_id, status);
         }).catch(this.handleError);

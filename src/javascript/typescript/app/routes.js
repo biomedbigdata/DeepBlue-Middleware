@@ -88,7 +88,7 @@ class ComposedCommandsRoutes {
             });
         });
     }
-    static calculateEnrichment(req, res, next) {
+    static enrichRegionsGoTerms(req, res, next) {
         manager_1.Manager.getComposedCommands().subscribe((cc) => {
             let queries_id = req.query["queries_id"];
             let gene_model_name = req.query["gene_model_name"];
@@ -106,7 +106,7 @@ class ComposedCommandsRoutes {
                 queries_id = [queries_id];
             }
             let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
-            var ccos = cc.calculateEnrichment(deepblue_query_ops, new deepblue_1.Name(gene_model_name), status).subscribe((results) => {
+            var ccos = cc.enrichRegionsGoTerms(deepblue_query_ops, new deepblue_1.Name(gene_model_name), status).subscribe((results) => {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
@@ -149,7 +149,7 @@ class ComposedCommandsRoutes {
         router = express.Router();
         router.get("/count_overlaps", this.countOverlaps);
         router.get("/count_genes_overlaps", this.countGenesOverlaps);
-        router.get("/calculate_enrichment", this.calculateEnrichment);
+        router.get("/enrich_regions_go_terms", this.enrichRegionsGoTerms);
         router.get("/get_request", this.getRequest);
         router.get("/gene_models_by_genome", this.geneModelsByGenome);
         router.get("/chromatin_states_by_genome", this.chromatinStatesByGenome);

@@ -144,7 +144,7 @@ export class DeepBlueService {
     return subject.asObservable();
   }
 
-  execute(command_name: string, parameters: Object, status: RequestStatus): Observable<[string | any]> {
+  execute(command_name: string, parameters: Object, status: RequestStatus): Observable<[string, any]> {
 
     let command: Command = this._commands[command_name];
     return command.makeRequest(parameters).map((body: string[]) => {
@@ -154,7 +154,7 @@ export class DeepBlueService {
         console.error(command_name, parameters, response);
       }
       status.increment();
-      return [status, response];
+      return <[string, any]>[command_status, response];
     });
   }
 
@@ -262,7 +262,6 @@ export class DeepBlueService {
       }).flatMap((request_id) => {
         return this.getResult(request_id, status);
       })
-
     }
   }
 
@@ -277,21 +276,19 @@ export class DeepBlueService {
     }).flatMap((request_id) => {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
-
   }
 
-  calculate_enrichment(data: DeepBlueOperation, gene_model_name: Name, status: RequestStatus): Observable<DeepBlueResult> {
+  enrich_regions_go_terms(data: DeepBlueOperation, gene_model_name: Name, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
     params['query_id'] = data.queryId();
     params['gene_model'] = gene_model_name.name;
 
-    return this.execute("calculate_enrichment", params, status).map((response: [string, any]) => {
+    return this.execute("enrich_regions_go_terms", params, status).map((response: [string, any]) => {
       status.increment();
-      return new DeepBlueRequest(data, response[1], 'calculate_enrichment');
+      return new DeepBlueRequest(data, response[1], 'enrich_regions_go_terms');
     }).flatMap((request_id) => {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
-
   }
 
   list_gene_models(status: RequestStatus): Observable<IdName[]> {

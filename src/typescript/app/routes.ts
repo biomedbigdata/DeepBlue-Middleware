@@ -147,7 +147,7 @@ export class ComposedCommandsRoutes {
   }
 
 
-  private static calculateEnrichment(req: express.Request, res: express.Response, next: express.NextFunction) {
+  private static enrichRegionsGoTerms(req: express.Request, res: express.Response, next: express.NextFunction) {
     Manager.getComposedCommands().subscribe((cc: ComposedCommands) => {
 
       let queries_id = req.query["queries_id"];
@@ -174,7 +174,7 @@ export class ComposedCommandsRoutes {
       let deepblue_query_ops: DeepBlueOperation[] =
         queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
 
-      var ccos = cc.calculateEnrichment(deepblue_query_ops, new Name(gene_model_name), status).subscribe((results: DeepBlueResult[]) => {
+      var ccos = cc.enrichRegionsGoTerms(deepblue_query_ops, new Name(gene_model_name), status).subscribe((results: DeepBlueResult[]) => {
         let rr = [];
         for (let i = 0; i < results.length; i++) {
           let result: DeepBlueResult = results[i];
@@ -229,7 +229,7 @@ export class ComposedCommandsRoutes {
 
     router.get("/count_overlaps", this.countOverlaps);
     router.get("/count_genes_overlaps", this.countGenesOverlaps);
-    router.get("/calculate_enrichment", this.calculateEnrichment);
+    router.get("/enrich_regions_go_terms", this.enrichRegionsGoTerms);
     router.get("/get_request", this.getRequest)
     router.get("/gene_models_by_genome", this.geneModelsByGenome);
     router.get("/chromatin_states_by_genome", this.chromatinStatesByGenome);

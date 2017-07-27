@@ -45,9 +45,9 @@ export class ComposedCommands {
     }
 
     filterWithSelected(current_operations: DeepBlueOperation[], filter: FilterParameter,
-        status: RequestStatus): Observable<DeepBlueFilter[]> {
+        status: RequestStatus): Observable<DeepBlueOperation[]> {
 
-        let observableBatch: Observable<DeepBlueFilter>[] = [];
+        let observableBatch: Observable<DeepBlueOperation>[] = [];
 
         current_operations.forEach((current_op) => {
             let o = this.deepBlueService.filter_regions(current_op, filter, status);
@@ -74,7 +74,7 @@ export class ComposedCommands {
         return Observable.forkJoin(observableBatch);
     }
 
-    applyFilter(current_operations: DeepBlueOperation[], filters: FilterParameter[], status: RequestStatus): Observable<DeepBlueFilter[]> {
+    applyFilter(current_operations: DeepBlueOperation[], filters: FilterParameter[], status: RequestStatus): Observable<DeepBlueOperation[]> {
         if (filters.length == 0) {
             return Observable.of(current_operations);
         } else {
@@ -150,7 +150,7 @@ export class ComposedCommands {
         return response.asObservable();
     }
 
-    calculateEnrichment(data_query_id: DeepBlueOperation[], gene_model: Name, status: RequestStatus): Observable<DeepBlueResult[]> {
+    enrichRegionsGoTerms(data_query_id: DeepBlueOperation[], gene_model: Name, status: RequestStatus): Observable<DeepBlueResult[]> {
         var start = new Date().getTime();
 
         let total = data_query_id.length * data_query_id.length * 3;
@@ -161,7 +161,7 @@ export class ComposedCommands {
         let observableBatch: Observable<DeepBlueResult>[] = [];
 
         data_query_id.forEach((current_op) => {
-            let o = this.deepBlueService.calculate_enrichment(current_op, gene_model, status);
+            let o = this.deepBlueService.enrich_regions_go_terms(current_op, gene_model, status);
             observableBatch.push(o);
         });
 
