@@ -227,12 +227,19 @@ export class ComposedCommandsRoutes {
   private static enrichRegions(req: express.Request, res: express.Response, next: express.NextFunction) {
     Manager.getRegionsEnrichment().subscribe((re: RegionsEnrichment) => {
 
+      let query_id: string = req.query["query_id"];
       let genome: string = req.query["genome"];
 
       if (!(genome)) {
         res.send(["error", "genome is missing"]);
         return;
       }
+
+      if (!(query_id)) {
+        res.send(["error", "query_id is missing"]);
+        return;
+      }
+
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
       re.buildDatabases(status, genome).subscribe((stuff) => {

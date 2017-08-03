@@ -228,10 +228,25 @@ class DeepBlueService {
             params["extra_metadata"] = { "type": type };
         }
         return this.execute("list_epigenetic_marks", params, status).map((response) => {
-            console.log(response);
             const data = response[1] || [];
             return data.map((value) => {
                 return new deepblue_1.GeneModel(value);
+            }).sort((a, b) => a.name.localeCompare(b.name));
+        });
+    }
+    collection_experiments_count(status, controlled_vocabulary, type, genome) {
+        const params = new Object();
+        params["controlled_vocabulary"] = controlled_vocabulary;
+        if (type) {
+            params["type"] = type;
+        }
+        if (genome) {
+            params["genome"] = genome;
+        }
+        return this.execute("collection_experiments_count", params, status).map((response) => {
+            const data = response[1] || [];
+            return data.map((value) => {
+                return new deepblue_1.IdNameCount(value[0], value[1], value[2]);
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }

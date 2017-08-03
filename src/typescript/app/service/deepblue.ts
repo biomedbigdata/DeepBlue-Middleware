@@ -12,7 +12,8 @@ import {
   FullMetadata,
   GeneModel,
   IdName,
-  Name
+  Name,
+  IdNameCount
 } from '../domain/deepblue';
 
 import {
@@ -297,10 +298,28 @@ export class DeepBlueService {
     }
 
     return this.execute("list_epigenetic_marks", params, status).map((response: [string, any]) => {
-      console.log(response);
       const data = response[1] || [];
       return data.map((value) => {
         return new GeneModel(value);
+      }).sort((a: IdName, b: IdName) => a.name.localeCompare(b.name));
+    });
+  }
+
+  collection_experiments_count(status: RequestStatus, controlled_vocabulary: string, type?: string, genome?:string): Observable<IdNameCount[]> {
+    const params: Object = new Object();
+
+    params["controlled_vocabulary"] = controlled_vocabulary;
+    if (type) {
+      params["type"] = type;
+    }
+    if (genome) {
+      params["genome"] = genome;
+    }
+
+    return this.execute("collection_experiments_count", params, status).map((response: [string, any]) => {
+      const data = response[1] || [];
+      return data.map((value) => {
+        return new IdNameCount(value[0], value[1], value[2]);
       }).sort((a: IdName, b: IdName) => a.name.localeCompare(b.name));
     });
   }

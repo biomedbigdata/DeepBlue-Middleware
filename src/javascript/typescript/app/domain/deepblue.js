@@ -25,6 +25,20 @@ class IdName {
     }
 }
 exports.IdName = IdName;
+class IdNameCount {
+    constructor(id, name, count) {
+        this.id = id;
+        this.name = name;
+        this.count = count;
+    }
+    key() {
+        return this.id;
+    }
+    clone() {
+        return new IdName(this.id, this.name);
+    }
+}
+exports.IdNameCount = IdNameCount;
 class EpigeneticMark extends IdName {
     constructor(data) {
         super(data[0], data[1]);

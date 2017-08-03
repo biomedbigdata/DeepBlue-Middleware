@@ -12,6 +12,7 @@ class ComposedCommandsRoutes {
     static getRequest(req, res, next) {
         let request_id = req.query["request_id"];
         let request_data = ComposedCommandsRoutes.requestManager.getRequest(request_id);
+        console.log("hereeee", request_data);
         if (request_data.finished) {
             res.send(["okay", request_data.getData()]);
         }
@@ -147,9 +148,14 @@ class ComposedCommandsRoutes {
     }
     static enrichRegions(req, res, next) {
         manager_1.Manager.getRegionsEnrichment().subscribe((re) => {
+            let query_id = req.query["query_id"];
             let genome = req.query["genome"];
             if (!(genome)) {
                 res.send(["error", "genome is missing"]);
+                return;
+            }
+            if (!(query_id)) {
+                res.send(["error", "query_id is missing"]);
                 return;
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
