@@ -122,6 +122,7 @@ class ComposedCommandsRoutes {
             let genome = req.query["genome"];
             if (!(genome)) {
                 res.send(["error", "genome is missing"]);
+                return;
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             cq.geneModelsByGenome(new deepblue_1.Name(genome), status).subscribe((gene_models) => {
@@ -135,10 +136,25 @@ class ComposedCommandsRoutes {
             let genome = req.query["genome"];
             if (!(genome)) {
                 res.send(["error", "genome is missing"]);
+                return;
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             cq.chromatinStatesByGenome(new deepblue_1.Name(genome), status).subscribe((csss) => {
                 res.send(["okay", csss]);
+                status.finish(null);
+            });
+        });
+    }
+    static enrichRegions(req, res, next) {
+        manager_1.Manager.getRegionsEnrichment().subscribe((re) => {
+            let genome = req.query["genome"];
+            if (!(genome)) {
+                res.send(["error", "genome is missing"]);
+                return;
+            }
+            let status = ComposedCommandsRoutes.requestManager.startRequest();
+            re.buildDatabases(status, genome).subscribe((stuff) => {
+                res.send(["okay", 'cool']);
                 status.finish(null);
             });
         });
@@ -153,6 +169,7 @@ class ComposedCommandsRoutes {
         router.get("/get_request", this.getRequest);
         router.get("/gene_models_by_genome", this.geneModelsByGenome);
         router.get("/chromatin_states_by_genome", this.chromatinStatesByGenome);
+        router.get("/enrich_regions", this.enrichRegions);
         return router;
     }
 }

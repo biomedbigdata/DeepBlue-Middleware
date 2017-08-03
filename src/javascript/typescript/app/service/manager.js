@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const composed_commands_1 = require("./composed_commands");
 const deepblue_1 = require("./deepblue");
+const composed_commands_1 = require("./composed_commands");
 const composed_queries_1 = require("./composed_queries");
+const regions_enrichment_1 = require("./regions_enrichment");
 const Observable_1 = require("rxjs/Observable");
 const rxjs_1 = require("rxjs");
 class Manager {
@@ -31,8 +32,21 @@ class Manager {
         });
         return subject.asObservable();
     }
+    static getRegionsEnrichment() {
+        if (this.regions_enrichment) {
+            return Observable_1.Observable.of(this.regions_enrichment);
+        }
+        let subject = new rxjs_1.Subject();
+        this.dbs.init().subscribe(() => {
+            this.regions_enrichment = new regions_enrichment_1.RegionsEnrichment(this.dbs);
+            subject.next(this.regions_enrichment);
+            subject.complete();
+        });
+        return subject.asObservable();
+    }
 }
 Manager.dbs = new deepblue_1.DeepBlueService();
 Manager.composed_commands = null;
 Manager.composed_queries = null;
+Manager.regions_enrichment = null;
 exports.Manager = Manager;

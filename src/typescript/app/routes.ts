@@ -23,9 +23,8 @@ import { Router } from 'express';
 
 import { Utils } from './service/utils';
 
-import { DeepBlueService } from './service/deepblue';
-
 import { Manager } from './service/manager';
+import { RegionsEnrichment } from './service/regions_enrichment';
 import { ComposedCommands } from './service/composed_commands';
 import { Experiments } from './service/experiments';
 
@@ -44,6 +43,7 @@ export class ComposedCommandsRoutes {
 
     let request_data: RequestStatus = ComposedCommandsRoutes.requestManager.getRequest(request_id);
 
+    console.log("hereeee", request_data);
     if (request_data.finished) {
       res.send(["okay", request_data.getData()]);
     } else {
@@ -195,6 +195,7 @@ export class ComposedCommandsRoutes {
 
       if (!(genome)) {
         res.send(["error", "genome is missing"]);
+        return;
       }
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
@@ -212,11 +213,30 @@ export class ComposedCommandsRoutes {
 
       if (!(genome)) {
         res.send(["error", "genome is missing"]);
+        return;
       }
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
       cq.chromatinStatesByGenome(new Name(genome), status).subscribe((csss: string[]) => {
         res.send(["okay", csss]);
+        status.finish(null);
+      });
+    });
+  }
+
+  private static enrichRegions(req: express.Request, res: express.Response, next: express.NextFunction) {
+    Manager.getRegionsEnrichment().subscribe((re: RegionsEnrichment) => {
+
+      let genome: string = req.query["genome"];
+
+      if (!(genome)) {
+        res.send(["error", "genome is missing"]);
+        return;
+      }
+
+      let status = ComposedCommandsRoutes.requestManager.startRequest();
+      re.buildDatabases(status, genome).subscribe((stuff) => {
+        res.send(["okay", 'cool']);
         status.finish(null);
       });
     });
@@ -233,6 +253,7 @@ export class ComposedCommandsRoutes {
     router.get("/get_request", this.getRequest)
     router.get("/gene_models_by_genome", this.geneModelsByGenome);
     router.get("/chromatin_states_by_genome", this.chromatinStatesByGenome);
+    router.get("/enrich_regions", this.enrichRegions);
 
     return router;
   }

@@ -56,8 +56,7 @@ class Command {
         } else if (parameter_type == "double") {
           xmlrpc_request_parameters.push(parseFloat(raw_value));
         } else if (parameter_type == "struct") {
-          var extra_metadata = JSON.parse(raw_value);
-          xmlrpc_request_parameters.push(extra_metadata);
+          xmlrpc_request_parameters.push(raw_value);
         } else if (parameter_type == "boolean") {
           var bool_value = raw_value == "true";
           xmlrpc_request_parameters.push(bool_value);
@@ -289,6 +288,38 @@ export class DeepBlueService {
     }).flatMap((request_id) => {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
+  }
+
+  list_epigenetic_marks(status: RequestStatus, type?: string): Observable<IdName[]> {
+    const params: Object = new Object();
+    if (type) {
+      params["extra_metadata"] = { "type": type };
+    }
+
+    return this.execute("list_epigenetic_marks", params, status).map((response: [string, any]) => {
+      console.log(response);
+      const data = response[1] || [];
+      return data.map((value) => {
+        return new GeneModel(value);
+      }).sort((a: IdName, b: IdName) => a.name.localeCompare(b.name));
+    });
+  }
+
+  list_experiments(status: RequestStatus, type?: string, epigenetic_mark?: string): Observable<IdName[]> {
+    const params: Object = new Object();
+    if (type) {
+      params["type"] = type;
+    }
+    if (epigenetic_mark) {
+      params["epigenetic_mark"] = epigenetic_mark;
+    }
+
+    return this.execute("list_experiments", params, status).map((response: [string, any]) => {
+      const data = response[1] || [];
+      return data.map((value) => {
+        return new GeneModel(value);
+      }).sort((a: IdName, b: IdName) => a.name.localeCompare(b.name));
+    });
   }
 
   list_gene_models(status: RequestStatus): Observable<IdName[]> {
