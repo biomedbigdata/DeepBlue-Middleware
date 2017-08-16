@@ -13,7 +13,8 @@ import {
   GeneModel,
   IdName,
   Name,
-  IdNameCount
+  IdNameCount,
+  Gene
 } from '../domain/deepblue';
 
 import {
@@ -305,7 +306,7 @@ export class DeepBlueService {
     });
   }
 
-  collection_experiments_count(status: RequestStatus, controlled_vocabulary: string, type?: string, genome?:string): Observable<IdNameCount[]> {
+  collection_experiments_count(status: RequestStatus, controlled_vocabulary: string, type?: string, genome?: string): Observable<IdNameCount[]> {
     const params: Object = new Object();
 
     params["controlled_vocabulary"] = controlled_vocabulary;
@@ -348,6 +349,26 @@ export class DeepBlueService {
       const data = response[1] || [];
       return data.map((value) => {
         return new GeneModel(value);
+      }).sort((a: IdName, b: IdName) => a.name.localeCompare(b.name));
+    });
+  }
+
+  list_genes(gene_model: GeneModel | string, status: RequestStatus): Observable<Gene[]> {
+    let gene_model_name = "";
+    if (gene_model instanceof GeneModel) {
+      gene_model_name = gene_model.name;
+    } else {
+      gene_model_name = gene_model;
+    }
+
+    const params: Object = new Object();
+
+    params["gene_model"] = gene_model_name;
+
+    return this.execute("list_genes", params, status).map((response: [string, any]) => {
+      const data = response[1] || [];
+      return data.map((value) => {
+        return new Gene(value);
       }).sort((a: IdName, b: IdName) => a.name.localeCompare(b.name));
     });
   }

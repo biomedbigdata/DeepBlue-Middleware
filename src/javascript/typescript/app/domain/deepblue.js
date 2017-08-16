@@ -75,6 +75,19 @@ class GeneModel extends IdName {
     }
 }
 exports.GeneModel = GeneModel;
+class Gene extends IdName {
+    constructor(data) {
+        super(data["_id"], data["gene_name"]);
+        this.data = data;
+    }
+    gene_id() {
+        return this.data["gene_id"];
+    }
+    gene_name() {
+        return this.data["gene_name"];
+    }
+}
+exports.Gene = Gene;
 class FullMetadata extends IdName {
     constructor(data) {
         super(data["_id"], data["name"]);

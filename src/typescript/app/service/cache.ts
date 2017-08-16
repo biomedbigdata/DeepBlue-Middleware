@@ -1,5 +1,5 @@
-import { IKey } from 'app/domain/interfaces';
-import { ICloneable } from 'app/domain/interfaces';
+import { IKey } from '../domain/interfaces';
+import { ICloneable } from '../domain/interfaces';
 
 export class DataCache<T extends IKey, V extends ICloneable> {
 

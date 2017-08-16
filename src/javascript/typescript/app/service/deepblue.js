@@ -274,6 +274,23 @@ class DeepBlueService {
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
+    list_genes(gene_model, status) {
+        let gene_model_name = "";
+        if (gene_model instanceof deepblue_1.GeneModel) {
+            gene_model_name = gene_model.name;
+        }
+        else {
+            gene_model_name = gene_model;
+        }
+        const params = new Object();
+        params["gene_model"] = gene_model_name;
+        return this.execute("list_genes", params, status).map((response) => {
+            const data = response[1] || [];
+            return data.map((value) => {
+                return new deepblue_1.Gene(value);
+            }).sort((a, b) => a.name.localeCompare(b.name));
+        });
+    }
     info(id_name, status) {
         let object = this.IdObjectCache.get(id_name);
         if (object) {

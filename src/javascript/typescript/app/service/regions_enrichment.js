@@ -19,12 +19,9 @@ class RegionsEnrichment {
     getHistoneModificationDatabases(request_status, genome) {
         let pollSubject = new rxjs_1.Subject();
         this.deepBlueService.collection_experiments_count(request_status, "epigenetic_marks", "peaks", genome).subscribe((ems) => {
-            console.log(ems);
             let histone_marks_names = ems.map((id_name) => id_name.name);
-            console.log(histone_marks_names);
             this.listExperimentsMany(request_status, histone_marks_names).subscribe((dbs) => {
                 pollSubject.next(dbs.filter((em) => {
-                    console.log(em[0], em[1].length);
                     return em[1].length > 0;
                 }));
                 pollSubject.complete();
@@ -33,10 +30,11 @@ class RegionsEnrichment {
         return pollSubject.asObservable();
     }
     buildDatabases(request_status, genome) {
-        "Histone Modification";
-        "Transcription Factor Binding Sites";
-        "Gene Expression";
-        console.log("aaaa");
+        /*
+        "Histone Modification"
+        "Transcription Factor Binding Sites"
+        "Gene Expression"
+        */
         return this.getHistoneModificationDatabases(request_status, genome);
     }
 }

@@ -1,7 +1,7 @@
 import { EpigeneticMark, Name } from './deepblue';
-import { ICloneable } from 'app/domain/interfaces'
-import { IKey } from 'app/domain/interfaces';
-import { IdName } from 'app/domain/deepblue';
+import { ICloneable } from '../domain/interfaces'
+import { IKey } from '../domain/interfaces';
+import { IdName } from '../domain/deepblue';
 
 export class DeepBlueParameters implements IKey {
     constructor(public genome: string, public type: string, public epigenetic_mark: string,

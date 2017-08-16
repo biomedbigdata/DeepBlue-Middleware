@@ -3,9 +3,11 @@ import { DeepBlueService } from './deepblue';
 import { ComposedCommands } from './composed_commands';
 import { ComposedQueries } from './composed_queries';
 import { RegionsEnrichment } from "./regions_enrichment";
+import { Genes } from "./genes";
 
 import { Observable } from "rxjs/Observable";
 import { Subject } from "rxjs";
+
 
 
 export class Manager {
@@ -14,6 +16,7 @@ export class Manager {
   private static composed_commands: ComposedCommands = null;
   private static composed_queries: ComposedQueries = null;
   private static regions_enrichment: RegionsEnrichment = null;
+  private static genes: Genes = null;
 
   constructor() { }
 
@@ -47,12 +50,24 @@ export class Manager {
     return subject.asObservable();
   }
 
+  static getGenes(): Observable<Genes> {
+    if (this.genes) {
+      return Observable.of(this.genes);
+    }
+
+    let subject = new Subject<Genes>();
+    this.dbs.init().subscribe(() => {
+      this.genes = new Genes(this.dbs);
+      subject.next(this.genes);
+      subject.complete();
+    })
+    return subject.asObservable();
+  }
+
   static getRegionsEnrichment(): Observable<RegionsEnrichment> {
     if (this.regions_enrichment) {
       return Observable.of(this.regions_enrichment);
     }
-
-
 
     let subject = new Subject<RegionsEnrichment>();
     this.dbs.init().subscribe(() => {

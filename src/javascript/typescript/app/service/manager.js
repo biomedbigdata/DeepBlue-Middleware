@@ -4,6 +4,7 @@ const deepblue_1 = require("./deepblue");
 const composed_commands_1 = require("./composed_commands");
 const composed_queries_1 = require("./composed_queries");
 const regions_enrichment_1 = require("./regions_enrichment");
+const genes_1 = require("./genes");
 const Observable_1 = require("rxjs/Observable");
 const rxjs_1 = require("rxjs");
 class Manager {
@@ -32,6 +33,18 @@ class Manager {
         });
         return subject.asObservable();
     }
+    static getGenes() {
+        if (this.genes) {
+            return Observable_1.Observable.of(this.genes);
+        }
+        let subject = new rxjs_1.Subject();
+        this.dbs.init().subscribe(() => {
+            this.genes = new genes_1.Genes(this.dbs);
+            subject.next(this.genes);
+            subject.complete();
+        });
+        return subject.asObservable();
+    }
     static getRegionsEnrichment() {
         if (this.regions_enrichment) {
             return Observable_1.Observable.of(this.regions_enrichment);
@@ -49,4 +62,5 @@ Manager.dbs = new deepblue_1.DeepBlueService();
 Manager.composed_commands = null;
 Manager.composed_queries = null;
 Manager.regions_enrichment = null;
+Manager.genes = null;
 exports.Manager = Manager;
