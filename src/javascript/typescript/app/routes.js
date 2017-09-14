@@ -188,7 +188,6 @@ class ComposedCommandsRoutes {
                 return;
             }
             let gene_id_name = req.query["gene_id_name"];
-            console.log(gene_id_name);
             if (!(gene_id_name)) {
                 res.send(["error", "gene_id_name is missing"]);
                 return;

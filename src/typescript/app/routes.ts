@@ -277,9 +277,7 @@ export class ComposedCommandsRoutes {
         res.send(["error", "gene_model is missing"]);
         return;
       }
-
       let gene_id_name: string = req.query["gene_id_name"];
-      console.log(gene_id_name);
       if (!(gene_id_name)) {
         res.send(["error", "gene_id_name is missing"]);
         return;

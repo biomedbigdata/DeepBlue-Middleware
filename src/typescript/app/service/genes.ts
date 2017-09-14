@@ -29,9 +29,11 @@ export class Genes {
   }
 
   listGeneName(name_id: string, status: RequestStatus, gene_model: GeneModel | string): Observable<Gene[]> {
-    return this.getGenes(status, gene_model)
-      .map((genes: Gene[]) =>
-        genes.filter((gene: Gene) => name_id.length == 0 || gene.gene_id().includes(name_id) || gene.gene_name().includes(name_id))
-      );
+    let upper_name_id = name_id.toLocaleUpperCase();
+    return this.getGenes(status, gene_model).map((genes: Gene[]) =>
+      genes.filter((gene: Gene) => {
+        return name_id.length == 0 || gene.gene_id().includes(upper_name_id) || gene.gene_name().includes(upper_name_id);
+      })
+    );
   }
 }

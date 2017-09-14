@@ -22,8 +22,10 @@ class Genes {
             .do((gene_names) => this.genes_models[gene_model_name] = gene_names);
     }
     listGeneName(name_id, status, gene_model) {
-        return this.getGenes(status, gene_model)
-            .map((genes) => genes.filter((gene) => name_id.length == 0 || gene.gene_id().includes(name_id) || gene.gene_name().includes(name_id)));
+        let upper_name_id = name_id.toLocaleUpperCase();
+        return this.getGenes(status, gene_model).map((genes) => genes.filter((gene) => {
+            return name_id.length == 0 || gene.gene_id().includes(upper_name_id) || gene.gene_name().includes(upper_name_id);
+        }));
     }
 }
 exports.Genes = Genes;
