@@ -59,6 +59,36 @@ class DeepBlueParameters {
     }
 }
 exports.DeepBlueParameters = DeepBlueParameters;
+class DeepBlueSimpleQuery {
+    constructor(_query_id) {
+        this._query_id = _query_id;
+    }
+    queryId() {
+        return this._query_id;
+    }
+    key() {
+        return this._query_id;
+    }
+    clone() {
+        return new DeepBlueSimpleQuery(this._query_id);
+    }
+    data() {
+        return new deepblue_1.Name("");
+    }
+    getDataName() {
+        return "";
+    }
+    getDataQuery() {
+        return "";
+    }
+    getFilterName() {
+        return "";
+    }
+    getFilterQuery() {
+        return "";
+    }
+}
+exports.DeepBlueSimpleQuery = DeepBlueSimpleQuery;
 class DeepBlueSelectData {
     constructor(_data, query_id, command) {
         this._data = _data;
