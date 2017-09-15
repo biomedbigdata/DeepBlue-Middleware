@@ -9,6 +9,17 @@ const Observable_1 = require("rxjs/Observable");
 const rxjs_1 = require("rxjs");
 class Manager {
     constructor() { }
+    static getDeepBlueService() {
+        if (this.dbs.isInitialized()) {
+            return Observable_1.Observable.of(this.dbs);
+        }
+        let subject = new rxjs_1.Subject();
+        this.dbs.init().subscribe(() => {
+            subject.next(this.dbs);
+            subject.complete();
+        });
+        return subject.asObservable();
+    }
     static getComposedCommands() {
         if (this.composed_commands) {
             return Observable_1.Observable.of(this.composed_commands);

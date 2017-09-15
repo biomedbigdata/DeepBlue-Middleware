@@ -110,7 +110,6 @@ class Command {
 }
 
 export class DeepBlueService {
-
   private _commands: Map<string, Command>;
 
   IdObjectCache = new DataCache<IdName, FullMetadata>();
@@ -124,11 +123,17 @@ export class DeepBlueService {
   resultCache = new DataCache<DeepBlueRequest, DeepBlueResult>()
 
 
-  constructor() { }
+  constructor(private initalized = false) { }
 
   public init(): Observable<boolean> {
     let client = xmlrpc.createClient(xmlrpc_host);
     let subject: Subject<boolean> = new Subject<boolean>();
+
+    if (this.isInitialized()) {
+      subject.next(true);
+      subject.complete();
+      return subject.asObservable();
+    }
 
     client.methodCall("commands", [], (error: Object, value: any) => {
       let commands = value[1];
@@ -140,9 +145,14 @@ export class DeepBlueService {
 
       subject.next(true);
       subject.complete();
+      this.initalized = true;
     });
 
     return subject.asObservable();
+  }
+
+  public isInitialized() : boolean {
+    return this.initalized;
   }
 
   execute(command_name: string, parameters: Object, status: RequestStatus): Observable<[string, any]> {
@@ -399,6 +409,7 @@ export class DeepBlueService {
 
     return Observable.forkJoin(observableBatch);
   }
+
 
   getResult(op_request: DeepBlueRequest, status: RequestStatus): Observable<DeepBlueResult> {
 

@@ -83,7 +83,8 @@ class Command {
     }
 }
 class DeepBlueService {
-    constructor() {
+    constructor(initalized = false) {
+        this.initalized = initalized;
         this.IdObjectCache = new cache_1.DataCache();
         this.idNamesQueryCache = new cache_1.DataCache();
         this.intersectsQueryCache = new cache_1.MultiKeyDataCache();
@@ -93,6 +94,11 @@ class DeepBlueService {
     init() {
         let client = xmlrpc.createClient(xmlrpc_host);
         let subject = new Subject_1.Subject();
+        if (this.isInitialized()) {
+            subject.next(true);
+            subject.complete();
+            return subject.asObservable();
+        }
         client.methodCall("commands", [], (error, value) => {
             let commands = value[1];
             for (let command_name in commands) {
@@ -102,8 +108,12 @@ class DeepBlueService {
             this._commands = commands;
             subject.next(true);
             subject.complete();
+            this.initalized = true;
         });
         return subject.asObservable();
+    }
+    isInitialized() {
+        return this.initalized;
     }
     execute(command_name, parameters, status) {
         let command = this._commands[command_name];

@@ -68,6 +68,44 @@ export interface DeepBlueOperation extends IKey {
     getFilterQuery(): string;
 }
 
+export class DeepBlueSimpleQuery implements DeepBlueOperation {
+    constructor(public _query_id: string) { }
+
+    queryId(): string {
+        return this._query_id;
+    }
+
+    key() : string {
+        return this._query_id;
+    }
+
+    clone(): DeepBlueSimpleQuery {
+        return new DeepBlueSimpleQuery(
+            this._query_id
+        );
+    }
+
+    data(): Name | DeepBlueOperation | DeepBlueParameters {
+        return new Name("");
+    }
+
+    getDataName(): string {
+        return "";
+    }
+
+    getDataQuery(): string {
+        return "";
+    }
+
+    getFilterName(): string {
+        return "";
+    }
+
+    getFilterQuery(): string {
+        return "";
+    }
+}
+
 export class DeepBlueSelectData implements DeepBlueOperation {
     constructor(private _data: Name | DeepBlueOperation | DeepBlueParameters,
         public query_id: string, public command: string) { }
@@ -321,7 +359,7 @@ export class DeepBlueMiddlewareGOEnrichtmentResult {
 export class FilterParameter {
     constructor(public field: string, public operation: string, public value: string, public type: string) { }
 
-    static fromObject(o: Object) : FilterParameter {
+    static fromObject(o: Object): FilterParameter {
         return new FilterParameter(o['field'], o['operation'], o['value'], o['type']);
     }
     asKeyValue(): Object {
