@@ -20,6 +20,20 @@ export class Manager {
 
   constructor() { }
 
+  static getDeepBlueService() : Observable<DeepBlueService> {
+
+    if (this.dbs.isInitialized()) {
+      return Observable.of(this.dbs);
+    }
+
+    let subject = new Subject<DeepBlueService>();
+    this.dbs.init().subscribe(() => {
+      subject.next(this.dbs);
+      subject.complete();
+    })
+    return subject.asObservable();
+  }
+
   static getComposedCommands(): Observable<ComposedCommands> {
 
     if (this.composed_commands) {
