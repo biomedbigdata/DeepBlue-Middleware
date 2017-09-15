@@ -199,35 +199,42 @@ class ComposedCommandsRoutes {
             });
         });
     }
+    static export(req, res, next) {
+        let request_id = req.query["request_id"];
+        let genome = req.query["genome"];
+        if (!(request_id)) {
+            res.send(["error", "genome is missing"]);
+            return;
+        }
+        if (!(genome)) {
+            res.send(["error", "genome is missing"]);
+            return;
+        }
+        let status = ComposedCommandsRoutes.requestManager.startRequest();
+        manager_1.Manager.getDeepBlueService().subscribe((dbs) => {
+            let sr = new operations_1.DeepBlueSimpleQuery("");
+            let dbr = new operations_1.DeepBlueRequest(sr, request_id, "export_ucsc");
+            dbs.getResult(dbr, status).subscribe((result) => {
+                console.log(result);
+            });
+        });
+    }
     /*
-    private static export(req: express.Request, res: express.Response, next: express.NextFunction) {
+    this.getResult(op_request: DeepBlueRequest, status: RequestStatus): Observable<DeepBlueResult> {
   
-      let request_id: string = req.query["request_id"];
-      let genome: string = req.query["genome"];
+    res.header('Content-Type: text/plain');
+    res.header('Content-Type: application/octet-stream');
+    res.header('Content-Type: application/download');
+    res.header('Content-Description: File Transfer');
   
-      if (!(request_id)) {
-        res.send(["error", "genome is missing"]);
-        return;
-      }
+    var ucscLink = "http://genome.ucsc.edu/cgi-bin/hgTracks?";
+    ucscLink = ucscLink + "db=" + genome
+    ucscLink = ucscLink + "&hgt.customText=" + encodeURIComponent(getExportLink("UCSC"))
   
-      if (!(genome)) {
-        res.send(["error", "genome is missing"]);
-        return;
-      }
+    header = "## Export of custom EpiExplorer track to UCSC genome browser\n"
   
-      res.header('Content-Type: text/plain'); // plain text file
-      res.header('Content-Type: application/octet-stream');
-      res.header('Content-Type: application/download');
-      res.header('Content-Description: File Transfer');
-  
-      var ucscLink = "http://genome.ucsc.edu/cgi-bin/hgTracks?";
-      ucscLink = ucscLink + "db=" + genome
-      ucscLink = ucscLink + "&hgt.customText=" + encodeURIComponent(getExportLink("UCSC"))
-  
-      header = "## Export of custom EpiExplorer track to UCSC genome browser\n"
-  
-      header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
-      window.open(ucscLink);
+    header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
+    window.open(ucscLink);
   
   firstLine = regionsContent[:regionsContent.find("\n")].strip().split("\t")
   header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
@@ -254,8 +261,8 @@ class ComposedCommandsRoutes {
   
   
   https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Intro noo
-    }
-    */
+  }
+  */
     static routes() {
         //get router
         let router;
@@ -268,6 +275,7 @@ class ComposedCommandsRoutes {
         router.get("/chromatin_states_by_genome", this.chromatinStatesByGenome);
         router.get("/get_enrichment_databases", this.enrichmentDatabases);
         router.get("/list_genes", this.listGenes);
+        router.get("/export", this.export);
         return router;
     }
 }

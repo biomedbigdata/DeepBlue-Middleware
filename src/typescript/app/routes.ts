@@ -17,7 +17,8 @@ import {
   DeepBlueRequest,
   DeepBlueResult,
   DeepBlueSelectData,
-  FilterParameter
+  FilterParameter,
+  DeepBlueSimpleQuery
 } from './domain/operations';
 
 import { Router } from 'express';
@@ -33,6 +34,7 @@ import { Genes } from "./service/genes";
 const composed_commands: Router = Router();
 
 import * as express from 'express';
+import { DeepBlueService } from 'app/service/deepblue';
 
 export class ComposedCommandsRoutes {
 
@@ -291,8 +293,6 @@ export class ComposedCommandsRoutes {
     });
   }
 
-
-  /*
   private static export(req: express.Request, res: express.Response, next: express.NextFunction) {
 
     let request_id: string = req.query["request_id"];
@@ -308,19 +308,34 @@ export class ComposedCommandsRoutes {
       return;
     }
 
-    res.header('Content-Type: text/plain'); // plain text file
-    res.header('Content-Type: application/octet-stream');
-    res.header('Content-Type: application/download');
-    res.header('Content-Description: File Transfer');
+    let status = ComposedCommandsRoutes.requestManager.startRequest();
 
-    var ucscLink = "http://genome.ucsc.edu/cgi-bin/hgTracks?";
-    ucscLink = ucscLink + "db=" + genome
-    ucscLink = ucscLink + "&hgt.customText=" + encodeURIComponent(getExportLink("UCSC"))
+    Manager.getDeepBlueService().subscribe((dbs: DeepBlueService) => {
+      let sr = new DeepBlueSimpleQuery("");
+      let dbr = new DeepBlueRequest(sr, request_id, "export_ucsc");
+      dbs.getResult(dbr, status).subscribe((result: DeepBlueResult) => {
+        console.log(result);
+      });
+    });
 
-    header = "## Export of custom EpiExplorer track to UCSC genome browser\n"
+  }
 
-    header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
-    window.open(ucscLink);
+  /*
+  this.getResult(op_request: DeepBlueRequest, status: RequestStatus): Observable<DeepBlueResult> {
+
+  res.header('Content-Type: text/plain');
+  res.header('Content-Type: application/octet-stream');
+  res.header('Content-Type: application/download');
+  res.header('Content-Description: File Transfer');
+
+  var ucscLink = "http://genome.ucsc.edu/cgi-bin/hgTracks?";
+  ucscLink = ucscLink + "db=" + genome
+  ucscLink = ucscLink + "&hgt.customText=" + encodeURIComponent(getExportLink("UCSC"))
+
+  header = "## Export of custom EpiExplorer track to UCSC genome browser\n"
+
+  header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
+  window.open(ucscLink);
 
 firstLine = regionsContent[:regionsContent.find("\n")].strip().split("\t")
 header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
@@ -347,8 +362,9 @@ Beyond the URL options of "&hubUrl=" and "&hubClear=" there are many other ways 
 
 
 https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Intro noo
-  }
-  */
+}
+*/
+
 
   public static routes(): express.Router {
     //get router
@@ -363,6 +379,7 @@ https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Intro noo
     router.get("/chromatin_states_by_genome", this.chromatinStatesByGenome);
     router.get("/get_enrichment_databases", this.enrichmentDatabases);
     router.get("/list_genes", this.listGenes);
+    router.get("/export", this.export);
 
     return router;
   }
