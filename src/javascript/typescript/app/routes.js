@@ -242,7 +242,7 @@ class ComposedCommandsRoutes {
             return;
         }
         // Here is a shitty hardcoding stuff. I have to put in some settings, but... it is a work for the future me (or you!)
-        let url = "http://deepblue.mpi-inf.mpg.de/api/composed_commands/export?genome=" + genome + "&request_id=" + request_id;
+        let url = "http://deepblue.mpi-inf.mpg.de/api/composed_commands/generate_track_file?genome=" + genome + "&request_id=" + request_id;
         let encodedUrl = encodeURIComponent(url);
         var ucscLink = "http://genome.ucsc.edu/cgi-bin/hgTracks?";
         ucscLink = ucscLink + "db=" + genome;
