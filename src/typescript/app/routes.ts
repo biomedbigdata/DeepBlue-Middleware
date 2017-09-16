@@ -293,7 +293,7 @@ export class ComposedCommandsRoutes {
     });
   }
 
-  private static export(req: express.Request, res: express.Response, next: express.NextFunction) {
+  private static generate_track_file(req: express.Request, res: express.Response, next: express.NextFunction) {
 
     let request_id: string = req.query["request_id"];
     let genome: string = req.query["genome"];
@@ -320,7 +320,7 @@ export class ComposedCommandsRoutes {
         let regionsSplit = regions.split("\n", 2);
         let firstLine = regionsSplit[0].split("\t");
         let position = "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n";
-        let trackInfo = 'track name=EpiExplorer description="'+request_id + '" visibility=2 url="deepblue.mpi-inf.mpg.de/request.php?_id=' + request_id + '"\n';
+        let trackInfo = 'track name=EpiExplorer description="' + request_id + '" visibility=2 url="deepblue.mpi-inf.mpg.de/request.php?_id=' + request_id + '"\n';
 
         let content = description + position + trackInfo + regions;
 
@@ -332,51 +332,46 @@ export class ComposedCommandsRoutes {
         res.send(content);
       });
     });
-
   }
 
-  /*
+  private static export_to_genome_browser(req: express.Request, res: express.Response, next: express.NextFunction) {
 
-  var ucscLink = "http://genome.ucsc.edu/cgi-bin/hgTracks?";
-  ucscLink = ucscLink + "db=" + genome
-  ucscLink = ucscLink + "&hgt.customText=" + encodeURIComponent(getExportLink("UCSC"))
-  window.open(ucscLink);
+    let request_id: string = req.query["request_id"];
+    let genome: string = req.query["genome"];
 
-firstLine = regionsContent[:regionsContent.find("\n")].strip().split("\t")
+    if (!(request_id)) {
+      res.send(["error", "genome is missing"]);
+      return;
+    }
 
-header = "## Export of custom EpiExplorer track to UCSC genome browser\n"
-
-header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
-
-
-header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
-header += 'track name=EpiExplorer description="' + regionSet + '" visibility=2 url="http://epiexplorer.mpi-inf.mpg.de/index.php?userdatasets=' + regionSet + '"\n'
-regionsContent = header + regionsContent
+    if (!(genome)) {
+      res.send(["error", "genome is missing"]);
+      return;
+    }
 
 
-Displaying Track Hubs by URL and in sessions
+    // Here is a shitty hardcoding stuff. I have to put in some settings, but... it is a work for the future me (or you!)
+    let url = "http://deepblue.mpi-inf.mpg.de/api/composed_commands/export?genome="+genome+"&request_id="+request_id;
+    let encodedUrl = encodeURIComponent(url);
+    var ucscLink = "http://genome.ucsc.edu/cgi-bin/hgTracks?";
+    ucscLink = ucscLink + "db=" + genome
+    ucscLink = ucscLink + "&hgt.customText=" + encodedUrl;
 
-Once you have successfully loaded your hub, by pasting the URL to the location of your hub.txt file into the My Hubs tab of the Track Data Hubs page,
-you may want to consider building URLs to directly load the hub along with session settings.
-To build a URL that will load the hub directly, add "&hubUrl=" to the hgTracks CGI followed by the address of the hub.txt file.
-You also need to include the UCSC assembly you are displaying the hub upon such as "db=hg19". For example, here is a working link that will visualize the ENCODE AWG hub:
-http://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&hubUrl=http://ftp.ebi.ac.uk/pub/databases/ensembl/encode/integration_data_jan2011/hub.txt
-If you also want to load your hub at specific browser coordinates and with a specific set of other browser tracks (you can also set the visibility of each track in your hub),
-you can save your hub in a session, which are in essence "View Settings" collected in a text file (example session text files here).
-Sessions can be shared in different ways, please see the instructions for creating a session and saving it to a file.
-By making your session file available over the Internet, you can build a URL that will load the session automatically by adding "&hgS_loadUrlName=" to the hgTracks CGI followed by the URL location of the saved session file. The location of the saved session file should be in the same directory that holds your hub.txt file. Finally add "&hgS_doLoadUrl=submit" to the URL to inform the browser to load the session.
-There are four required variables for your URL to load a session with a hub and an example URL:
-db - name of the assembly (e.g. hg19 or mm10)
-hubUrl - URL to your track hub
-hgS_loadUrlName - URL to your session file
-hgS_doLoadUrl - value should be "submit"
-http://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&hubUrl=http://myLab.org/myHub.txt&hgS_loadUrlName=http://mySession&hgS_doLoadUrl=submit
-Another feature one can use in place of "&hubUrl=" is "&hubClear=", which will load a hub while simultaneously disconnecting or clearing, hubs located at the same location. For example adding &hubClear=http://university.edu/lab/folder/hub10.txt would connect the referenced hub10.txt while simultaneously disconnecting any hubs that might be displayed from the same http://university.edu/lab/folder/ directory (for example, hub1.txt, hub2.txt, ect.). This feature can be useful for dynamically generated hubs that might collect in the browser otherwise.
-Beyond the URL options of "&hubUrl=" and "&hubClear=" there are many other ways to link to the Browser including a list of URL optional parameters described in the the Custom Tracks User's Guide.
+    let page = `
+    <html>
+     <head>
+     </head>
+     <body>
+      <h1>Loading request ` + request_id + ` in UCSC Genome browser<h1>
+      <script type="text/javascript">
+        alert("bunda");
+        window.open("`+ucscLink+`");
+      </script>
+     </body>
+    </head>`
 
-}
-*/
-
+    res.send(page)
+  }
 
   public static routes(): express.Router {
     //get router
@@ -391,7 +386,8 @@ Beyond the URL options of "&hubUrl=" and "&hubClear=" there are many other ways 
     router.get("/chromatin_states_by_genome", this.chromatinStatesByGenome);
     router.get("/get_enrichment_databases", this.enrichmentDatabases);
     router.get("/list_genes", this.listGenes);
-    router.get("/export", this.export);
+    router.get("/generate_track_file", this.generate_track_file);
+    router.get("/export_to_genome_browser", this.export_to_genome_browser);
 
     return router;
   }
