@@ -215,28 +215,35 @@ class ComposedCommandsRoutes {
             let sr = new operations_1.DeepBlueSimpleQuery("");
             let dbr = new operations_1.DeepBlueRequest(sr, request_id, "export_ucsc");
             dbs.getResult(dbr, status).subscribe((result) => {
-                console.log(result);
+                let regions = result.resultAsString();
+                let description = "## Export of DeepBlue Regions to UCSC genome browser\n";
+                let regionsSplit = regions.split("\n", 2);
+                let firstLine = regionsSplit[0].split("\t");
+                let position = "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n";
+                let trackInfo = 'track name=EpiExplorer description="' + request_id + '" visibility=2 url="deepblue.mpi-inf.mpg.de/request.php?_id=' + request_id + '"\n';
+                let content = description + position + trackInfo + regions;
+                res.header('Content-Type: text/plain');
+                res.header('Content-Type: application/octet-stream');
+                res.header('Content-Type: application/download');
+                res.header('Content-Description: File Transfer');
+                res.send(content);
             });
         });
     }
     /*
-    this.getResult(op_request: DeepBlueRequest, status: RequestStatus): Observable<DeepBlueResult> {
-  
-    res.header('Content-Type: text/plain');
-    res.header('Content-Type: application/octet-stream');
-    res.header('Content-Type: application/download');
-    res.header('Content-Description: File Transfer');
   
     var ucscLink = "http://genome.ucsc.edu/cgi-bin/hgTracks?";
     ucscLink = ucscLink + "db=" + genome
     ucscLink = ucscLink + "&hgt.customText=" + encodeURIComponent(getExportLink("UCSC"))
-  
-    header = "## Export of custom EpiExplorer track to UCSC genome browser\n"
-  
-    header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
     window.open(ucscLink);
   
   firstLine = regionsContent[:regionsContent.find("\n")].strip().split("\t")
+  
+  header = "## Export of custom EpiExplorer track to UCSC genome browser\n"
+  
+  header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
+  
+  
   header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n"
   header += 'track name=EpiExplorer description="' + regionSet + '" visibility=2 url="http://epiexplorer.mpi-inf.mpg.de/index.php?userdatasets=' + regionSet + '"\n'
   regionsContent = header + regionsContent
@@ -244,10 +251,14 @@ class ComposedCommandsRoutes {
   
   Displaying Track Hubs by URL and in sessions
   
-  Once you have successfully loaded your hub, by pasting the URL to the location of your hub.txt file into the My Hubs tab of the Track Data Hubs page, you may want to consider building URLs to directly load the hub along with session settings.
-  To build a URL that will load the hub directly, add "&hubUrl=" to the hgTracks CGI followed by the address of the hub.txt file. You also need to include the UCSC assembly you are displaying the hub upon such as "db=hg19". For example, here is a working link that will visualize the ENCODE AWG hub:
+  Once you have successfully loaded your hub, by pasting the URL to the location of your hub.txt file into the My Hubs tab of the Track Data Hubs page,
+  you may want to consider building URLs to directly load the hub along with session settings.
+  To build a URL that will load the hub directly, add "&hubUrl=" to the hgTracks CGI followed by the address of the hub.txt file.
+  You also need to include the UCSC assembly you are displaying the hub upon such as "db=hg19". For example, here is a working link that will visualize the ENCODE AWG hub:
   http://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&hubUrl=http://ftp.ebi.ac.uk/pub/databases/ensembl/encode/integration_data_jan2011/hub.txt
-  If you also want to load your hub at specific browser coordinates and with a specific set of other browser tracks (you can also set the visibility of each track in your hub), you can save your hub in a session, which are in essence "View Settings" collected in a text file (example session text files here). Sessions can be shared in different ways, please see the instructions for creating a session and saving it to a file.
+  If you also want to load your hub at specific browser coordinates and with a specific set of other browser tracks (you can also set the visibility of each track in your hub),
+  you can save your hub in a session, which are in essence "View Settings" collected in a text file (example session text files here).
+  Sessions can be shared in different ways, please see the instructions for creating a session and saving it to a file.
   By making your session file available over the Internet, you can build a URL that will load the session automatically by adding "&hgS_loadUrlName=" to the hgTracks CGI followed by the URL location of the saved session file. The location of the saved session file should be in the same directory that holds your hub.txt file. Finally add "&hgS_doLoadUrl=submit" to the URL to inform the browser to load the session.
   There are four required variables for your URL to load a session with a hub and an example URL:
   db - name of the assembly (e.g. hg19 or mm10)
@@ -258,9 +269,6 @@ class ComposedCommandsRoutes {
   Another feature one can use in place of "&hubUrl=" is "&hubClear=", which will load a hub while simultaneously disconnecting or clearing, hubs located at the same location. For example adding &hubClear=http://university.edu/lab/folder/hub10.txt would connect the referenced hub10.txt while simultaneously disconnecting any hubs that might be displayed from the same http://university.edu/lab/folder/ directory (for example, hub1.txt, hub2.txt, ect.). This feature can be useful for dynamically generated hubs that might collect in the browser otherwise.
   Beyond the URL options of "&hubUrl=" and "&hubClear=" there are many other ways to link to the Browser including a list of URL optional parameters described in the the Custom Tracks User's Guide.
   
-  
-  
-  https://genome.ucsc.edu/goldenpath/help/hgTrackHubHelp.html#Intro noo
   }
   */
     static routes() {
