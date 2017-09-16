@@ -254,7 +254,6 @@ class ComposedCommandsRoutes {
      <body>
       <h1>Loading request ` + request_id + ` in UCSC Genome browser<h1>
       <script type="text/javascript">
-        alert("bunda");
         window.open("` + ucscLink + `");
       </script>
      </body>
