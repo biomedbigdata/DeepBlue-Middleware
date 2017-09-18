@@ -126,16 +126,19 @@ export class DeepBlueService {
   constructor(private initalized = false) { }
 
   public init(): Observable<boolean> {
+
+    console.log("deepblue 1", this.isInitialized());
+
+    if (this.isInitialized()) {
+      console.log("deepblue 2", this.isInitialized());
+      return Observable.of(true);
+    }
+
     let client = xmlrpc.createClient(xmlrpc_host);
     let subject: Subject<boolean> = new Subject<boolean>();
 
-    if (this.isInitialized()) {
-      subject.next(true);
-      subject.complete();
-      return subject.asObservable();
-    }
-
     client.methodCall("commands", [], (error: Object, value: any) => {
+      console.log("deepblue 3", this.isInitialized());
       let commands = value[1];
       for (let command_name in commands) {
         let command = new Command(command_name, commands[command_name]["parameters"]);
@@ -143,11 +146,14 @@ export class DeepBlueService {
       }
       this._commands = commands;
 
+      console.log("deepblue 4", this.isInitialized());
       subject.next(true);
       subject.complete();
       this.initalized = true;
     });
 
+
+    console.log("deepblue 5", this.isInitialized());
     return subject.asObservable();
   }
 

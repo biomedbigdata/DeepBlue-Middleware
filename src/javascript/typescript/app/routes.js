@@ -27,7 +27,9 @@ class ComposedCommandsRoutes {
         }
     }
     static countOverlaps(req, res, next) {
+        console.log("count overlap 1  ");
         manager_1.Manager.getComposedCommands().subscribe((cc) => {
+            console.log("count overlap 2");
             let queries_id = req.query["queries_id"];
             let experiments_id = req.query["experiments_id"];
             let filters = req.query["filters"];
@@ -53,12 +55,15 @@ class ComposedCommandsRoutes {
             if (!(Array.isArray(experiments_id))) {
                 experiments_id = [experiments_id];
             }
+            console.log("count overlap 3");
             experiments_1.Experiments.info(experiments_id).subscribe((experiments) => {
+                console.log("count overlap 4");
                 let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
                 let experiments_name = experiments.map((v) => new deepblue_1.Name(v["name"]));
                 var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, filters, status).subscribe((results) => {
                     let rr = [];
                     for (let i = 0; i < results.length; i++) {
+                        console.log("count overlap 3", i);
                         let result = results[i];
                         let resultObj = new operations_1.DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(), result.getFilterName(), result.getFilterQuery(), result.resultAsCount());
                         rr.push(resultObj);
@@ -133,7 +138,9 @@ class ComposedCommandsRoutes {
         });
     }
     static chromatinStatesByGenome(req, res, next) {
+        console.log("CSS 1");
         manager_1.Manager.getComposedQueries().subscribe((cq) => {
+            console.log("CSS 2");
             let genome = req.query["genome"];
             if (!(genome)) {
                 res.send(["error", "genome is missing"]);
@@ -155,6 +162,7 @@ class ComposedCommandsRoutes {
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             re.buildDatabases(status, genome).subscribe((dbs) => {
+                console.log(dbs);
                 res.send(dbs);
                 status.finish(null);
             });
@@ -192,8 +200,10 @@ class ComposedCommandsRoutes {
                 res.send(["error", "gene_id_name is missing"]);
                 return;
             }
+            console.log("list genes", gene_model, gene_id_name);
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             genes.listGeneName(gene_id_name, status, gene_model).subscribe((dbs) => {
+                console.log(dbs);
                 res.send(dbs);
                 status.finish(null);
             });
@@ -269,9 +279,9 @@ class ComposedCommandsRoutes {
         router.get("/enrich_regions_go_terms", this.enrichRegionsGoTerms);
         router.get("/get_request", this.getRequest);
         router.get("/gene_models_by_genome", this.geneModelsByGenome);
+        router.get("/list_genes", this.listGenes);
         router.get("/chromatin_states_by_genome", this.chromatinStatesByGenome);
         router.get("/get_enrichment_databases", this.enrichmentDatabases);
-        router.get("/list_genes", this.listGenes);
         router.get("/generate_track_file", this.generate_track_file);
         router.get("/export_to_genome_browser", this.export_to_genome_browser);
         return router;

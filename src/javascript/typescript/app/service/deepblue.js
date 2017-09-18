@@ -92,24 +92,27 @@ class DeepBlueService {
         this.resultCache = new cache_1.DataCache();
     }
     init() {
+        console.log("deepblue 1", this.isInitialized());
+        if (this.isInitialized()) {
+            console.log("deepblue 2", this.isInitialized());
+            return Observable_1.Observable.of(true);
+        }
         let client = xmlrpc.createClient(xmlrpc_host);
         let subject = new Subject_1.Subject();
-        if (this.isInitialized()) {
-            subject.next(true);
-            subject.complete();
-            return subject.asObservable();
-        }
         client.methodCall("commands", [], (error, value) => {
+            console.log("deepblue 3", this.isInitialized());
             let commands = value[1];
             for (let command_name in commands) {
                 let command = new Command(command_name, commands[command_name]["parameters"]);
                 commands[command_name] = command;
             }
             this._commands = commands;
+            console.log("deepblue 4", this.isInitialized());
             subject.next(true);
             subject.complete();
             this.initalized = true;
         });
+        console.log("deepblue 5", this.isInitialized());
         return subject.asObservable();
     }
     isInitialized() {

@@ -12,6 +12,7 @@ class RegionsEnrichment {
     listExperimentsMany(request_status, epigenetic_marks) {
         let observableBatch = [];
         epigenetic_marks.forEach((epigenetic_mark) => {
+            console.log(epigenetic_mark);
             observableBatch.push(this.listExperiments(request_status, epigenetic_mark));
         });
         return Observable_1.Observable.forkJoin(observableBatch);

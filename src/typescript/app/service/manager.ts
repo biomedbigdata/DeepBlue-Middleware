@@ -51,16 +51,25 @@ export class Manager {
 
   static getComposedQueries(): Observable<ComposedQueries> {
 
+    console.log("get composed queries 1");
+
     if (this.composed_queries) {
+      console.log("get composed queries X");
       return Observable.of(this.composed_queries);
     }
 
     let subject = new Subject<ComposedQueries>();
+
+    console.log("get composed queries 2");
     this.dbs.init().subscribe(() => {
+      console.log("get composed queries 3");
       this.composed_queries = new ComposedQueries(this.dbs);
       subject.next(this.composed_queries);
       subject.complete();
+      console.log("COMPLETE!");
     })
+
+    console.log("get composed queries 4");
     return subject.asObservable();
   }
 
