@@ -157,7 +157,7 @@ export class DeepBlueService {
     return subject.asObservable();
   }
 
-  public isInitialized() : boolean {
+  public isInitialized(): boolean {
     return this.initalized;
   }
 
@@ -307,6 +307,23 @@ export class DeepBlueService {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
   }
+
+   enrich_regions_overlap(query_id: string, universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult> {
+    const params: Object = new Object();
+    params['query_id'] = query_id;
+    params['background_query_id'] = universe_id;
+    params['datasets'] = datasets;
+    params["genome"] = "GRCh38";
+
+    return this.execute("enrich_region_overlap", params, status).map((response: [string, any]) => {
+      status.increment();
+      console.log(response);
+      return new DeepBlueRequest(null, response[1], 'enrich_regions_go_terms');
+    }).flatMap((request_id) => {
+      return this.getResult(request_id, status);
+    }).catch(this.handleError);
+  }
+
 
   list_epigenetic_marks(status: RequestStatus, type?: string): Observable<IdName[]> {
     const params: Object = new Object();
