@@ -17,13 +17,12 @@ export class RegionsEnrichment {
   private listExperimentsMany(request_status: RequestStatus, epigenetic_marks: string[]): Observable<Array<[string, string[]]>> {
     let observableBatch: Observable<[string, string[]]>[] = [];
     epigenetic_marks.forEach((epigenetic_mark: string) => {
-      console.log(epigenetic_mark);
       observableBatch.push(this.listExperiments(request_status, epigenetic_mark));
     });
     return Observable.forkJoin(observableBatch);
   }
 
-  private getHistoneModificationDatabases(request_status: RequestStatus, genome: string): Observable<[string, string[]][]> {
+  buildFullDatabases(request_status: RequestStatus, genome: string): Observable<[string, string[]][]> {
     let pollSubject = new Subject<[string, string[]][]>();
 
     this.deepBlueService.collection_experiments_count(request_status, "epigenetic_marks", "peaks", genome).subscribe((ems: IdNameCount[]) => {
@@ -39,12 +38,9 @@ export class RegionsEnrichment {
     return pollSubject.asObservable();
   }
 
-  buildDatabases(request_status: RequestStatus, genome: string): Observable<[string, string[]][]> {
-    /*
-    "Histone Modification"
-    "Transcription Factor Binding Sites"
-    "Gene Expression"
-    */
-    return this.getHistoneModificationDatabases(request_status, genome);
+  enrichRegionsOverlap(request_status: RequestStatus, query_id: string, universe_id: string, datasets: Object): Observable<Object> {
+    return this.deepBlueService.enrich_regions_overlap(query_id, universe_id, datasets, request_status);
+
   }
+
 }
