@@ -161,31 +161,40 @@ class ComposedCommandsRoutes {
                 return;
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
-            re.buildDatabases(status, genome).subscribe((dbs) => {
-                console.log(dbs);
+            re.buildFullDatabases(status, genome).subscribe((dbs) => {
                 res.send(dbs);
                 status.finish(null);
             });
         });
     }
-    static enrichRegions(req, res, next) {
+    static enrichRegionOverlap(req, res, next) {
         manager_1.Manager.getRegionsEnrichment().subscribe((re) => {
-            let query_id = req.query["query_id"];
-            let universe_id = req.query["universe_id"];
-            let genome = req.query["genome"];
-            if (!(genome)) {
-                res.send(["error", "genome is missing"]);
+            console.log(req.body);
+            let queries_id = req.body.queries_id;
+            let universe_id = req.body.universe_id;
+            let datasets = req.body.datasets;
+            //console.log(queries_id);
+            //console.log(universe_id);
+            //console.log(datasets);
+            if (!(queries_id)) {
+                res.send(["error", "queries_id is missing"]);
                 return;
             }
-            if (!(query_id)) {
-                res.send(["error", "request id is missing"]);
+            if (!(universe_id)) {
+                res.send(["error", "universe_id id is missing"]);
                 return;
+            }
+            if (!(datasets)) {
+                res.send(["error", "datasets is missing"]);
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
-            re.buildDatabases(status, genome).subscribe((dbs) => {
-                res.send(dbs);
-                status.finish(null);
+            console.log("queries_id:'", queries_id, "'");
+            console.log("queries_id:'", queries_id[0], "'");
+            var ccos = re.enrichRegionsOverlap(status, queries_id[0], universe_id, datasets).subscribe((results) => {
+                console.log(results);
+                res.send(results);
             });
+            res.send(datasets);
         });
     }
     static listGenes(req, res, next) {
@@ -284,6 +293,8 @@ class ComposedCommandsRoutes {
         router.get("/get_enrichment_databases", this.enrichmentDatabases);
         router.get("/generate_track_file", this.generate_track_file);
         router.get("/export_to_genome_browser", this.export_to_genome_browser);
+        // Post:
+        router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
         return router;
     }
 }

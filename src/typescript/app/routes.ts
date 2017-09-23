@@ -243,39 +243,55 @@ export class ComposedCommandsRoutes {
       }
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
-      re.buildDatabases(status, genome).subscribe((dbs: [string, string[]][]) => {
-        console.log(dbs);
+      re.buildFullDatabases(status, genome).subscribe((dbs: [string, string[]][]) => {
         res.send(dbs);
         status.finish(null);
       });
     });
   }
 
-  private static enrichRegions(req: express.Request, res: express.Response, next: express.NextFunction) {
+  private static enrichRegionOverlap(req: express.Request, res: express.Response, next: express.NextFunction) {
     Manager.getRegionsEnrichment().subscribe((re: RegionsEnrichment) => {
 
-      let query_id: string = req.query["query_id"];
-      let universe_id: string = req.query["universe_id"];
-      let genome: string = req.query["genome"];
+      console.log(req.body);
 
-      if (!(genome)) {
-        res.send(["error", "genome is missing"]);
+      let queries_id = req.body.queries_id;
+      let universe_id = req.body.universe_id;
+      let datasets = req.body.datasets;
+
+      //console.log(queries_id);
+      //console.log(universe_id);
+      //console.log(datasets);
+
+      if (!(queries_id)) {
+        res.send(["error", "queries_id is missing"]);
         return;
       }
 
-
-      if (!(query_id)) {
-        res.send(["error", "request id is missing"]);
+      if (!(universe_id)) {
+        res.send(["error", "universe_id id is missing"]);
         return;
+      }
+
+      if (!(datasets)) {
+        res.send(["error", "datasets is missing"]);
       }
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
-      re.buildDatabases(status, genome).subscribe((dbs: [string, string[]][]) => {
-        res.send(dbs);
-        status.finish(null);
+
+      console.log("queries_id:'", queries_id, "'");
+      console.log("queries_id:'", queries_id[0], "'");
+
+      var ccos = re.enrichRegionsOverlap(status, queries_id[0], universe_id, datasets).subscribe((results: DeepBlueResult[]) => {
+        console.log(results);
+        res.send(results);
       });
+
+
+      res.send(datasets);
     });
   }
+
 
   private static listGenes(req: express.Request, res: express.Response, next: express.NextFunction) {
     Manager.getGenes().subscribe((genes: Genes) => {
@@ -359,7 +375,7 @@ export class ComposedCommandsRoutes {
 
 
     // Here is a shitty hardcoding stuff. I have to put in some settings, but... it is a work for the future me (or you!)
-    let url = "http://deepblue.mpi-inf.mpg.de/api/composed_commands/generate_track_file?genome="+genome+"&request_id="+request_id;
+    let url = "http://deepblue.mpi-inf.mpg.de/api/composed_commands/generate_track_file?genome=" + genome + "&request_id=" + request_id;
     let encodedUrl = encodeURIComponent(url);
     var ucscLink = "http://genome.ucsc.edu/cgi-bin/hgTracks?";
     ucscLink = ucscLink + "db=" + genome
@@ -372,7 +388,7 @@ export class ComposedCommandsRoutes {
      <body>
       <h1>Loading request ` + request_id + ` in UCSC Genome browser<h1>
       <script type="text/javascript">
-        window.open("`+ucscLink+`");
+        window.open("`+ ucscLink + `");
       </script>
      </body>
     </head>`
@@ -395,6 +411,9 @@ export class ComposedCommandsRoutes {
     router.get("/get_enrichment_databases", this.enrichmentDatabases);
     router.get("/generate_track_file", this.generate_track_file);
     router.get("/export_to_genome_browser", this.export_to_genome_browser);
+
+    // Post:
+    router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
 
     return router;
   }
