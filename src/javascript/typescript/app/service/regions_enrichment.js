@@ -29,8 +29,18 @@ class RegionsEnrichment {
         });
         return pollSubject.asObservable();
     }
-    enrichRegionsOverlap(request_status, query_id, universe_id, datasets) {
-        return this.deepBlueService.enrich_regions_overlap(query_id, universe_id, datasets, request_status);
+    enrichRegionsOverlap(data_query_id, universe_id, datasets, status) {
+        var start = new Date().getTime();
+        let total = data_query_id.length * data_query_id.length * 3;
+        status.reset(total);
+        let response = new rxjs_1.Subject();
+        let observableBatch = [];
+        data_query_id.forEach((current_op) => {
+            console.log(current_op);
+            let o = this.deepBlueService.enrich_regions_overlap(current_op.getDataQuery(), universe_id, datasets, status);
+            observableBatch.push(o);
+        });
+        return Observable_1.Observable.forkJoin(observableBatch);
     }
 }
 exports.RegionsEnrichment = RegionsEnrichment;

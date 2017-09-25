@@ -318,7 +318,7 @@ export class DeepBlueService {
     return this.execute("enrich_region_overlap", params, status).map((response: [string, any]) => {
       status.increment();
       console.log(response);
-      return new DeepBlueRequest(null, response[1], 'enrich_regions_go_terms');
+      return new DeepBlueRequest(null, response[1], 'enrich_regions_overlap');
     }).flatMap((request_id) => {
       return this.getResult(request_id, status);
     }).catch(this.handleError);

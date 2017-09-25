@@ -1,5 +1,5 @@
 import { RequestStatus } from '../domain/status';
-import { DeepBlueResult } from '../domain/operations';
+import { DeepBlueResult, DeepBlueOperation } from '../domain/operations';
 import { DeepBlueService } from "../service/deepblue";
 import { IdName, IdNameCount } from "../domain/deepblue";
 import { Observable } from "rxjs/Observable";
@@ -38,9 +38,23 @@ export class RegionsEnrichment {
     return pollSubject.asObservable();
   }
 
-  enrichRegionsOverlap(request_status: RequestStatus, query_id: string, universe_id: string, datasets: Object): Observable<Object> {
-    return this.deepBlueService.enrich_regions_overlap(query_id, universe_id, datasets, request_status);
+  enrichRegionsOverlap(data_query_id: DeepBlueOperation[], universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult[]> {
+    var start = new Date().getTime();
 
+    let total = data_query_id.length * data_query_id.length * 3;
+    status.reset(total);
+
+    let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
+
+    let observableBatch: Observable<DeepBlueResult>[] = [];
+
+    data_query_id.forEach((current_op) => {
+      console.log(current_op);
+      let o = this.deepBlueService.enrich_regions_overlap(current_op.getDataQuery(), universe_id, datasets, status);
+      observableBatch.push(o);
+    });
+
+    return Observable.forkJoin(observableBatch);
   }
 
 }

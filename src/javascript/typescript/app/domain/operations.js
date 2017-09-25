@@ -294,6 +294,27 @@ class DeepBlueMiddlewareGOEnrichtmentResult {
     }
 }
 exports.DeepBlueMiddlewareGOEnrichtmentResult = DeepBlueMiddlewareGOEnrichtmentResult;
+class DeepBlueMiddlewareOverlapEnrichtmentResult {
+    constructor(data_name, universe_id, datasets, results) {
+        this.data_name = data_name;
+        this.universe_id = universe_id;
+        this.datasets = datasets;
+        this.results = results;
+    }
+    getDataName() {
+        return this.data_name;
+    }
+    getUniverseId() {
+        return this.universe_id;
+    }
+    getDatasets() {
+        return this.datasets;
+    }
+    getResults() {
+        return this.results;
+    }
+}
+exports.DeepBlueMiddlewareOverlapEnrichtmentResult = DeepBlueMiddlewareOverlapEnrichtmentResult;
 class FilterParameter {
     constructor(field, operation, value, type) {
         this.field = field;

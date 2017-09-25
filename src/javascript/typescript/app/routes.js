@@ -169,13 +169,10 @@ class ComposedCommandsRoutes {
     }
     static enrichRegionOverlap(req, res, next) {
         manager_1.Manager.getRegionsEnrichment().subscribe((re) => {
-            console.log(req.body);
+            // This function received an JSON object in the body
             let queries_id = req.body.queries_id;
             let universe_id = req.body.universe_id;
             let datasets = req.body.datasets;
-            //console.log(queries_id);
-            //console.log(universe_id);
-            //console.log(datasets);
             if (!(queries_id)) {
                 res.send(["error", "queries_id is missing"]);
                 return;
@@ -188,11 +185,16 @@ class ComposedCommandsRoutes {
                 res.send(["error", "datasets is missing"]);
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
-            console.log("queries_id:'", queries_id, "'");
-            console.log("queries_id:'", queries_id[0], "'");
-            var ccos = re.enrichRegionsOverlap(status, queries_id[0], universe_id, datasets).subscribe((results) => {
+            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
+            var ccos = re.enrichRegionsOverlap(deepblue_query_ops, universe_id, datasets, status).subscribe((results) => {
                 console.log(results);
-                res.send(results);
+                let rr = [];
+                for (let i = 0; i < results.length; i++) {
+                    let result = results[i];
+                    let resultObj = new operations_1.DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), universe_id, datasets, result.resultAsTuples());
+                    rr.push(resultObj);
+                }
+                status.finish(rr);
             });
             res.send(datasets);
         });

@@ -75,7 +75,7 @@ export class DeepBlueSimpleQuery implements DeepBlueOperation {
         return this._query_id;
     }
 
-    key() : string {
+    key(): string {
         return this._query_id;
     }
 
@@ -349,6 +349,27 @@ export class DeepBlueMiddlewareGOEnrichtmentResult {
 
     getGeneModel(): string {
         return this.gene_model;
+    }
+
+    getResults(): Object[] {
+        return this.results;
+    }
+}
+
+
+export class DeepBlueMiddlewareOverlapEnrichtmentResult {
+    constructor(public data_name: string, public universe_id: string, public datasets: Object, public results: Object[]) { }
+
+    getDataName(): string {
+        return this.data_name;
+    }
+
+    getUniverseId(): string {
+        return this.universe_id;
+    }
+
+    getDatasets(): Object {
+        return this.datasets;
     }
 
     getResults(): Object[] {

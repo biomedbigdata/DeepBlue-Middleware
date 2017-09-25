@@ -18,7 +18,8 @@ import {
   DeepBlueResult,
   DeepBlueSelectData,
   FilterParameter,
-  DeepBlueSimpleQuery
+  DeepBlueSimpleQuery,
+  DeepBlueMiddlewareOverlapEnrichtmentResult
 } from './domain/operations';
 
 import { Router } from 'express';
@@ -194,7 +195,6 @@ export class ComposedCommandsRoutes {
     });
   }
 
-
   private static geneModelsByGenome(req: express.Request, res: express.Response, next: express.NextFunction) {
     Manager.getComposedQueries().subscribe((cq: ComposedQueries) => {
 
@@ -253,15 +253,11 @@ export class ComposedCommandsRoutes {
   private static enrichRegionOverlap(req: express.Request, res: express.Response, next: express.NextFunction) {
     Manager.getRegionsEnrichment().subscribe((re: RegionsEnrichment) => {
 
-      console.log(req.body);
+      // This function received an JSON object in the body
 
-      let queries_id = req.body.queries_id;
-      let universe_id = req.body.universe_id;
-      let datasets = req.body.datasets;
-
-      //console.log(queries_id);
-      //console.log(universe_id);
-      //console.log(datasets);
+      let queries_id : string[] = req.body.queries_id;
+      let universe_id : string = req.body.universe_id;
+      let datasets : Object = req.body.datasets;
 
       if (!(queries_id)) {
         res.send(["error", "queries_id is missing"]);
@@ -279,12 +275,19 @@ export class ComposedCommandsRoutes {
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
 
-      console.log("queries_id:'", queries_id, "'");
-      console.log("queries_id:'", queries_id[0], "'");
+      let deepblue_query_ops: DeepBlueOperation[] =
+        queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
 
-      var ccos = re.enrichRegionsOverlap(status, queries_id[0], universe_id, datasets).subscribe((results: DeepBlueResult[]) => {
+
+      var ccos = re.enrichRegionsOverlap(deepblue_query_ops, universe_id, datasets, status).subscribe((results: DeepBlueResult[]) => {
         console.log(results);
-        res.send(results);
+        let rr = [];
+        for (let i = 0; i < results.length; i++) {
+          let result: DeepBlueResult = results[i];
+          let resultObj = new DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), universe_id, datasets, result.resultAsTuples());
+          rr.push(resultObj);
+        }
+        status.finish(rr);
       });
 
 
