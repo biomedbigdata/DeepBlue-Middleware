@@ -47,7 +47,6 @@ export class ComposedCommandsRoutes {
 
     let request_data: RequestStatus = ComposedCommandsRoutes.requestManager.getRequest(request_id);
 
-    console.log("hereeee", request_data);
     if (request_data.finished) {
       res.send(["okay", request_data.getData()]);
     } else {
@@ -255,9 +254,9 @@ export class ComposedCommandsRoutes {
 
       // This function received an JSON object in the body
 
-      let queries_id : string[] = req.body.queries_id;
-      let universe_id : string = req.body.universe_id;
-      let datasets : Object = req.body.datasets;
+      let queries_id: string[] = req.body.queries_id;
+      let universe_id: string = req.body.universe_id;
+      let datasets: Object = req.body.datasets;
 
       if (!(queries_id)) {
         res.send(["error", "queries_id is missing"]);
@@ -274,6 +273,7 @@ export class ComposedCommandsRoutes {
       }
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
+      res.send(["okay", status.request_id.toLocaleString()]);
 
       let deepblue_query_ops: DeepBlueOperation[] =
         queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
@@ -287,11 +287,9 @@ export class ComposedCommandsRoutes {
           let resultObj = new DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), universe_id, datasets, result.resultAsTuples());
           rr.push(resultObj);
         }
+        console.log(rr);
         status.finish(rr);
       });
-
-
-      res.send(datasets);
     });
   }
 

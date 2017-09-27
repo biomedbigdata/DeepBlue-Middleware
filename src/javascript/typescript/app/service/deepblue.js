@@ -235,16 +235,16 @@ class DeepBlueService {
             return this.getResult(request_id, status);
         }).catch(this.handleError);
     }
-    enrich_regions_overlap(query_id, universe_id, datasets, status) {
+    enrich_regions_overlap(data, universe_id, datasets, status) {
         const params = new Object();
-        params['query_id'] = query_id;
+        params['query_id'] = data.queryId();
         params['background_query_id'] = universe_id;
         params['datasets'] = datasets;
         params["genome"] = "GRCh38";
         return this.execute("enrich_region_overlap", params, status).map((response) => {
             status.increment();
             console.log(response);
-            return new operations_1.DeepBlueRequest(null, response[1], 'enrich_regions_overlap');
+            return new operations_1.DeepBlueRequest(data, response[1], 'enrich_regions_overlap');
         }).flatMap((request_id) => {
             return this.getResult(request_id, status);
         }).catch(this.handleError);

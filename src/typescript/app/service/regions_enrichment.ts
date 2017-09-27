@@ -50,7 +50,7 @@ export class RegionsEnrichment {
 
     data_query_id.forEach((current_op) => {
       console.log(current_op);
-      let o = this.deepBlueService.enrich_regions_overlap(current_op.getDataQuery(), universe_id, datasets, status);
+      let o = this.deepBlueService.enrich_regions_overlap(current_op, universe_id, datasets, status);
       observableBatch.push(o);
     });
 

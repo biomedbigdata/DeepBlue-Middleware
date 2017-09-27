@@ -12,7 +12,6 @@ class ComposedCommandsRoutes {
     static getRequest(req, res, next) {
         let request_id = req.query["request_id"];
         let request_data = ComposedCommandsRoutes.requestManager.getRequest(request_id);
-        console.log("hereeee", request_data);
         if (request_data.finished) {
             res.send(["okay", request_data.getData()]);
         }
@@ -185,6 +184,7 @@ class ComposedCommandsRoutes {
                 res.send(["error", "datasets is missing"]);
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
+            res.send(["okay", status.request_id.toLocaleString()]);
             let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
             var ccos = re.enrichRegionsOverlap(deepblue_query_ops, universe_id, datasets, status).subscribe((results) => {
                 console.log(results);
@@ -194,9 +194,9 @@ class ComposedCommandsRoutes {
                     let resultObj = new operations_1.DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), universe_id, datasets, result.resultAsTuples());
                     rr.push(resultObj);
                 }
+                console.log(rr);
                 status.finish(rr);
             });
-            res.send(datasets);
         });
     }
     static listGenes(req, res, next) {

@@ -308,9 +308,9 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
-   enrich_regions_overlap(query_id: string, universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult> {
+   enrich_regions_overlap(data: DeepBlueOperation, universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
-    params['query_id'] = query_id;
+    params['query_id'] = data.queryId();
     params['background_query_id'] = universe_id;
     params['datasets'] = datasets;
     params["genome"] = "GRCh38";
@@ -318,7 +318,7 @@ export class DeepBlueService {
     return this.execute("enrich_region_overlap", params, status).map((response: [string, any]) => {
       status.increment();
       console.log(response);
-      return new DeepBlueRequest(null, response[1], 'enrich_regions_overlap');
+      return new DeepBlueRequest(data, response[1], 'enrich_regions_overlap');
     }).flatMap((request_id) => {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
