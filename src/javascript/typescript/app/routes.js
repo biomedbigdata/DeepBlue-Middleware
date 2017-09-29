@@ -54,15 +54,13 @@ class ComposedCommandsRoutes {
             if (!(Array.isArray(experiments_id))) {
                 experiments_id = [experiments_id];
             }
-            console.log("count overlap 3");
+            // TODO: Load the real query
             experiments_1.Experiments.info(experiments_id).subscribe((experiments) => {
-                console.log("count overlap 4");
-                let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
+                let deepblue_query_ops = queries_id.map((query_id) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data"));
                 let experiments_name = experiments.map((v) => new deepblue_1.Name(v["name"]));
                 var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, filters, status).subscribe((results) => {
                     let rr = [];
                     for (let i = 0; i < results.length; i++) {
-                        console.log("count overlap 3", i);
                         let result = results[i];
                         let resultObj = new operations_1.DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(), result.getFilterName(), result.getFilterQuery(), result.resultAsCount());
                         rr.push(resultObj);
@@ -81,7 +79,8 @@ class ComposedCommandsRoutes {
             if (!(Array.isArray(queries_id))) {
                 queries_id = [queries_id];
             }
-            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
+            // TODO: Load real Operation
+            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data"));
             var ccos = cc.countGenesOverlaps(deepblue_query_ops, new deepblue_1.Name(gene_model_name), status).subscribe((results) => {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
@@ -110,7 +109,8 @@ class ComposedCommandsRoutes {
             if (!(Array.isArray(queries_id))) {
                 queries_id = [queries_id];
             }
-            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
+            // TODO: Load real Operation
+            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data"));
             var ccos = cc.enrichRegionsGoTerms(deepblue_query_ops, new deepblue_1.Name(gene_model_name), status).subscribe((results) => {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
@@ -185,13 +185,14 @@ class ComposedCommandsRoutes {
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             res.send(["okay", status.request_id.toLocaleString()]);
-            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), query_id, "DIVE data"));
+            // TODO: Load real operations
+            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data"));
             var ccos = re.enrichRegionsOverlap(deepblue_query_ops, universe_id, datasets, status).subscribe((results) => {
                 console.log(results);
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
-                    let resultObj = new operations_1.DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), universe_id, datasets, result.resultAsTuples());
+                    let resultObj = new operations_1.DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), new deepblue_1.Id(universe_id), datasets, result.resultAsTuples());
                     rr.push(resultObj);
                 }
                 console.log(rr);
@@ -233,7 +234,8 @@ class ComposedCommandsRoutes {
         }
         let status = ComposedCommandsRoutes.requestManager.startRequest();
         manager_1.Manager.getDeepBlueService().subscribe((dbs) => {
-            let sr = new operations_1.DeepBlueSimpleQuery("");
+            // TODO: create dummy query and request
+            let sr = new operations_1.DeepBlueSimpleQuery(new deepblue_1.Id(""));
             let dbr = new operations_1.DeepBlueRequest(sr, request_id, "export_ucsc");
             dbs.getResult(dbr, status).subscribe((result) => {
                 let regions = result.resultAsString();

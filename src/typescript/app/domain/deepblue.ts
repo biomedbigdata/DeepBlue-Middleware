@@ -1,6 +1,18 @@
 import { IKey } from '../domain/interfaces';
 
 
+export class Id implements IKey {
+    constructor(public id: string) { }
+
+    key(): string {
+        return this.id;
+    }
+
+    clone(): Id {
+        return new Id(this.id);
+    }
+}
+
 export class Name implements IKey {
     constructor(public name: string) { }
 
@@ -18,6 +30,10 @@ export class IdName implements IKey {
 
     key(): string {
         return this.id;
+    }
+
+    Id() : Id {
+        return new Id(this.id);
     }
 
     clone(): IdName {
@@ -116,6 +132,10 @@ export class FullMetadata extends IdName {
 
     columns(): Object {
         return this.values["columns"];
+    }
+
+    type() : string {
+        return this.values["type"];
     }
 
     clone(): FullMetadata {

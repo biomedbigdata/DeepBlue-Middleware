@@ -143,7 +143,7 @@ class DeepBlueService {
         params["experiment_name"] = experiment.name;
         return this.execute("select_experiments", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueSelectData(experiment, response[1], "select_experiment");
+            return new operations_1.DeepBlueSelectData(experiment, new deepblue_1.Id(response[1]), "select_experiment");
         }).do((operation) => {
             this.idNamesQueryCache.put(experiment, operation);
         }).catch(this.handleError);
@@ -152,15 +152,15 @@ class DeepBlueService {
         const params = new operations_1.DeepBlueParameters(genome, type, epigenetic_mark, biosource, sample, technique, project);
         return this.execute("select_regions", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueSelectData(params, response[1], "select_regions_from_metadata");
+            return new operations_1.DeepBlueSelectData(params, new deepblue_1.Id(response[1]), "select_regions_from_metadata");
         }).catch(this.handleError);
     }
     filter_regions(query_data_id, filter, status) {
         let params = filter.asKeyValue();
-        params["query_id"] = query_data_id.queryId();
+        params["query_id"] = query_data_id.queryIdString();
         return this.execute("filter_regions", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueFilter(query_data_id, filter, response[1]);
+            return new operations_1.DeepBlueFilter(query_data_id, filter, new deepblue_1.Id(response[1]));
         }).catch(this.handleError);
     }
     selectGenes(gene_model_name, status) {
@@ -173,7 +173,7 @@ class DeepBlueService {
         params['gene_model'] = gene_model_name.name;
         return this.execute("select_genes", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueSelectData(gene_model_name, response[1], 'select_genes');
+            return new operations_1.DeepBlueSelectData(gene_model_name, new deepblue_1.Id(response[1]), 'select_genes');
         }).do((operation) => {
             this.idNamesQueryCache.put(gene_model_name, operation);
         }).catch(this.handleError);
@@ -186,11 +186,11 @@ class DeepBlueService {
             return Observable_1.Observable.of(cached_intersection);
         }
         let params = {};
-        params["query_data_id"] = query_data_id.queryId();
-        params["query_filter_id"] = query_filter_id.queryId();
+        params["query_data_id"] = query_data_id.queryIdString();
+        params["query_filter_id"] = query_filter_id.queryIdString();
         return this.execute("intersection", params, status)
             .map((response) => {
-            return new operations_1.DeepBlueIntersection(query_data_id, query_filter_id, response[1]);
+            return new operations_1.DeepBlueIntersection(query_data_id, query_filter_id, new deepblue_1.Id(response[1]));
         })
             .do((operation) => this.intersectsQueryCache.put(cache_key, operation))
             .catch(this.handleError);
@@ -203,7 +203,7 @@ class DeepBlueService {
         }
         else {
             let params = new Object();
-            params["query_id"] = op_exp.queryId();
+            params["query_id"] = op_exp.queryIdString();
             return this.execute("count_regions", params, status).map((data) => {
                 let request = new operations_1.DeepBlueRequest(op_exp, data[1], "count_regions");
                 this.requestCache.put(op_exp, request);
@@ -215,8 +215,10 @@ class DeepBlueService {
     }
     distinct_column_values(data, field, status) {
         const params = new Object();
-        params['query_id'] = data.queryId();
+        params['query_id'] = data.queryIdString();
         params['field'] = field;
+        console.log(data);
+        console.log(params);
         return this.execute("distinct_column_values", params, status).map((response) => {
             status.increment();
             return new operations_1.DeepBlueRequest(data, response[1], 'distinct_column_values');
@@ -226,7 +228,7 @@ class DeepBlueService {
     }
     enrich_regions_go_terms(data, gene_model_name, status) {
         const params = new Object();
-        params['query_id'] = data.queryId();
+        params['query_id'] = data.queryIdString();
         params['gene_model'] = gene_model_name.name;
         return this.execute("enrich_regions_go_terms", params, status).map((response) => {
             status.increment();
@@ -237,7 +239,7 @@ class DeepBlueService {
     }
     enrich_regions_overlap(data, universe_id, datasets, status) {
         const params = new Object();
-        params['query_id'] = data.queryId();
+        params['query_id'] = data.queryIdString();
         params['background_query_id'] = universe_id;
         params['datasets'] = datasets;
         params["genome"] = "GRCh38";
@@ -318,24 +320,26 @@ class DeepBlueService {
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
-    info(id_name, status) {
-        let object = this.IdObjectCache.get(id_name);
+    info(id, status) {
+        let object = this.IdObjectCache.get(id);
         if (object) {
             status.increment();
             return Observable_1.Observable.of(object);
         }
-        return this.execute("info", id_name, status).map((response) => {
+        const params = new Object();
+        params["id"] = id.id;
+        return this.execute("info", params, status).map((response) => {
             return new deepblue_1.FullMetadata(response[1][0]);
         })
             .do((info_object) => {
-            this.IdObjectCache.put(id_name, info_object);
+            this.IdObjectCache.put(id, info_object);
         });
     }
     infos(id_names, status) {
         let total = 0;
         let observableBatch = [];
         id_names.forEach((id_name) => {
-            observableBatch.push(this.info(id_name, status));
+            observableBatch.push(this.info(id_name.Id(), status));
         });
         return Observable_1.Observable.forkJoin(observableBatch);
     }

@@ -4,14 +4,16 @@ import { Subject } from "rxjs";
 
 import { DeepBlueService } from '../service/deepblue';
 
-import { IdName, Name } from '../domain/deepblue';
+import { IdName, Name, Id, FullMetadata } from '../domain/deepblue';
 
 import {
     DeepBlueIntersection,
     DeepBlueFilter,
     DeepBlueOperation,
     DeepBlueResult,
-    FilterParameter
+    FilterParameter,
+    DeepBlueSelectData,
+    DeepBlueTilingRegions
 } from '../domain/operations';
 
 export class ComposedCommands {
@@ -166,6 +168,60 @@ export class ComposedCommands {
         });
 
         return Observable.forkJoin(observableBatch);
+    }
+
+    loadQuery(query_id: Id, status: RequestStatus): Observable<DeepBlueOperation> {
+        return this.deepBlueService.info(query_id, status).map((fullMetadata: FullMetadata) => {
+
+            let type = fullMetadata.type();
+            let name = fullMetadata.name
+            let id = new Id(fullMetadata.id);
+
+            switch (type) {
+                case "annotation_select": {
+                    return new DeepBlueSelectData(new Name(name), id, type);
+                }
+
+                case "experiment_select": {
+                    return new DeepBlueSelectData(new Name(name), id, type);
+                }
+
+                case "genes_select": {
+                    return new DeepBlueSelectData(new Name(fullMetadata.values['genes']), id, type);
+                }
+
+
+                case "intersect": case "overlap": {
+                    let data = new Id(fullMetadata.values['qid_1']);
+                    let filter = new Id(fullMetadata.values['qid_1']);
+
+                    Observable.forkJoin(this.loadQuery(data, status), this.loadQuery(filter, status))
+                        .subscribe(([op_data, op_filter]) => {
+                            return new DeepBlueIntersection(op_data, op_filter, id);
+                        });
+                }
+
+                case "filter": {
+                    let filter_parameters = FilterParameter.fromObject(fullMetadata.values);
+                    let query_id = new Id(fullMetadata.values['query']);
+
+                    this.loadQuery(query_id, status).subscribe((op) => {
+                        return new DeepBlueFilter(op, filter_parameters, query_id);
+                    });
+                }
+
+                case "tiling": {
+                    let genome = fullMetadata.values['genome'];
+                    let size = Number(fullMetadata.values['size'])
+                    return new DeepBlueTilingRegions(size, genome, id);
+                }
+
+                default: {
+                    console.log("Invalid type", type);
+                    return new DeepBlueSelectData(new Name("name"), id, type);
+                }
+            }
+        });
     }
 
     private handleError(error: Response | any) {

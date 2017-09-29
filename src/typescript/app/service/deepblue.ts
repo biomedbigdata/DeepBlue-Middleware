@@ -14,7 +14,8 @@ import {
   IdName,
   Name,
   IdNameCount,
-  Gene
+  Gene,
+  Id
 } from '../domain/deepblue';
 
 import {
@@ -112,7 +113,7 @@ class Command {
 export class DeepBlueService {
   private _commands: Map<string, Command>;
 
-  IdObjectCache = new DataCache<IdName, FullMetadata>();
+  IdObjectCache = new DataCache<Id, FullMetadata>();
 
   idNamesQueryCache = new DataCache<Name, DeepBlueOperation>();
 
@@ -189,9 +190,9 @@ export class DeepBlueService {
     let params: Object = new Object();
     params["experiment_name"] = experiment.name;
 
-    return this.execute("select_experiments", params, status).map((response: [string, any]) => {
+    return this.execute("select_experiments", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueSelectData(experiment, response[1], "select_experiment");
+      return new DeepBlueSelectData(experiment, new Id(response[1]), "select_experiment");
     }).do((operation) => {
       this.idNamesQueryCache.put(experiment, operation);
     }).catch(this.handleError);
@@ -203,19 +204,19 @@ export class DeepBlueService {
 
     const params = new DeepBlueParameters(genome, type, epigenetic_mark, biosource, sample, technique, project);
 
-    return this.execute("select_regions", params, status).map((response: [string, any]) => {
+    return this.execute("select_regions", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueSelectData(params, response[1], "select_regions_from_metadata");
+      return new DeepBlueSelectData(params, new Id(response[1]), "select_regions_from_metadata");
     }).catch(this.handleError);
   }
 
   filter_regions(query_data_id: DeepBlueOperation, filter: FilterParameter, status: RequestStatus): Observable<DeepBlueOperation> {
     let params = filter.asKeyValue();
-    params["query_id"] = query_data_id.queryId();
+    params["query_id"] = query_data_id.queryIdString();
 
-    return this.execute("filter_regions", params, status).map((response: [string, any]) => {
+    return this.execute("filter_regions", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueFilter(query_data_id, filter, response[1]);
+      return new DeepBlueFilter(query_data_id, filter, new Id(response[1]));
     }).catch(this.handleError);
   }
 
@@ -229,9 +230,9 @@ export class DeepBlueService {
     const params: Object = new Object();
     params['gene_model'] = gene_model_name.name;
 
-    return this.execute("select_genes", params, status).map((response: [string, any]) => {
+    return this.execute("select_genes", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueSelectData(gene_model_name, response[1], 'select_genes');
+      return new DeepBlueSelectData(gene_model_name, new Id(response[1]), 'select_genes');
     }).do((operation) => {
       this.idNamesQueryCache.put(gene_model_name, operation);
     }).catch(this.handleError);
@@ -249,11 +250,11 @@ export class DeepBlueService {
     }
 
     let params = {};
-    params["query_data_id"] = query_data_id.queryId();
-    params["query_filter_id"] = query_filter_id.queryId();
+    params["query_data_id"] = query_data_id.queryIdString();
+    params["query_filter_id"] = query_filter_id.queryIdString();
     return this.execute("intersection", params, status)
-      .map((response: [string, any]) => {
-        return new DeepBlueIntersection(query_data_id, query_filter_id, response[1])
+      .map((response: [string, string]) => {
+        return new DeepBlueIntersection(query_data_id, query_filter_id, new Id(response[1]))
       })
 
       .do((operation: DeepBlueIntersection) => this.intersectsQueryCache.put(cache_key, operation))
@@ -270,9 +271,9 @@ export class DeepBlueService {
 
     } else {
       let params = new Object();
-      params["query_id"] = op_exp.queryId();
+      params["query_id"] = op_exp.queryIdString();
 
-      return this.execute("count_regions", params, status).map((data: [string, any]) => {
+      return this.execute("count_regions", params, status).map((data: [string, string]) => {
         let request = new DeepBlueRequest(op_exp, data[1], "count_regions");
         this.requestCache.put(op_exp, request);
         return request;
@@ -284,10 +285,13 @@ export class DeepBlueService {
 
   distinct_column_values(data: DeepBlueOperation, field: string, status: RequestStatus): Observable<string[]> {
     const params: Object = new Object();
-    params['query_id'] = data.queryId();
+    params['query_id'] = data.queryIdString();
     params['field'] = field;
 
-    return this.execute("distinct_column_values", params, status).map((response: [string, any]) => {
+    console.log(data);
+    console.log(params);
+
+    return this.execute("distinct_column_values", params, status).map((response: [string, string]) => {
       status.increment();
       return new DeepBlueRequest(data, response[1], 'distinct_column_values');
     }).flatMap((request_id) => {
@@ -297,10 +301,10 @@ export class DeepBlueService {
 
   enrich_regions_go_terms(data: DeepBlueOperation, gene_model_name: Name, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
-    params['query_id'] = data.queryId();
+    params['query_id'] = data.queryIdString();
     params['gene_model'] = gene_model_name.name;
 
-    return this.execute("enrich_regions_go_terms", params, status).map((response: [string, any]) => {
+    return this.execute("enrich_regions_go_terms", params, status).map((response: [string, string]) => {
       status.increment();
       return new DeepBlueRequest(data, response[1], 'enrich_regions_go_terms');
     }).flatMap((request_id) => {
@@ -310,12 +314,12 @@ export class DeepBlueService {
 
    enrich_regions_overlap(data: DeepBlueOperation, universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
-    params['query_id'] = data.queryId();
+    params['query_id'] = data.queryIdString();
     params['background_query_id'] = universe_id;
     params['datasets'] = datasets;
     params["genome"] = "GRCh38";
 
-    return this.execute("enrich_region_overlap", params, status).map((response: [string, any]) => {
+    return this.execute("enrich_region_overlap", params, status).map((response: [string, string]) => {
       status.increment();
       console.log(response);
       return new DeepBlueRequest(data, response[1], 'enrich_regions_overlap');
@@ -406,19 +410,22 @@ export class DeepBlueService {
     });
   }
 
-  info(id_name: IdName, status: RequestStatus): Observable<FullMetadata> {
+  info(id: Id , status: RequestStatus): Observable<FullMetadata> {
 
-    let object = this.IdObjectCache.get(id_name);
+    let object = this.IdObjectCache.get(id);
     if (object) {
       status.increment();
       return Observable.of(object);
     }
 
-    return this.execute("info", id_name, status).map((response: [string, any]) => {
+    const params: Object = new Object();
+    params["id"] = id.id;
+
+    return this.execute("info", params, status).map((response: [string, any]) => {
       return new FullMetadata(response[1][0]);
     })
       .do((info_object: FullMetadata) => {
-        this.IdObjectCache.put(id_name, info_object)
+        this.IdObjectCache.put(id, info_object)
       });
   }
 
@@ -427,7 +434,7 @@ export class DeepBlueService {
     let observableBatch: Observable<FullMetadata>[] = [];
 
     id_names.forEach((id_name: IdName) => {
-      observableBatch.push(this.info(id_name, status));
+      observableBatch.push(this.info(id_name.Id(), status));
     });
 
     return Observable.forkJoin(observableBatch);

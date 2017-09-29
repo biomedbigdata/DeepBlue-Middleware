@@ -1,5 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+class Id {
+    constructor(id) {
+        this.id = id;
+    }
+    key() {
+        return this.id;
+    }
+    clone() {
+        return new Id(this.id);
+    }
+}
+exports.Id = Id;
 class Name {
     constructor(name) {
         this.name = name;
@@ -19,6 +31,9 @@ class IdName {
     }
     key() {
         return this.id;
+    }
+    Id() {
+        return new Id(this.id);
     }
     clone() {
         return new IdName(this.id, this.name);
@@ -107,6 +122,9 @@ class FullMetadata extends IdName {
     }
     columns() {
         return this.values["columns"];
+    }
+    type() {
+        return this.values["type"];
     }
     clone() {
         return new FullMetadata(this.values);

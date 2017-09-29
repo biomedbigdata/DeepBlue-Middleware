@@ -7,7 +7,8 @@ import {
   FullMetadata,
   IdName,
   Name,
-  Gene
+  Gene,
+  Id
 } from './domain/deepblue';
 
 import {
@@ -96,17 +97,15 @@ export class ComposedCommandsRoutes {
         experiments_id = [experiments_id];
       }
 
-      console.log("count overlap 3");
+      // TODO: Load the real query
       Experiments.info(experiments_id).subscribe((experiments: Object[]) => {
-        console.log("count overlap 4");
         let deepblue_query_ops: DeepBlueOperation[] =
-          queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
+          queries_id.map((query_id: string) => new DeepBlueSelectData(new Name(query_id), new Id(query_id), "DIVE data"));
         let experiments_name: Name[] = experiments.map((v: Object) => new Name(v["name"]));
 
         var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, filters, status).subscribe((results: DeepBlueResult[]) => {
           let rr = [];
           for (let i = 0; i < results.length; i++) {
-            console.log("count overlap 3", i);
             let result: DeepBlueResult = results[i];
             let resultObj = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(),
               result.getFilterName(), result.getFilterQuery(),
@@ -135,8 +134,9 @@ export class ComposedCommandsRoutes {
         queries_id = [queries_id];
       }
 
+      // TODO: Load real Operation
       let deepblue_query_ops: DeepBlueOperation[] =
-        queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
+        queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), new Id(query_id), "DIVE data"));
 
       var ccos = cc.countGenesOverlaps(deepblue_query_ops, new Name(gene_model_name), status).subscribe((results: DeepBlueResult[]) => {
         let rr = [];
@@ -149,7 +149,6 @@ export class ComposedCommandsRoutes {
         }
         status.finish(rr);
       });
-
     });
   }
 
@@ -178,8 +177,9 @@ export class ComposedCommandsRoutes {
         queries_id = [queries_id];
       }
 
+      // TODO: Load real Operation
       let deepblue_query_ops: DeepBlueOperation[] =
-        queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
+        queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), new Id(query_id), "DIVE data"));
 
       var ccos = cc.enrichRegionsGoTerms(deepblue_query_ops, new Name(gene_model_name), status).subscribe((results: DeepBlueResult[]) => {
         let rr = [];
@@ -275,8 +275,9 @@ export class ComposedCommandsRoutes {
       let status = ComposedCommandsRoutes.requestManager.startRequest();
       res.send(["okay", status.request_id.toLocaleString()]);
 
+      // TODO: Load real operations
       let deepblue_query_ops: DeepBlueOperation[] =
-        queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), query_id, "DIVE data"));
+        queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), new Id(query_id), "DIVE data"));
 
 
       var ccos = re.enrichRegionsOverlap(deepblue_query_ops, universe_id, datasets, status).subscribe((results: DeepBlueResult[]) => {
@@ -284,7 +285,7 @@ export class ComposedCommandsRoutes {
         let rr = [];
         for (let i = 0; i < results.length; i++) {
           let result: DeepBlueResult = results[i];
-          let resultObj = new DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), universe_id, datasets, result.resultAsTuples());
+          let resultObj = new DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), new Id(universe_id), datasets, result.resultAsTuples());
           rr.push(resultObj);
         }
         console.log(rr);
@@ -336,7 +337,8 @@ export class ComposedCommandsRoutes {
     let status = ComposedCommandsRoutes.requestManager.startRequest();
 
     Manager.getDeepBlueService().subscribe((dbs: DeepBlueService) => {
-      let sr = new DeepBlueSimpleQuery("");
+      // TODO: create dummy query and request
+      let sr = new DeepBlueSimpleQuery(new Id(""));
       let dbr = new DeepBlueRequest(sr, request_id, "export_ucsc");
       dbs.getResult(dbr, status).subscribe((result: DeepBlueResult) => {
         let regions = result.resultAsString();
