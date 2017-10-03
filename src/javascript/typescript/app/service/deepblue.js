@@ -92,27 +92,22 @@ class DeepBlueService {
         this.resultCache = new cache_1.DataCache();
     }
     init() {
-        console.log("deepblue 1", this.isInitialized());
         if (this.isInitialized()) {
-            console.log("deepblue 2", this.isInitialized());
             return Observable_1.Observable.of(true);
         }
         let client = xmlrpc.createClient(xmlrpc_host);
         let subject = new Subject_1.Subject();
         client.methodCall("commands", [], (error, value) => {
-            console.log("deepblue 3", this.isInitialized());
             let commands = value[1];
             for (let command_name in commands) {
                 let command = new Command(command_name, commands[command_name]["parameters"]);
                 commands[command_name] = command;
             }
             this._commands = commands;
-            console.log("deepblue 4", this.isInitialized());
             subject.next(true);
             subject.complete();
             this.initalized = true;
         });
-        console.log("deepblue 5", this.isInitialized());
         return subject.asObservable();
     }
     isInitialized() {
@@ -157,7 +152,7 @@ class DeepBlueService {
     }
     filter_regions(query_data_id, filter, status) {
         let params = filter.asKeyValue();
-        params["query_id"] = query_data_id.queryIdString();
+        params["query_id"] = query_data_id.queryId().id;
         return this.execute("filter_regions", params, status).map((response) => {
             status.increment();
             return new operations_1.DeepBlueFilter(query_data_id, filter, new deepblue_1.Id(response[1]));
@@ -186,8 +181,8 @@ class DeepBlueService {
             return Observable_1.Observable.of(cached_intersection);
         }
         let params = {};
-        params["query_data_id"] = query_data_id.queryIdString();
-        params["query_filter_id"] = query_filter_id.queryIdString();
+        params["query_data_id"] = query_data_id.queryId().id;
+        params["query_filter_id"] = query_filter_id.queryId().id;
         return this.execute("intersection", params, status)
             .map((response) => {
             return new operations_1.DeepBlueIntersection(query_data_id, query_filter_id, new deepblue_1.Id(response[1]));
@@ -203,22 +198,20 @@ class DeepBlueService {
         }
         else {
             let params = new Object();
-            params["query_id"] = op_exp.queryIdString();
+            params["query_id"] = op_exp.queryId().id;
             return this.execute("count_regions", params, status).map((data) => {
                 let request = new operations_1.DeepBlueRequest(op_exp, data[1], "count_regions");
                 this.requestCache.put(op_exp, request);
                 return request;
-            }).flatMap((request_id) => {
-                return this.getResult(request_id, status);
+            }).flatMap((request) => {
+                return this.getResult(request, status);
             });
         }
     }
     distinct_column_values(data, field, status) {
         const params = new Object();
-        params['query_id'] = data.queryIdString();
+        params['query_id'] = data.queryId().id;
         params['field'] = field;
-        console.log(data);
-        console.log(params);
         return this.execute("distinct_column_values", params, status).map((response) => {
             status.increment();
             return new operations_1.DeepBlueRequest(data, response[1], 'distinct_column_values');
@@ -228,7 +221,7 @@ class DeepBlueService {
     }
     enrich_regions_go_terms(data, gene_model_name, status) {
         const params = new Object();
-        params['query_id'] = data.queryIdString();
+        params['query_id'] = data.queryId().id;
         params['gene_model'] = gene_model_name.name;
         return this.execute("enrich_regions_go_terms", params, status).map((response) => {
             status.increment();
@@ -239,13 +232,12 @@ class DeepBlueService {
     }
     enrich_regions_overlap(data, universe_id, datasets, status) {
         const params = new Object();
-        params['query_id'] = data.queryIdString();
+        params['query_id'] = data.queryId().id;
         params['background_query_id'] = universe_id;
         params['datasets'] = datasets;
         params["genome"] = "GRCh38";
         return this.execute("enrich_region_overlap", params, status).map((response) => {
             status.increment();
-            console.log(response);
             return new operations_1.DeepBlueRequest(data, response[1], 'enrich_regions_overlap');
         }).flatMap((request_id) => {
             return this.getResult(request_id, status);

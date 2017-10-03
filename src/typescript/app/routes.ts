@@ -62,9 +62,7 @@ export class ComposedCommandsRoutes {
   }
 
   private static countOverlaps(req: express.Request, res: express.Response, next: express.NextFunction) {
-    console.log("count overlap 1  ");
     Manager.getComposedCommands().subscribe((cc: ComposedCommands) => {
-      console.log("count overlap 2");
       let queries_id = req.query["queries_id"];
       let experiments_id = req.query["experiments_id"];
       let filters = req.query["filters"];
@@ -107,10 +105,10 @@ export class ComposedCommandsRoutes {
           let rr = [];
           for (let i = 0; i < results.length; i++) {
             let result: DeepBlueResult = results[i];
-            let resultObj = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(),
+            let overlapResult = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(),
               result.getFilterName(), result.getFilterQuery(),
               result.resultAsCount());
-            rr.push(resultObj);
+            rr.push(overlapResult);
           }
           status.finish(rr);
         });
@@ -213,9 +211,7 @@ export class ComposedCommandsRoutes {
   }
 
   private static chromatinStatesByGenome(req: express.Request, res: express.Response, next: express.NextFunction) {
-    console.log("CSS 1");
     Manager.getComposedQueries().subscribe((cq: ComposedQueries) => {
-      console.log("CSS 2");
       let genome: string = req.query["genome"];
 
       if (!(genome)) {
@@ -281,14 +277,12 @@ export class ComposedCommandsRoutes {
 
 
       var ccos = re.enrichRegionsOverlap(deepblue_query_ops, universe_id, datasets, status).subscribe((results: DeepBlueResult[]) => {
-        console.log(results);
         let rr = [];
         for (let i = 0; i < results.length; i++) {
           let result: DeepBlueResult = results[i];
           let resultObj = new DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), new Id(universe_id), datasets, result.resultAsTuples());
           rr.push(resultObj);
         }
-        console.log(rr);
         status.finish(rr);
       });
     });
@@ -309,10 +303,8 @@ export class ComposedCommandsRoutes {
         return;
       }
 
-      console.log("list genes", gene_model, gene_id_name);
       let status = ComposedCommandsRoutes.requestManager.startRequest();
       genes.listGeneName(gene_id_name, status, gene_model).subscribe((dbs: Gene[]) => {
-        console.log(dbs);
         res.send(dbs);
         status.finish(null);
       });

@@ -33,21 +33,15 @@ class Manager {
         return subject.asObservable();
     }
     static getComposedQueries() {
-        console.log("get composed queries 1");
         if (this.composed_queries) {
-            console.log("get composed queries X");
             return Observable_1.Observable.of(this.composed_queries);
         }
         let subject = new rxjs_1.Subject();
-        console.log("get composed queries 2");
         this.dbs.init().subscribe(() => {
-            console.log("get composed queries 3");
             this.composed_queries = new composed_queries_1.ComposedQueries(this.dbs);
             subject.next(this.composed_queries);
             subject.complete();
-            console.log("COMPLETE!");
         });
-        console.log("get composed queries 4");
         return subject.asObservable();
     }
     static getGenes() {

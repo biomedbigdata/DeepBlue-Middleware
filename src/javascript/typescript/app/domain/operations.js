@@ -64,8 +64,8 @@ class DeepBlueSimpleQuery {
     constructor(_query_id) {
         this._query_id = _query_id;
     }
-    queryIdString() {
-        return this._query_id.id;
+    queryId() {
+        return this._query_id;
     }
     key() {
         return this._query_id.id;
@@ -99,9 +99,8 @@ class DeepBlueSelectData {
     clone() {
         return new DeepBlueSelectData(this._data.clone(), this.query_id, this.command);
     }
-    queryIdString() {
-        console.log(this.query_id);
-        return this.query_id.id;
+    queryId() {
+        return this.query_id;
     }
     data() {
         return this._data;
@@ -132,8 +131,8 @@ class DeepBlueTilingRegions {
         this.genome = genome;
         this.query_id = query_id;
     }
-    queryIdString() {
-        return this.query_id.id;
+    queryId() {
+        return this.query_id;
     }
     data() {
         return new deepblue_1.Name(this.genome + " " + this.size.toString());
@@ -167,14 +166,14 @@ class DeepBlueIntersection {
     clone() {
         return new DeepBlueIntersection(this._data.clone(), this._filter.clone(), this.query_id);
     }
-    queryIdString() {
-        return this.query_id.id;
+    queryId() {
+        return this.query_id;
     }
     data() {
         return this._data;
     }
     key() {
-        return "intersect_" + this._data.queryIdString() + '_' + this._filter.queryIdString();
+        return "intersect_" + this._data.queryId().id + '_' + this._filter.queryId().id;
     }
     getDataName() {
         return this._data.getDataName();
@@ -186,7 +185,7 @@ class DeepBlueIntersection {
         return this._filter.getDataName();
     }
     getFilterQuery() {
-        return this._filter.getDataQuery();
+        return this._filter.queryId();
     }
 }
 exports.DeepBlueIntersection = DeepBlueIntersection;
@@ -196,8 +195,8 @@ class DeepBlueFilter {
         this._params = _params;
         this.query_id = query_id;
     }
-    queryIdString() {
-        return this.query_id.id;
+    queryId() {
+        return this.query_id;
     }
     ;
     data() {
@@ -207,7 +206,7 @@ class DeepBlueFilter {
         return this._data.getDataName();
     }
     getDataQuery() {
-        return new deepblue_2.Id(this._data.getDataName());
+        return this._data.getDataQuery();
     }
     getFilterName() {
         return "filter_regions";
@@ -216,7 +215,7 @@ class DeepBlueFilter {
         return new deepblue_2.Id(this._params.toString());
     }
     key() {
-        return "filter_" + this.queryIdString();
+        return "filter_" + this.queryId().id;
     }
     clone() {
         return new DeepBlueFilter(this._data.clone(), this._params.clone(), this.query_id);

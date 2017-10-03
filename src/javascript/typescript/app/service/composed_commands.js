@@ -34,9 +34,9 @@ class ComposedCommands {
         });
         return Observable_1.Observable.forkJoin(observableBatch);
     }
-    countRegionsBatch(query_ids, status) {
+    countRegionsBatch(query_ops, status) {
         let observableBatch = [];
-        query_ids.forEach((op_exp, key) => {
+        query_ops.forEach((op_exp, key) => {
             let o = new Observable_1.Observable((observer) => {
                 this.deepBlueService.count_regions(op_exp, status).subscribe((result) => {
                     observer.next(result);
@@ -71,10 +71,10 @@ class ComposedCommands {
         status.setStep("Selecting experiments regions");
         this.selectMultipleExperiments(experiments_name, status).subscribe((selected_experiments) => {
             status.setStep("Overlaping regions");
-            this.applyFilter(selected_experiments, filters, status).subscribe((filtered_data_id) => {
-                this.intersectWithSelected(data_query_id, filtered_data_id, status).subscribe((overlap_ids) => {
+            this.applyFilter(selected_experiments, filters, status).subscribe((filtered_data) => {
+                this.intersectWithSelected(data_query_id, filtered_data, status).subscribe((overlap_ops) => {
                     status.setStep("Intersecting regions");
-                    this.countRegionsBatch(overlap_ids, status).subscribe((datum) => {
+                    this.countRegionsBatch(overlap_ops, status).subscribe((datum) => {
                         var end = new Date().getTime();
                         setTimeout(() => {
                             response.next(datum);
@@ -155,7 +155,7 @@ class ComposedCommands {
                     return new operations_1.DeepBlueTilingRegions(size, genome, id);
                 }
                 default: {
-                    console.log("Invalid type", type);
+                    console.error("Invalid type", type);
                     return new operations_1.DeepBlueSelectData(new deepblue_1.Name("name"), id, type);
                 }
             }

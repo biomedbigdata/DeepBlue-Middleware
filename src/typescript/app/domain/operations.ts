@@ -55,7 +55,7 @@ export class DeepBlueParameters implements IKey {
 }
 
 export interface DeepBlueOperation extends IKey {
-    queryIdString(): string;
+    queryId(): Id;
 
     data(): Name | DeepBlueOperation | DeepBlueParameters;
 
@@ -71,8 +71,8 @@ export interface DeepBlueOperation extends IKey {
 export class DeepBlueSimpleQuery implements DeepBlueOperation {
     constructor(public _query_id: Id) { }
 
-    queryIdString(): string {
-        return this._query_id.id;
+    queryId(): Id {
+        return this._query_id;
     }
 
     key(): string {
@@ -118,9 +118,8 @@ export class DeepBlueSelectData implements DeepBlueOperation {
         );
     }
 
-    queryIdString(): string {
-        console.log(this.query_id);
-        return this.query_id.id;
+    queryId(): Id {
+        return this.query_id;
     }
 
     data(): Name | DeepBlueOperation | DeepBlueParameters {
@@ -155,8 +154,8 @@ export class DeepBlueTilingRegions implements DeepBlueOperation {
 
     constructor(private size: number, private genome: string, public query_id: Id) { }
 
-    queryIdString(): string {
-        return this.query_id.id;
+    queryId(): Id {
+        return this.query_id;
     }
     data(): DeepBlueOperation | Name | DeepBlueParameters {
         return new Name(this.genome + " " + this.size.toString());
@@ -197,8 +196,8 @@ export class DeepBlueIntersection implements DeepBlueOperation {
         );
     }
 
-    queryIdString(): string {
-        return this.query_id.id;
+    queryId(): Id {
+        return this.query_id;
     }
 
     data(): Name | DeepBlueOperation | DeepBlueParameters {
@@ -206,7 +205,7 @@ export class DeepBlueIntersection implements DeepBlueOperation {
     }
 
     key(): string {
-        return "intersect_" + this._data.queryIdString() + '_' + this._filter.queryIdString();
+        return "intersect_" + this._data.queryId().id + '_' + this._filter.queryId().id;
     }
 
     getDataName(): string {
@@ -222,15 +221,15 @@ export class DeepBlueIntersection implements DeepBlueOperation {
     }
 
     getFilterQuery(): Id {
-        return this._filter.getDataQuery();
+        return this._filter.queryId();
     }
 }
 
 export class DeepBlueFilter implements DeepBlueOperation {
     constructor(private _data: DeepBlueOperation, public _params: FilterParameter, public query_id: Id) { }
 
-    queryIdString(): string {
-        return this.query_id.id;
+    queryId(): Id {
+        return this.query_id;
     };
 
     data(): Name | DeepBlueOperation | DeepBlueParameters {
@@ -242,7 +241,7 @@ export class DeepBlueFilter implements DeepBlueOperation {
     }
 
     getDataQuery(): Id {
-        return new Id(this._data.getDataName());
+        return this._data.getDataQuery();
     }
 
     getFilterName(): string {
@@ -254,7 +253,7 @@ export class DeepBlueFilter implements DeepBlueOperation {
     }
 
     key(): string {
-        return "filter_" + this.queryIdString();
+        return "filter_" + this.queryId().id;
     }
 
     clone(): DeepBlueFilter {

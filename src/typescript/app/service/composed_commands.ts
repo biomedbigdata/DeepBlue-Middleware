@@ -59,10 +59,10 @@ export class ComposedCommands {
         return Observable.forkJoin(observableBatch);
     }
 
-    countRegionsBatch(query_ids: DeepBlueOperation[], status: RequestStatus): Observable<DeepBlueResult[]> {
+    countRegionsBatch(query_ops: DeepBlueOperation[], status: RequestStatus): Observable<DeepBlueResult[]> {
         let observableBatch: Observable<DeepBlueResult>[] = [];
 
-        query_ids.forEach((op_exp, key) => {
+        query_ops.forEach((op_exp, key) => {
             let o: Observable<DeepBlueResult> = new Observable((observer) => {
                 this.deepBlueService.count_regions(op_exp, status).subscribe((result) => {
                     observer.next(result);
@@ -106,11 +106,11 @@ export class ComposedCommands {
         this.selectMultipleExperiments(experiments_name, status).subscribe((selected_experiments: DeepBlueOperation[]) => {
             status.setStep("Overlaping regions");
 
-            this.applyFilter(selected_experiments, filters, status).subscribe((filtered_data_id: DeepBlueFilter[]) => {
-                this.intersectWithSelected(data_query_id, filtered_data_id, status).subscribe((overlap_ids: DeepBlueOperation[]) => {
+            this.applyFilter(selected_experiments, filters, status).subscribe((filtered_data: DeepBlueFilter[]) => {
+                this.intersectWithSelected(data_query_id, filtered_data, status).subscribe((overlap_ops: DeepBlueOperation[]) => {
                     status.setStep("Intersecting regions");
 
-                    this.countRegionsBatch(overlap_ids, status).subscribe((datum: DeepBlueResult[]) => {
+                    this.countRegionsBatch(overlap_ops, status).subscribe((datum: DeepBlueResult[]) => {
                         var end = new Date().getTime();
                         setTimeout(() => {
                             response.next(datum);
@@ -217,7 +217,7 @@ export class ComposedCommands {
                 }
 
                 default: {
-                    console.log("Invalid type", type);
+                    console.error("Invalid type", type);
                     return new DeepBlueSelectData(new Name("name"), id, type);
                 }
             }
