@@ -21,10 +21,9 @@ class RegionsEnrichment {
             let states = subs[0].resultAsDistinct();
             let state_names = Object.keys(states);
             let experiments = subs[1];
-            let exp_filter_ids = new Array();
             let total_processed = 0;
-            for (let experiment of experiments) {
-                this.deepBlueService.selectExperiment(experiment, request_status)
+            let exp_states_obs = experiments.map((experiment) => {
+                return this.deepBlueService.selectExperiment(experiment, request_status)
                     .flatMap((exp_op) => {
                     return this.deepBlueService.query_cache(exp_op, request_status);
                 })
@@ -45,15 +44,14 @@ class RegionsEnrichment {
                         }
                         return exp_filter_id;
                     });
-                }).subscribe((filters) => {
-                    total_processed++;
-                    console.log(total_processed, experiments.length);
-                    exp_filter_ids.push(filters);
-                    if (total_processed == experiments.length) {
-                        console.log(exp_filter_ids);
-                    }
                 });
-            }
+            });
+            Observable_1.Observable.forkJoin(exp_states_obs).subscribe((filters) => {
+                console.log(filters);
+                console.log(filters.length);
+                console.log(filters[0].length);
+                console.log(filters[0][0].length);
+            });
         });
         return response.asObservable();
     }
