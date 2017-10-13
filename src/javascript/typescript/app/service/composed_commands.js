@@ -119,19 +119,38 @@ class ComposedCommands {
         return Observable_1.Observable.forkJoin(observableBatch);
     }
     loadQuery(query_id, status) {
-        return this.deepBlueService.info(query_id, status).map((fullMetadata) => {
+        let querySubject = new rxjs_1.Subject();
+        console.log("IN?");
+        this.deepBlueService.info(query_id, status).subscribe((fullMetadata) => {
+            console.log("-------");
+            console.log(fullMetadata);
+            console.log("-------");
             let type = fullMetadata.type();
-            let name = fullMetadata.name;
             let id = new deepblue_1.Id(fullMetadata.id);
+            let name = fullMetadata.name;
+            let content;
+            if (name) {
+                content = new deepblue_1.Name(name);
+            }
+            else {
+                content = new operations_1.DeepBlueArgs(fullMetadata.values['args']);
+            }
+            console.log(fullMetadata);
             switch (type) {
                 case "annotation_select": {
-                    return new operations_1.DeepBlueSelectData(new deepblue_1.Name(name), id, type);
+                    querySubject.next(new operations_1.DeepBlueSelectData(new deepblue_1.Name(name), id, type));
+                    querySubject.complete();
+                    break;
                 }
                 case "experiment_select": {
-                    return new operations_1.DeepBlueSelectData(new deepblue_1.Name(name), id, type);
+                    querySubject.next(new operations_1.DeepBlueSelectData(content, id, type));
+                    querySubject.complete();
+                    break;
                 }
                 case "genes_select": {
-                    return new operations_1.DeepBlueSelectData(new deepblue_1.Name(fullMetadata.values['genes']), id, type);
+                    querySubject.next(new operations_1.DeepBlueSelectData(new deepblue_1.Name(fullMetadata.values['genes']), id, type));
+                    querySubject.complete();
+                    break;
                 }
                 case "intersect":
                 case "overlap": {
@@ -139,20 +158,26 @@ class ComposedCommands {
                     let filter = new deepblue_1.Id(fullMetadata.values['qid_1']);
                     Observable_1.Observable.forkJoin(this.loadQuery(data, status), this.loadQuery(filter, status))
                         .subscribe(([op_data, op_filter]) => {
-                        return new operations_1.DeepBlueIntersection(op_data, op_filter, id);
+                        querySubject.next(new operations_1.DeepBlueIntersection(op_data, op_filter, id));
+                        querySubject.complete();
                     });
+                    break;
                 }
                 case "filter": {
-                    let filter_parameters = operations_1.FilterParameter.fromObject(fullMetadata.values);
-                    let query_id = new deepblue_1.Id(fullMetadata.values['query']);
+                    let filter_parameters = operations_1.FilterParameter.fromObject(fullMetadata['values']['args']);
+                    let query_id = new deepblue_1.Id(fullMetadata.values['args']['query']);
                     this.loadQuery(query_id, status).subscribe((op) => {
-                        return new operations_1.DeepBlueFilter(op, filter_parameters, query_id);
+                        querySubject.next(new operations_1.DeepBlueFilter(op, filter_parameters, query_id));
+                        querySubject.complete();
                     });
+                    break;
                 }
                 case "tiling": {
                     let genome = fullMetadata.values['genome'];
                     let size = Number(fullMetadata.values['size']);
-                    return new operations_1.DeepBlueTilingRegions(size, genome, id);
+                    querySubject.next(new operations_1.DeepBlueTilingRegions(size, genome, id));
+                    querySubject.complete();
+                    break;
                 }
                 default: {
                     console.error("Invalid type", type);
@@ -160,6 +185,7 @@ class ComposedCommands {
                 }
             }
         });
+        return querySubject.asObservable();
     }
     handleError(error) {
         let errMsg;

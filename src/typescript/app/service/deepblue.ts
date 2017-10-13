@@ -203,13 +203,24 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
-  filter_regions(query_data_id: DeepBlueOperation, filter: FilterParameter, status: RequestStatus): Observable<DeepBlueOperation> {
+  filter_regions(query_data_id: DeepBlueOperation, filter: FilterParameter, status: RequestStatus): Observable<DeepBlueFilter> {
     let params = filter.asKeyValue();
     params["query_id"] = query_data_id.queryId().id;
 
     return this.execute("filter_regions", params, status).map((response: [string, string]) => {
       status.increment();
       return new DeepBlueFilter(query_data_id, filter, new Id(response[1]));
+    }).catch(this.handleError);
+  }
+
+  query_cache(query_data: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueOperation> {
+    let params = new Object();
+    params["query_id"] = query_data.queryId().id;
+    params["cache"] = "true";
+
+    return this.execute("query_cache", params, status).map((response: [string, string]) => {
+      status.increment();
+      return query_data.cacheIt(new Id(response[1]));
     }).catch(this.handleError);
   }
 
@@ -276,7 +287,7 @@ export class DeepBlueService {
     }
   }
 
-  distinct_column_values(data: DeepBlueOperation, field: string, status: RequestStatus): Observable<string[]> {
+  distinct_column_values(data: DeepBlueOperation, field: string, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
     params['query_id'] = data.queryId().id;
     params['field'] = field;
@@ -302,7 +313,7 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
-   enrich_regions_overlap(data: DeepBlueOperation, universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult> {
+  enrich_regions_overlap(data: DeepBlueOperation, universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
     params['query_id'] = data.queryId().id;
     params['background_query_id'] = universe_id;
@@ -351,7 +362,7 @@ export class DeepBlueService {
     });
   }
 
-  list_experiments(status: RequestStatus, type?: string, epigenetic_mark?: string): Observable<IdName[]> {
+  list_experiments(status: RequestStatus, type?: string, epigenetic_mark?: string, genome?: string): Observable<IdName[]> {
     const params: Object = new Object();
     if (type) {
       params["type"] = type;
@@ -360,10 +371,14 @@ export class DeepBlueService {
       params["epigenetic_mark"] = epigenetic_mark;
     }
 
+    if (genome) {
+      params["genome"] = genome;
+    }
+
     return this.execute("list_experiments", params, status).map((response: [string, any]) => {
       const data = response[1] || [];
       return data.map((value) => {
-        return new GeneModel(value);
+        return new Experiment(value);
       }).sort((a: IdName, b: IdName) => a.name.localeCompare(b.name));
     });
   }
@@ -399,7 +414,7 @@ export class DeepBlueService {
     });
   }
 
-  info(id: Id , status: RequestStatus): Observable<FullMetadata> {
+  info(id: Id, status: RequestStatus): Observable<FullMetadata> {
 
     let object = this.IdObjectCache.get(id);
     if (object) {

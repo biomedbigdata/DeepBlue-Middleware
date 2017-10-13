@@ -13,7 +13,8 @@ import {
     DeepBlueResult,
     FilterParameter,
     DeepBlueSelectData,
-    DeepBlueTilingRegions
+    DeepBlueTilingRegions,
+    DeepBlueArgs
 } from '../domain/operations';
 
 export class ComposedCommands {
@@ -171,25 +172,46 @@ export class ComposedCommands {
     }
 
     loadQuery(query_id: Id, status: RequestStatus): Observable<DeepBlueOperation> {
-        return this.deepBlueService.info(query_id, status).map((fullMetadata: FullMetadata) => {
+        let querySubject = new Subject<DeepBlueOperation>();
+
+        console.log("IN?");
+        this.deepBlueService.info(query_id, status).subscribe((fullMetadata: FullMetadata) => {
+
+            console.log("-------");
+            console.log(fullMetadata);
+            console.log("-------");
 
             let type = fullMetadata.type();
-            let name = fullMetadata.name
             let id = new Id(fullMetadata.id);
+            let name = fullMetadata.name;
+
+            let content;
+            if (name) {
+                content = new Name(name);
+            } else {
+                content = new DeepBlueArgs(fullMetadata.values['args']);
+            }
+
+            console.log(fullMetadata);
 
             switch (type) {
                 case "annotation_select": {
-                    return new DeepBlueSelectData(new Name(name), id, type);
+                    querySubject.next(new DeepBlueSelectData(new Name(name), id, type));
+                    querySubject.complete();
+                    break;
                 }
 
                 case "experiment_select": {
-                    return new DeepBlueSelectData(new Name(name), id, type);
+                    querySubject.next(new DeepBlueSelectData(content, id, type));
+                    querySubject.complete();
+                    break;
                 }
 
                 case "genes_select": {
-                    return new DeepBlueSelectData(new Name(fullMetadata.values['genes']), id, type);
+                    querySubject.next(new DeepBlueSelectData(new Name(fullMetadata.values['genes']), id, type));
+                    querySubject.complete();
+                    break;
                 }
-
 
                 case "intersect": case "overlap": {
                     let data = new Id(fullMetadata.values['qid_1']);
@@ -197,23 +219,30 @@ export class ComposedCommands {
 
                     Observable.forkJoin(this.loadQuery(data, status), this.loadQuery(filter, status))
                         .subscribe(([op_data, op_filter]) => {
-                            return new DeepBlueIntersection(op_data, op_filter, id);
+                            querySubject.next(new DeepBlueIntersection(op_data, op_filter, id));
+                            querySubject.complete();
                         });
+                    break;
                 }
 
                 case "filter": {
-                    let filter_parameters = FilterParameter.fromObject(fullMetadata.values);
-                    let query_id = new Id(fullMetadata.values['query']);
+                    let filter_parameters = FilterParameter.fromObject(fullMetadata['values']['args']);
+                    let query_id = new Id(fullMetadata.values['args']['query']);
 
                     this.loadQuery(query_id, status).subscribe((op) => {
-                        return new DeepBlueFilter(op, filter_parameters, query_id);
+                        querySubject.next(new DeepBlueFilter(op, filter_parameters, query_id));
+                        querySubject.complete();
+
                     });
+                    break;
                 }
 
                 case "tiling": {
                     let genome = fullMetadata.values['genome'];
                     let size = Number(fullMetadata.values['size'])
-                    return new DeepBlueTilingRegions(size, genome, id);
+                    querySubject.next(new DeepBlueTilingRegions(size, genome, id));
+                    querySubject.complete();
+                    break;
                 }
 
                 default: {
@@ -222,6 +251,8 @@ export class ComposedCommands {
                 }
             }
         });
+
+        return querySubject.asObservable();
     }
 
     private handleError(error: Response | any) {

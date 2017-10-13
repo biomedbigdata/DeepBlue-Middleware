@@ -143,7 +143,7 @@ class ComposedCommandsRoutes {
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             cq.chromatinStatesByGenome(new deepblue_1.Name(genome), status).subscribe((csss) => {
-                res.send(["okay", csss]);
+                res.send(["okay", csss.resultAsDistinct()]);
                 status.finish(null);
             });
         });
@@ -209,6 +209,20 @@ class ComposedCommandsRoutes {
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             genes.listGeneName(gene_id_name, status, gene_model).subscribe((dbs) => {
                 res.send(dbs);
+                status.finish(null);
+            });
+        });
+    }
+    static queryInfo(req, res, next) {
+        manager_1.Manager.getComposedCommands().subscribe((cc) => {
+            let query_id = req.query["query_id"];
+            if (!(query_id)) {
+                res.send(["error", "query_id is missing"]);
+                return;
+            }
+            let status = ComposedCommandsRoutes.requestManager.startRequest();
+            cc.loadQuery(new deepblue_1.Id(query_id), status).subscribe((query) => {
+                res.send(query);
                 status.finish(null);
             });
         });
@@ -289,6 +303,7 @@ class ComposedCommandsRoutes {
         router.get("/get_enrichment_databases", this.enrichmentDatabases);
         router.get("/generate_track_file", this.generate_track_file);
         router.get("/export_to_genome_browser", this.export_to_genome_browser);
+        router.get("/query_info", this.queryInfo);
         // Post:
         router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
         return router;

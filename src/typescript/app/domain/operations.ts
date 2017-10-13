@@ -3,6 +3,105 @@ import { ICloneable } from '../domain/interfaces'
 import { IKey } from '../domain/interfaces';
 import { IdName, FullMetadata, Id } from '../domain/deepblue';
 
+
+function clone(obj) {
+    var copy;
+
+    // Handle the 3 simple types, and null or undefined
+    if (null == obj || "object" != typeof obj) return obj;
+
+    // Handle Date
+    if (obj instanceof Date) {
+        copy = new Date();
+        copy.setTime(obj.getTime());
+        return copy;
+    }
+
+    // Handle Array
+    if (obj instanceof Array) {
+        copy = [];
+        for (var i = 0, len = obj.length; i < len; i++) {
+            copy[i] = clone(obj[i]);
+        }
+        return copy;
+    }
+
+    // Handle Object
+    if (obj instanceof Object) {
+        copy = {};
+        for (var attr in obj) {
+            if (obj.hasOwnProperty(attr)) {
+                copy[attr] = clone(obj[attr]);
+            }
+        }
+        return copy;
+    }
+
+    throw new Error("Unable to copy obj! Its type isn't supported.");
+}
+
+
+function textify(obj): string {
+    if ("string" == typeof obj) {
+        return obj;
+    }
+
+    if ("number" == typeof obj) {
+        return (<number>obj).toString();
+    }
+
+    // Handle Date
+    if (obj instanceof Date) {
+        return (<Date>obj).toDateString()
+    }
+
+    // Handle Array
+    if (obj instanceof Array) {
+        let text = "";
+        for (var i = 0, len = obj.length; i < len; i++) {
+            text += textify(obj[i]);
+        }
+        return text;
+    }
+
+
+    // Handle the 3 simple types, and null or undefined
+    if (null == obj || "object" != typeof obj) {
+        return "";
+    }
+
+    // Handle Object
+    if (obj instanceof Object) {
+        let text = "";
+        for (var attr in obj) {
+            if (obj.hasOwnProperty(attr)) {
+                text += textify(obj[attr]);
+            }
+        }
+        return text;
+    }
+
+    throw new Error("Unable to textify " + obj + "! Its type isn't supported.");
+}
+
+
+export class DeepBlueArgs implements IKey {
+    constructor(public args: Object) { }
+
+    key(): string {
+        return textify(this.args);
+    }
+
+    clone(): DeepBlueArgs {
+        return new DeepBlueArgs(clone(this.args));
+    }
+
+    asKeyValue(): Object {
+        return this.args;
+    }
+}
+
+
 export class DeepBlueParameters implements IKey {
     constructor(public genome: string, public type: string, public epigenetic_mark: string,
         public biosource: string, public sample: string, public technique: string, public project: string) { }
@@ -57,7 +156,7 @@ export class DeepBlueParameters implements IKey {
 export interface DeepBlueOperation extends IKey {
     queryId(): Id;
 
-    data(): Name | DeepBlueOperation | DeepBlueParameters;
+    data(): Name | DeepBlueOperation | DeepBlueParameters | DeepBlueArgs;
 
     getDataName(): string;
 
@@ -66,10 +165,12 @@ export interface DeepBlueOperation extends IKey {
     getFilterName(): string;
 
     getFilterQuery(): Id;
+
+    cacheIt(query_id: Id): DeepBlueOperation;
 }
 
 export class DeepBlueSimpleQuery implements DeepBlueOperation {
-    constructor(public _query_id: Id) { }
+    constructor(public _query_id: Id, public cached = false) { }
 
     queryId(): Id {
         return this._query_id;
@@ -81,7 +182,8 @@ export class DeepBlueSimpleQuery implements DeepBlueOperation {
 
     clone(): DeepBlueSimpleQuery {
         return new DeepBlueSimpleQuery(
-            this._query_id
+            this._query_id,
+            this.cached
         );
     }
 
@@ -104,17 +206,22 @@ export class DeepBlueSimpleQuery implements DeepBlueOperation {
     getFilterQuery(): Id {
         return null;
     }
+
+    cacheIt(query_id: Id): DeepBlueSimpleQuery {
+        return new DeepBlueSimpleQuery(query_id, true);
+    }
 }
 
 export class DeepBlueSelectData implements DeepBlueOperation {
     constructor(private _data: Name | DeepBlueOperation | DeepBlueParameters,
-        public query_id: Id, public command: string) { }
+        public query_id: Id, public command: string, public cached = false) { }
 
     clone(): DeepBlueSelectData {
         return new DeepBlueSelectData(
             this._data.clone(),
             this.query_id,
-            this.command
+            this.command,
+            this.cached
         );
     }
 
@@ -134,6 +241,9 @@ export class DeepBlueSelectData implements DeepBlueOperation {
         if (this._data instanceof Name) {
             return this._data.name;
         }
+        if (this._data instanceof IdName) {
+            return this._data.name;
+        }
         return this._data.key();
     }
 
@@ -148,51 +258,68 @@ export class DeepBlueSelectData implements DeepBlueOperation {
     getFilterQuery(): Id {
         return null;
     }
+
+    cacheIt(query_id: Id): DeepBlueSelectData {
+        return new DeepBlueSelectData(this._data, this.query_id, this.command, true);
+    }
 }
 
 export class DeepBlueTilingRegions implements DeepBlueOperation {
 
-    constructor(private size: number, private genome: string, public query_id: Id) { }
+    constructor(private size: number, private genome: string, public query_id: Id, public cached = false) { }
 
     queryId(): Id {
         return this.query_id;
     }
+
     data(): DeepBlueOperation | Name | DeepBlueParameters {
         return new Name(this.genome + " " + this.size.toString());
     }
+
     getDataName(): string {
         return this.genome + " " + this.size.toString();
     }
+
     getDataQuery(): Id {
         return this.query_id;
     }
+
     getFilterName(): string {
         return null;
     }
+
     getFilterQuery(): Id {
         return null;
     }
+
     key(): string {
         return this.query_id.id;
     }
+
     clone() {
         return new DeepBlueTilingRegions(
             this.size,
             this.genome,
-            this.query_id
+            this.query_id,
+            this.cached
         );
+    }
+
+    cacheIt(query_id: Id) {
+        return new DeepBlueTilingRegions(this.size, this.genome, this.query_id, true);
     }
 }
 
 
 export class DeepBlueIntersection implements DeepBlueOperation {
-    constructor(private _data: DeepBlueOperation, public _filter: DeepBlueOperation, public query_id: Id) { }
+    constructor(private _data: DeepBlueOperation, public _filter: DeepBlueOperation, public query_id: Id, public cached = false) { }
 
     clone(): DeepBlueIntersection {
         return new DeepBlueIntersection(
             this._data.clone(),
             this._filter.clone(),
-            this.query_id
+            this.query_id,
+            this.cached
         );
     }
 
@@ -223,16 +350,20 @@ export class DeepBlueIntersection implements DeepBlueOperation {
     getFilterQuery(): Id {
         return this._filter.queryId();
     }
+
+    cacheIt(query_id: Id) : DeepBlueIntersection {
+        return new DeepBlueIntersection(this._data, this._filter, this.query_id, true);
+    }
 }
 
 export class DeepBlueFilter implements DeepBlueOperation {
-    constructor(private _data: DeepBlueOperation, public _params: FilterParameter, public query_id: Id) { }
+    constructor(private _data: DeepBlueOperation, public _params: FilterParameter, public query_id: Id, public cached = false) { }
 
     queryId(): Id {
         return this.query_id;
     };
 
-    data(): Name | DeepBlueOperation | DeepBlueParameters {
+    data(): Name | DeepBlueOperation | DeepBlueParameters | DeepBlueArgs {
         return this._data
     }
 
@@ -260,8 +391,13 @@ export class DeepBlueFilter implements DeepBlueOperation {
         return new DeepBlueFilter(
             this._data.clone(),
             this._params.clone(),
-            this.query_id
+            this.query_id,
+            this.cached
         );
+    }
+
+    cacheIt(query_id: Id) : DeepBlueFilter {
+        return new DeepBlueFilter(this._data, this._params, this.query_id, this.cached);
     }
 
 }
@@ -319,6 +455,10 @@ export class DeepBlueResult implements ICloneable {
 
     resultAsCount(): number {
         return <number>this.result["count"];
+    }
+
+    resultAsDistinct(): {[key: string] : number} {
+        return this.result["distinct"];
     }
 
     resultAsTuples(): Object[] {

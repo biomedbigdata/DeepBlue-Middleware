@@ -158,6 +158,15 @@ class DeepBlueService {
             return new operations_1.DeepBlueFilter(query_data_id, filter, new deepblue_1.Id(response[1]));
         }).catch(this.handleError);
     }
+    query_cache(query_data, status) {
+        let params = new Object();
+        params["query_id"] = query_data.queryId().id;
+        params["cache"] = "true";
+        return this.execute("query_cache", params, status).map((response) => {
+            status.increment();
+            return query_data.cacheIt(new deepblue_1.Id(response[1]));
+        }).catch(this.handleError);
+    }
     selectGenes(gene_model_name, status) {
         let cached_operation = this.idNamesQueryCache.get(gene_model_name);
         if (cached_operation) {
@@ -271,7 +280,7 @@ class DeepBlueService {
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
-    list_experiments(status, type, epigenetic_mark) {
+    list_experiments(status, type, epigenetic_mark, genome) {
         const params = new Object();
         if (type) {
             params["type"] = type;
@@ -279,10 +288,13 @@ class DeepBlueService {
         if (epigenetic_mark) {
             params["epigenetic_mark"] = epigenetic_mark;
         }
+        if (genome) {
+            params["genome"] = genome;
+        }
         return this.execute("list_experiments", params, status).map((response) => {
             const data = response[1] || [];
             return data.map((value) => {
-                return new deepblue_1.GeneModel(value);
+                return new deepblue_1.Experiment(value);
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
