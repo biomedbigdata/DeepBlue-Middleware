@@ -1,4 +1,4 @@
-import { DeepBlueResult, DeepBlueSelectData } from './operations';
+import { DeepBlueResult, DeepBlueSelectData, DeepBlueMiddlewareOverlapResult } from './operations';
 
 export class RequestStatus {
 
@@ -12,6 +12,7 @@ export class RequestStatus {
   step: string;
 
   data: DeepBlueResult[] = new Array<DeepBlueResult>();
+  partialData = new Array<DeepBlueMiddlewareOverlapResult>();
 
   constructor(request_id: number) {
     this.request_id = request_id;
@@ -22,6 +23,7 @@ export class RequestStatus {
     this.total_loaded = 0;
     this.step = "";
     this.data = new Array<DeepBlueResult>();
+    this.partialData = new Array<DeepBlueMiddlewareOverlapResult>();
   }
 
   increment() {
@@ -50,8 +52,16 @@ export class RequestStatus {
     return this.total_to_load;
   }
 
+  addPartialData(data: DeepBlueMiddlewareOverlapResult) {
+    this.partialData.push(data);
+  }
+
+  getPartialData() : DeepBlueMiddlewareOverlapResult[] {
+    return this.partialData;
+  }
 
   setData(data: DeepBlueResult[]) {
+    this.partialData  = [];
     this.data = data;
   }
 

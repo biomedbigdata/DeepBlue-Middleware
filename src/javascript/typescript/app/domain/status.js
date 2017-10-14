@@ -6,6 +6,7 @@ class RequestStatus {
         this.total_loaded = 0;
         this.finished = false;
         this.data = new Array();
+        this.partialData = new Array();
         this.request_id = request_id;
     }
     reset(total) {
@@ -13,6 +14,7 @@ class RequestStatus {
         this.total_loaded = 0;
         this.step = "";
         this.data = new Array();
+        this.partialData = new Array();
     }
     increment() {
         this.total_loaded++;
@@ -34,7 +36,14 @@ class RequestStatus {
     getTotal() {
         return this.total_to_load;
     }
+    addPartialData(data) {
+        this.partialData.push(data);
+    }
+    getPartialData() {
+        return this.partialData;
+    }
     setData(data) {
+        this.partialData = [];
         this.data = data;
     }
     getData() {
