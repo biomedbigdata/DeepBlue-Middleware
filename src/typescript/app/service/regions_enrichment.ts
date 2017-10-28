@@ -15,8 +15,8 @@ export class RegionsEnrichment {
       })
   }
 
-  private buildChromatinStatesQueries(request_status: RequestStatus, genome: string): Observable<Object> {
-    let response: Subject<Object> = new Subject<Object>();
+  private buildChromatinStatesQueries(request_status: RequestStatus, genome: string): Observable<[string, any[]]> {
+    let response = new Subject<[string, [string, [string, string][]][]]>();
 
     Observable.forkJoin([
       this.getChromatinStates(request_status, genome),
@@ -58,33 +58,57 @@ export class RegionsEnrichment {
       })
 
       Observable.forkJoin(exp_states_obs).subscribe((filters) => {
-          console.log(filters);
-          console.log(filters.length);
-          console.log(filters[0].length);
-          console.log(filters[0][0].length);
+        //let states = new Object<string, Array<string, string]>();
+
+        let states: { [key: string]: [string, string][] } = {};
+
+
+        for (let exp_filters of filters) {
+          for (let filter of exp_filters) {
+            if (!(filter[1] in states)) {
+              states[filter[1]] = new Array<[string, string]>();
+            }
+            states[filter[1]].push([filter[0], filter[2]]);
+          }
+        }
+
+        let arr_filter: [string, [string, string][]][] = Object.keys(states).map((state) => {
+          return <[string, [string, string][]]>[state, states[state]]
+        });
+
+        console.log(JSON.stringify(arr_filter));
+
+        response.next(["Chomatin States Segmentation", arr_filter]);
+        response.complete();
       });
     });
 
     return response.asObservable();
   };
 
-  private listExperiments(request_status: RequestStatus, epigenetic_mark: string): Observable<[string, string[]]> {
+  private listExperiments(request_status: RequestStatus, epigenetic_mark: string): Observable<[string, any[]]> {
     return this.deepBlueService.list_experiments(request_status, "peaks", epigenetic_mark).map(((experiments: IdName[]) =>
       <[string, string[]]>[epigenetic_mark, experiments.map((experiment: IdName) => experiment.name)]
     ));
   }
 
-  private listExperimentsMany(request_status: RequestStatus, epigenetic_marks: string[], genome: string): Observable<Array<[string, string[]]>> {
-    let observableBatch: Observable<[string, string[]]>[] = [];
+
+
+  //  {[key: string]: [string, string][]};
+
+  private listExperimentsMany(request_status: RequestStatus, epigenetic_marks: string[], genome: string): Observable<Array<[string, any[]]>> {
+    let observableBatch: Observable<[string, any[]]>[] = [];
     epigenetic_marks.forEach((epigenetic_mark: string) => {
+      let o;
       if (epigenetic_mark == "Chromatin State Segmentation") {
-        this.buildChromatinStatesQueries(request_status, genome);
-        //observableBatch.push();
+        o = this.buildChromatinStatesQueries(request_status, genome);
       } else {
-        //observableBatch.push(this.listExperiments(request_status, epigenetic_mark));
+        o = this.listExperiments(request_status, epigenetic_mark);
       }
+      observableBatch.push(o);
     });
     return Observable.forkJoin(observableBatch);
+
   }
 
   buildFullDatabases(request_status: RequestStatus, genome: string): Observable<[string, string[]][]> {

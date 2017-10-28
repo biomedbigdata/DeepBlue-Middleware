@@ -47,10 +47,22 @@ class RegionsEnrichment {
                 });
             });
             Observable_1.Observable.forkJoin(exp_states_obs).subscribe((filters) => {
-                console.log(filters);
-                console.log(filters.length);
-                console.log(filters[0].length);
-                console.log(filters[0][0].length);
+                //let states = new Object<string, Array<string, string]>();
+                let states = {};
+                for (let exp_filters of filters) {
+                    for (let filter of exp_filters) {
+                        if (!(filter[1] in states)) {
+                            states[filter[1]] = new Array();
+                        }
+                        states[filter[1]].push([filter[0], filter[2]]);
+                    }
+                }
+                let arr_filter = Object.keys(states).map((state) => {
+                    return [state, states[state]];
+                });
+                console.log(JSON.stringify(arr_filter));
+                response.next(["Chomatin States Segmentation", arr_filter]);
+                response.complete();
             });
         });
         return response.asObservable();
@@ -59,16 +71,18 @@ class RegionsEnrichment {
     listExperiments(request_status, epigenetic_mark) {
         return this.deepBlueService.list_experiments(request_status, "peaks", epigenetic_mark).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => experiment.name)]));
     }
+    //  {[key: string]: [string, string][]};
     listExperimentsMany(request_status, epigenetic_marks, genome) {
         let observableBatch = [];
         epigenetic_marks.forEach((epigenetic_mark) => {
+            let o;
             if (epigenetic_mark == "Chromatin State Segmentation") {
-                this.buildChromatinStatesQueries(request_status, genome);
-                //observableBatch.push();
+                o = this.buildChromatinStatesQueries(request_status, genome);
             }
             else {
-                //observableBatch.push(this.listExperiments(request_status, epigenetic_mark));
+                o = this.listExperiments(request_status, epigenetic_mark);
             }
+            observableBatch.push(o);
         });
         return Observable_1.Observable.forkJoin(observableBatch);
     }
