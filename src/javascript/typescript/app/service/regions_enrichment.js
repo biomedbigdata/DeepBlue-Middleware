@@ -6,6 +6,7 @@ const rxjs_1 = require("rxjs");
 class RegionsEnrichment {
     constructor(deepBlueService) {
         this.deepBlueService = deepBlueService;
+        this.chromatinCache = null;
     }
     getChromatinStates(request_status, genome) {
         return this.deepBlueService.select_regions_from_metadata(genome, "peaks", "Chromatin State Segmentation", null, null, null, null, request_status).flatMap((op) => {
@@ -14,6 +15,9 @@ class RegionsEnrichment {
     }
     buildChromatinStatesQueries(request_status, genome) {
         let response = new rxjs_1.Subject();
+        if (this.chromatinCache) {
+            return Observable_1.Observable.of(this.chromatinCache);
+        }
         Observable_1.Observable.forkJoin([
             this.getChromatinStates(request_status, genome),
             this.deepBlueService.list_experiments(request_status, "peaks", "Chromatin State Segmentation", genome)
@@ -61,7 +65,8 @@ class RegionsEnrichment {
                     return [state, states[state]];
                 });
                 console.log(JSON.stringify(arr_filter));
-                response.next(["Chomatin States Segmentation", arr_filter]);
+                this.chromatinCache = ["Chomatin States Segmentation", arr_filter];
+                response.next(this.chromatinCache);
                 response.complete();
             });
         });

@@ -6,6 +6,8 @@ import { Observable } from "rxjs/Observable";
 import { Subject } from "rxjs";
 
 export class RegionsEnrichment {
+  chromatinCache = null;
+
   constructor(private deepBlueService: DeepBlueService) { }
 
   private getChromatinStates(request_status: RequestStatus, genome: string): Observable<DeepBlueResult> {
@@ -17,6 +19,10 @@ export class RegionsEnrichment {
 
   private buildChromatinStatesQueries(request_status: RequestStatus, genome: string): Observable<[string, any[]]> {
     let response = new Subject<[string, [string, [string, string][]][]]>();
+
+    if (this.chromatinCache) {
+      return Observable.of(this.chromatinCache);
+    }
 
     Observable.forkJoin([
       this.getChromatinStates(request_status, genome),
@@ -78,7 +84,8 @@ export class RegionsEnrichment {
 
         console.log(JSON.stringify(arr_filter));
 
-        response.next(["Chomatin States Segmentation", arr_filter]);
+        this.chromatinCache = ["Chomatin States Segmentation", arr_filter]
+        response.next(this.chromatinCache);
         response.complete();
       });
     });
