@@ -326,8 +326,7 @@ export class ComposedCommandsRoutes {
         let regions = f.buffer.toString('utf-8');
 
         let status = ComposedCommandsRoutes.requestManager.startRequest();
-        ds.inputRegions(new Name("grch38"), regions, status).subscribe((result) => {
-          console.log(result.queryId().id);
+        ds.inputRegions(new Name(genome), regions, status).subscribe((result) => {
           res.send(["okay", result.queryId().id]);
         });
         found = true;

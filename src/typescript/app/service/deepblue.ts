@@ -451,7 +451,6 @@ export class DeepBlueService {
 
     return this.execute("input_regions", params, status).map((response: [string, string]) => {
       status.increment();
-      console.log(response);
       return new DeepBlueSelectData(new Name("User regions"), new Id(response[1]), 'input_regions');
     }).catch(this.handleError);
   }
