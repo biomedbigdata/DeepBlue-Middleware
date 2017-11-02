@@ -194,16 +194,44 @@ class ComposedCommandsRoutes {
             });
         });
     }
+    static inputRegions(req, res, next) {
+        manager_1.Manager.getDeepBlueService().subscribe((dbs) => {
+            // This function received an JSON object in the body
+            let genome = req.body.genome;
+            let region_set = req.body.region_set;
+            let datasets = req.body.datasets;
+            if (!(genome)) {
+                res.send(["error", "genome is missing"]);
+                return;
+            }
+            if (!(region_set)) {
+                res.send(["error", "region_set id is missing"]);
+                return;
+            }
+            let status = ComposedCommandsRoutes.requestManager.startRequest();
+            dbs.inputRegions(new deepblue_1.Name(genome), region_set, status).subscribe((op) => {
+                res.send(["okay", op.queryId().id]);
+            });
+        });
+    }
     static uploadRegions(req, res, next) {
         manager_1.Manager.getDeepBlueService().subscribe((ds) => {
-            // This function received an JSON object in the body
-            let userregions = req.body.userregions;
-            let regions = req.file.buffer.toString('utf-8');
-            let status = ComposedCommandsRoutes.requestManager.startRequest();
-            ds.inputRegions(new deepblue_1.Name("grch38"), regions, status).subscribe((result) => {
-                console.log(result.queryId().id);
-                res.send(result.queryId().id);
-            });
+            // We get only one file and return the query id of this file
+            let found = false;
+            for (let file in req.files) {
+                let f = req.files[file];
+                let genome = f.fieldname;
+                let regions = f.buffer.toString('utf-8');
+                let status = ComposedCommandsRoutes.requestManager.startRequest();
+                ds.inputRegions(new deepblue_1.Name("grch38"), regions, status).subscribe((result) => {
+                    console.log(result.queryId().id);
+                    res.send(["okay", result.queryId().id]);
+                });
+                found = true;
+            }
+            if (!found) {
+                res.send(["error", "No file was sent."]);
+            }
         });
     }
     static listGenes(req, res, next) {
@@ -319,7 +347,8 @@ class ComposedCommandsRoutes {
         // Post:
         var storage = multer.memoryStorage();
         var upload = multer({ storage: storage });
-        router.post("/upload_regions", upload.single('userregions'), this.uploadRegions);
+        router.post("/upload_regions", upload.any(), this.uploadRegions);
+        router.post("/input_regions", this.inputRegions);
         router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
         return router;
     }
