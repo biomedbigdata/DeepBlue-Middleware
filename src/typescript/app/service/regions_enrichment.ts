@@ -18,7 +18,7 @@ export class RegionsEnrichment {
   }
 
   private buildChromatinStatesQueries(request_status: RequestStatus, genome: string): Observable<[string, any[]]> {
-    let response = new Subject<[string, [string, [string, string][]][]]>();
+    let response = new Subject<[string, [string, [string, string, string][]][]]>();
 
     if (this.chromatinCache) {
       return Observable.of(this.chromatinCache);
@@ -52,10 +52,13 @@ export class RegionsEnrichment {
               let exp_filter_id = new Array<string[]>();
 
               for (let filter of filters) {
+                let filter_data = <IdName>filter.data();
+                //console.log(JSON.stringify(filter_data));
                 let exp_name = filter.getDataName();
+                let exp_id = filter.getDataId().id;
                 let filter_name = filter._params.value;
                 let q_id = filter.queryId().id;
-                exp_filter_id.push([exp_name, filter_name, q_id]);
+                exp_filter_id.push([exp_id, exp_name, filter_name, q_id]);
               }
 
               return exp_filter_id;
@@ -64,25 +67,23 @@ export class RegionsEnrichment {
       })
 
       Observable.forkJoin(exp_states_obs).subscribe((filters) => {
-        //let states = new Object<string, Array<string, string]>();
-
         let states: { [key: string]: [string, string][] } = {};
 
 
         for (let exp_filters of filters) {
           for (let filter of exp_filters) {
-            if (!(filter[1] in states)) {
-              states[filter[1]] = new Array<[string, string]>();
+            if (!(filter[2] in states)) {
+              states[filter[2]] = new Array<[string, string]>();
             }
-            states[filter[1]].push([filter[0], filter[2]]);
+            states[filter[2]].push([filter[0], filter[1], filter[3]]);
           }
         }
 
         let arr_filter: [string, [string, string][]][] = Object.keys(states).map((state) => {
-          return <[string, [string, string][]]>[state, states[state]]
+          return <[string, [string, string, string][]]>[state, states[state]]
         });
 
-        console.log(JSON.stringify(arr_filter));
+        //console.log(JSON.stringify(arr_filter));
 
         this.chromatinCache = ["Chomatin States Segmentation", arr_filter]
         response.next(this.chromatinCache);
@@ -95,7 +96,7 @@ export class RegionsEnrichment {
 
   private listExperiments(request_status: RequestStatus, epigenetic_mark: string): Observable<[string, any[]]> {
     return this.deepBlueService.list_experiments(request_status, "peaks", epigenetic_mark).map(((experiments: IdName[]) =>
-      <[string, string[]]>[epigenetic_mark, experiments.map((experiment: IdName) => experiment.name)]
+      <[string, [string, string][]]>[epigenetic_mark, experiments.map((experiment: IdName) => [experiment.id, experiment.name])]
     ));
   }
 

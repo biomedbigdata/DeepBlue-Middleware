@@ -41,30 +41,32 @@ class RegionsEnrichment {
                     return Observable_1.Observable.forkJoin(filter_queries).map((filters) => {
                         let exp_filter_id = new Array();
                         for (let filter of filters) {
+                            let filter_data = filter.data();
+                            //console.log(JSON.stringify(filter_data));
                             let exp_name = filter.getDataName();
+                            let exp_id = filter.getDataId().id;
                             let filter_name = filter._params.value;
                             let q_id = filter.queryId().id;
-                            exp_filter_id.push([exp_name, filter_name, q_id]);
+                            exp_filter_id.push([exp_id, exp_name, filter_name, q_id]);
                         }
                         return exp_filter_id;
                     });
                 });
             });
             Observable_1.Observable.forkJoin(exp_states_obs).subscribe((filters) => {
-                //let states = new Object<string, Array<string, string]>();
                 let states = {};
                 for (let exp_filters of filters) {
                     for (let filter of exp_filters) {
-                        if (!(filter[1] in states)) {
-                            states[filter[1]] = new Array();
+                        if (!(filter[2] in states)) {
+                            states[filter[2]] = new Array();
                         }
-                        states[filter[1]].push([filter[0], filter[2]]);
+                        states[filter[2]].push([filter[0], filter[1], filter[3]]);
                     }
                 }
                 let arr_filter = Object.keys(states).map((state) => {
                     return [state, states[state]];
                 });
-                console.log(JSON.stringify(arr_filter));
+                //console.log(JSON.stringify(arr_filter));
                 this.chromatinCache = ["Chomatin States Segmentation", arr_filter];
                 response.next(this.chromatinCache);
                 response.complete();
@@ -74,7 +76,7 @@ class RegionsEnrichment {
     }
     ;
     listExperiments(request_status, epigenetic_mark) {
-        return this.deepBlueService.list_experiments(request_status, "peaks", epigenetic_mark).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => experiment.name)]));
+        return this.deepBlueService.list_experiments(request_status, "peaks", epigenetic_mark).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => [experiment.id, experiment.name])]));
     }
     //  {[key: string]: [string, string][]};
     listExperimentsMany(request_status, epigenetic_marks, genome) {
