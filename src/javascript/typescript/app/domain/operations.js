@@ -161,8 +161,8 @@ class DeepBlueSimpleQuery {
     getDataName() {
         return "";
     }
-    getDataQuery() {
-        return null;
+    getDataId() {
+        return this._query_id;
     }
     getFilterName() {
         return "";
@@ -198,13 +198,20 @@ class DeepBlueSelectData {
         if (this._data instanceof deepblue_1.Name) {
             return this._data.name;
         }
-        if (this._data instanceof deepblue_2.IdName) {
-            return this._data.name;
-        }
         return this._data.key();
     }
-    getDataQuery() {
-        return this.query_id;
+    getDataId() {
+        console.log("Internal data", this._data);
+        if (this._data instanceof deepblue_2.IdName) {
+            return this._data.Id();
+        }
+        if (this._data instanceof deepblue_1.Name) {
+            return new deepblue_2.Id("");
+        }
+        if (this._data instanceof DeepBlueParameters) {
+            return new deepblue_2.Id("");
+        }
+        return this._data.getDataId();
     }
     getFilterName() {
         return "";
@@ -233,7 +240,7 @@ class DeepBlueTilingRegions {
     getDataName() {
         return this.genome + " " + this.size.toString();
     }
-    getDataQuery() {
+    getDataId() {
         return this.query_id;
     }
     getFilterName() {
@@ -275,8 +282,8 @@ class DeepBlueIntersection {
     getDataName() {
         return this._data.getDataName();
     }
-    getDataQuery() {
-        return this._data.getDataQuery();
+    getDataId() {
+        return this._data.getDataId();
     }
     getFilterName() {
         return this._filter.getDataName();
@@ -306,8 +313,9 @@ class DeepBlueFilter {
     getDataName() {
         return this._data.getDataName();
     }
-    getDataQuery() {
-        return this._data.getDataQuery();
+    getDataId() {
+        console.log("DATA: ", JSON.stringify(this._data));
+        return this._data.getDataId();
     }
     getFilterName() {
         return "filter_regions";
@@ -344,8 +352,8 @@ class DeepBlueRequest {
     getDataName() {
         return this._data.getDataName();
     }
-    getDataQuery() {
-        return this._data.getDataQuery();
+    getDataId() {
+        return this._data.getDataId();
     }
     getFilterName() {
         return this._data.getFilterName();
@@ -381,8 +389,8 @@ class DeepBlueResult {
     getDataName() {
         return this._data.getDataName();
     }
-    getDataQuery() {
-        return this._data.getDataQuery();
+    getDataId() {
+        return this._data.getDataId();
     }
     getFilterName() {
         return this._data.getFilterName();
