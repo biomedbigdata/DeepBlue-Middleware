@@ -24,8 +24,9 @@ class Name {
     }
 }
 exports.Name = Name;
-class IdName {
+class IdName extends Name {
     constructor(id, name) {
+        super(name);
         this.id = id;
         this.name = name;
     }
@@ -34,6 +35,9 @@ class IdName {
     }
     Id() {
         return new Id(this.id);
+    }
+    Name() {
+        return new Name(this.name);
     }
     clone() {
         return new IdName(this.id, this.name);
