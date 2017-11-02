@@ -33,9 +33,9 @@ import { ComposedCommands } from './service/composed_commands';
 import { Experiments } from './service/experiments';
 import { Genes } from "./service/genes";
 
-const composed_commands: Router = Router();
-
 import * as express from 'express';
+import * as multer from 'multer';
+
 import { DeepBlueService } from 'app/service/deepblue';
 
 export class ComposedCommandsRoutes {
@@ -289,6 +289,18 @@ export class ComposedCommandsRoutes {
     });
   }
 
+  private static uploadRegions(req: express.Request, res: express.Response, next: express.NextFunction) {
+    Manager.getDeepBlueService().subscribe((ds: DeepBlueService) => {
+
+      // This function received an JSON object in the body
+      let userregions: string = req.body.userregions;
+
+      console.log(userregions);
+      console.log(req.file.buffer.toString('utf-8'));
+
+    });
+  }
+
 
   private static listGenes(req: express.Request, res: express.Response, next: express.NextFunction) {
     Manager.getGenes().subscribe((genes: Genes) => {
@@ -428,6 +440,10 @@ export class ComposedCommandsRoutes {
     router.get("/query_info", this.queryInfo);
 
     // Post:
+    var storage = multer.memoryStorage()
+    var upload = multer({ storage: storage })
+    router.post("/upload_regions", upload.single('userregions'), this.uploadRegions);
+
     router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
 
     return router;

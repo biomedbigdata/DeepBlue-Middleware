@@ -245,7 +245,7 @@ class DeepBlueService {
         params['background_query_id'] = universe_id;
         params['datasets'] = datasets;
         params["genome"] = "GRCh38";
-        return this.execute("enrich_region_overlap", params, status).map((response) => {
+        return this.execute("enrich_regions_overlap", params, status).map((response) => {
             status.increment();
             return new operations_1.DeepBlueRequest(data, response[1], 'enrich_regions_overlap');
         }).flatMap((request_id) => {

@@ -1,4 +1,5 @@
 var compression = require('compression')
+var multer  = require('multer')
 var express = require('express');
 var path = require('path');
 var logger = require('morgan');
@@ -23,7 +24,7 @@ app.all('*', function(req, res, next) {
 app.use(bodyParser.urlencoded({
   extended: true
 }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '5mb'}));
 
 var router = rest_to_xmlrpc.router;
 

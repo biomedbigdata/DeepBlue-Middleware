@@ -3,11 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const requests_manager_1 = require("./service/requests_manager");
 const deepblue_1 = require("./domain/deepblue");
 const operations_1 = require("./domain/operations");
-const express_1 = require("express");
 const manager_1 = require("./service/manager");
 const experiments_1 = require("./service/experiments");
-const composed_commands = express_1.Router();
 const express = require("express");
+const multer = require("multer");
 class ComposedCommandsRoutes {
     static getRequest(req, res, next) {
         let request_id = req.query["request_id"];
@@ -195,6 +194,14 @@ class ComposedCommandsRoutes {
             });
         });
     }
+    static uploadRegions(req, res, next) {
+        manager_1.Manager.getDeepBlueService().subscribe((ds) => {
+            // This function received an JSON object in the body
+            let userregions = req.body.userregions;
+            console.log(userregions);
+            console.log(req.file.buffer.toString('utf-8'));
+        });
+    }
     static listGenes(req, res, next) {
         manager_1.Manager.getGenes().subscribe((genes) => {
             let gene_model = req.query["gene_model"];
@@ -306,6 +313,9 @@ class ComposedCommandsRoutes {
         router.get("/export_to_genome_browser", this.export_to_genome_browser);
         router.get("/query_info", this.queryInfo);
         // Post:
+        var storage = multer.memoryStorage();
+        var upload = multer({ storage: storage });
+        router.post("/upload_regions", upload.single('userregions'), this.uploadRegions);
         router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
         return router;
     }
