@@ -68,7 +68,7 @@ export class ComposedCommands {
             let o: Observable<DeepBlueResult> = new Observable((observer) => {
                 this.deepBlueService.count_regions(op_exp, status).subscribe((result) => {
 
-                    let overlapResult = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(),
+                    let overlapResult = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(),
                         result.getFilterName(), result.getFilterQuery(),
                         result.resultAsCount());
 

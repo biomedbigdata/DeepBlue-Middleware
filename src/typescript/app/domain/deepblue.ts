@@ -25,8 +25,10 @@ export class Name implements IKey {
     }
 }
 
-export class IdName implements IKey {
-    constructor(public id: string, public name: string) { }
+export class IdName extends Name {
+    constructor(public id: string, public name: string) {
+        super(name);
+    }
 
     key(): string {
         return this.id;
@@ -34,6 +36,10 @@ export class IdName implements IKey {
 
     Id() : Id {
         return new Id(this.id);
+    }
+
+    Name() : Name {
+        return new Name(this.name);
     }
 
     clone(): IdName {

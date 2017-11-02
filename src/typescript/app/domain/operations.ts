@@ -160,7 +160,7 @@ export interface DeepBlueOperation extends IKey {
 
     getDataName(): string;
 
-    getDataQuery(): Id;
+    getDataId(): Id;
 
     getFilterName(): string;
 
@@ -195,8 +195,8 @@ export class DeepBlueSimpleQuery implements DeepBlueOperation {
         return "";
     }
 
-    getDataQuery(): Id {
-        return null;
+    getDataId(): Id {
+        return this._query_id;
     }
 
     getFilterName(): string {
@@ -241,14 +241,21 @@ export class DeepBlueSelectData implements DeepBlueOperation {
         if (this._data instanceof Name) {
             return this._data.name;
         }
-        if (this._data instanceof IdName) {
-            return this._data.name;
-        }
         return this._data.key();
     }
 
-    getDataQuery(): Id {
-        return this.query_id;
+    getDataId(): Id {
+        if (this._data instanceof IdName) {
+            return this._data.Id();
+        }
+        if (this._data instanceof Name) {
+            return new Id("");
+        }
+        if (this._data instanceof DeepBlueParameters) {
+            return new Id("");
+        }
+        return this._data.getDataId();
+
     }
 
     getFilterName(): string {
@@ -280,7 +287,7 @@ export class DeepBlueTilingRegions implements DeepBlueOperation {
         return this.genome + " " + this.size.toString();
     }
 
-    getDataQuery(): Id {
+    getDataId(): Id {
         return this.query_id;
     }
 
@@ -339,8 +346,8 @@ export class DeepBlueIntersection implements DeepBlueOperation {
         return this._data.getDataName();
     }
 
-    getDataQuery(): Id {
-        return this._data.getDataQuery();
+    getDataId(): Id {
+        return this._data.getDataId();
     }
 
     getFilterName(): string {
@@ -371,8 +378,8 @@ export class DeepBlueFilter implements DeepBlueOperation {
         return this._data.getDataName();
     }
 
-    getDataQuery(): Id {
-        return this._data.getDataQuery();
+    getDataId(): Id {
+        return this._data.getDataId();
     }
 
     getFilterName(): string {
@@ -425,8 +432,8 @@ export class DeepBlueRequest implements IKey {
         return this._data.getDataName();
     }
 
-    getDataQuery(): Id {
-        return this._data.getDataQuery();
+    getDataId(): Id {
+        return this._data.getDataId();
     }
 
     getFilterName(): string {
@@ -473,8 +480,8 @@ export class DeepBlueResult implements ICloneable {
         return this._data.getDataName();
     }
 
-    getDataQuery(): Id {
-        return this._data.getDataQuery();
+    getDataId(): Id {
+        return this._data.getDataId();
     }
 
 

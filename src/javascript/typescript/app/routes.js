@@ -60,7 +60,7 @@ class ComposedCommandsRoutes {
                     let rr = [];
                     for (let i = 0; i < results.length; i++) {
                         let result = results[i];
-                        let overlapResult = new operations_1.DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(), result.getFilterName(), result.getFilterQuery(), result.resultAsCount());
+                        let overlapResult = new operations_1.DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(), result.getFilterName(), result.getFilterQuery(), result.resultAsCount());
                         rr.push(overlapResult);
                     }
                     status.finish(rr);
@@ -83,7 +83,7 @@ class ComposedCommandsRoutes {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
-                    let resultObj = new operations_1.DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(), result.getFilterName(), result.getFilterQuery(), result.resultAsCount());
+                    let resultObj = new operations_1.DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(), result.getFilterName(), result.getFilterQuery(), result.resultAsCount());
                     rr.push(resultObj);
                 }
                 status.finish(rr);

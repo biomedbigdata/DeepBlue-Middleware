@@ -106,7 +106,7 @@ export class ComposedCommandsRoutes {
           let rr = [];
           for (let i = 0; i < results.length; i++) {
             let result: DeepBlueResult = results[i];
-            let overlapResult = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(),
+            let overlapResult = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(),
               result.getFilterName(), result.getFilterQuery(),
               result.resultAsCount());
             rr.push(overlapResult);
@@ -141,7 +141,7 @@ export class ComposedCommandsRoutes {
         let rr = [];
         for (let i = 0; i < results.length; i++) {
           let result: DeepBlueResult = results[i];
-          let resultObj = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataQuery(),
+          let resultObj = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(),
             result.getFilterName(), result.getFilterQuery(),
             result.resultAsCount());
           rr.push(resultObj);
