@@ -320,7 +320,7 @@ export class DeepBlueService {
     params['datasets'] = datasets;
     params["genome"] = "GRCh38";
 
-    return this.execute("enrich_region_overlap", params, status).map((response: [string, string]) => {
+    return this.execute("enrich_regions_overlap", params, status).map((response: [string, string]) => {
       status.increment();
       return new DeepBlueRequest(data, response[1], 'enrich_regions_overlap');
     }).flatMap((request_id) => {
