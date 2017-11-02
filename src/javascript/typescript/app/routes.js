@@ -198,8 +198,12 @@ class ComposedCommandsRoutes {
         manager_1.Manager.getDeepBlueService().subscribe((ds) => {
             // This function received an JSON object in the body
             let userregions = req.body.userregions;
-            console.log(userregions);
-            console.log(req.file.buffer.toString('utf-8'));
+            let regions = req.file.buffer.toString('utf-8');
+            let status = ComposedCommandsRoutes.requestManager.startRequest();
+            ds.inputRegions(new deepblue_1.Name("grch38"), regions, status).subscribe((result) => {
+                console.log(result.queryId().id);
+                res.send(result.queryId().id);
+            });
         });
     }
     static listGenes(req, res, next) {

@@ -295,9 +295,13 @@ export class ComposedCommandsRoutes {
       // This function received an JSON object in the body
       let userregions: string = req.body.userregions;
 
-      console.log(userregions);
-      console.log(req.file.buffer.toString('utf-8'));
+      let regions = req.file.buffer.toString('utf-8');
 
+      let status = ComposedCommandsRoutes.requestManager.startRequest();
+      ds.inputRegions(new Name("grch38"), regions, status).subscribe((result) => {
+        console.log(result.queryId().id);
+        res.send(result.queryId().id);
+      });
     });
   }
 

@@ -444,6 +444,17 @@ export class DeepBlueService {
     return Observable.forkJoin(observableBatch);
   }
 
+  inputRegions(genome: Name, region_set: string, status: RequestStatus): Observable<DeepBlueOperation> {
+    const params: Object = new Object();
+    params['genome'] = genome.name;
+    params['region_set'] = region_set;
+
+    return this.execute("input_regions", params, status).map((response: [string, string]) => {
+      status.increment();
+      console.log(response);
+      return new DeepBlueSelectData(new Name("User regions"), new Id(response[1]), 'input_regions');
+    }).catch(this.handleError);
+  }
 
   getResult(op_request: DeepBlueRequest, status: RequestStatus): Observable<DeepBlueResult> {
 

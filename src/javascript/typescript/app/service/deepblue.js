@@ -347,6 +347,16 @@ class DeepBlueService {
         });
         return Observable_1.Observable.forkJoin(observableBatch);
     }
+    inputRegions(genome, region_set, status) {
+        const params = new Object();
+        params['genome'] = genome.name;
+        params['region_set'] = region_set;
+        return this.execute("input_regions", params, status).map((response) => {
+            status.increment();
+            console.log(response);
+            return new operations_1.DeepBlueSelectData(new deepblue_1.Name("User regions"), new deepblue_1.Id(response[1]), 'input_regions');
+        }).catch(this.handleError);
+    }
     getResult(op_request, status) {
         let result = this.resultCache.get(op_request);
         if (result) {
