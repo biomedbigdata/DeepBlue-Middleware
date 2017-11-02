@@ -353,7 +353,6 @@ class DeepBlueService {
         params['region_set'] = region_set;
         return this.execute("input_regions", params, status).map((response) => {
             status.increment();
-            console.log(response);
             return new operations_1.DeepBlueSelectData(new deepblue_1.Name("User regions"), new deepblue_1.Id(response[1]), 'input_regions');
         }).catch(this.handleError);
     }

@@ -201,7 +201,6 @@ class DeepBlueSelectData {
         return this._data.key();
     }
     getDataId() {
-        console.log("Internal data", this._data);
         if (this._data instanceof deepblue_2.IdName) {
             return this._data.Id();
         }
@@ -314,7 +313,6 @@ class DeepBlueFilter {
         return this._data.getDataName();
     }
     getDataId() {
-        console.log("DATA: ", JSON.stringify(this._data));
         return this._data.getDataId();
     }
     getFilterName() {
