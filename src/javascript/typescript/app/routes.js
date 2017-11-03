@@ -54,7 +54,7 @@ class ComposedCommandsRoutes {
             }
             // TODO: Load the real query
             experiments_1.Experiments.info(experiments_id).subscribe((experiments) => {
-                let deepblue_query_ops = queries_id.map((query_id) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data"));
+                let deepblue_query_ops = queries_id.map((query_id) => new operations_1.DeepBlueSelectData(new deepblue_1.IdName(query_id, query_id), new deepblue_1.Id(query_id), "DIVE data"));
                 let experiments_name = experiments.map((v) => new deepblue_1.Name(v["name"]));
                 var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, filters, status).subscribe((results) => {
                     let rr = [];
@@ -288,7 +288,7 @@ class ComposedCommandsRoutes {
                 let regionsSplit = regions.split("\n", 2);
                 let firstLine = regionsSplit[0].split("\t");
                 let position = "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n";
-                let trackInfo = 'track name=EpiExplorer description="' + request_id + '" visibility=2 url="deepblue.mpi-inf.mpg.de/request.php?_id=' + request_id + '"\n';
+                let trackInfo = 'track name=DeepBlue Regions="' + request_id + '" visibility=2 url="deepblue.mpi-inf.mpg.de/request.php?_id=' + request_id + '"\n';
                 let content = description + position + trackInfo + regions;
                 res.header('Content-Type: text/plain');
                 res.header('Content-Type: application/octet-stream');
