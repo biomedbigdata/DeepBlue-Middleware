@@ -2,6 +2,7 @@ import { DeepBlueService } from './deepblue';
 
 import { ComposedCommands } from './composed_commands';
 import { ComposedQueries } from './composed_queries';
+import { ComposedData } from './composed_data';
 import { RegionsEnrichment } from "./regions_enrichment";
 import { Genes } from "./genes";
 
@@ -15,12 +16,13 @@ export class Manager {
   private static dbs: DeepBlueService = new DeepBlueService();
   private static composed_commands: ComposedCommands = null;
   private static composed_queries: ComposedQueries = null;
+  private static composed_data: ComposedData = null;
   private static regions_enrichment: RegionsEnrichment = null;
   private static genes: Genes = null;
 
   constructor() { }
 
-  static getDeepBlueService() : Observable<DeepBlueService> {
+  static getDeepBlueService(): Observable<DeepBlueService> {
 
     if (this.dbs.isInitialized()) {
       return Observable.of(this.dbs);
@@ -60,6 +62,23 @@ export class Manager {
     this.dbs.init().subscribe(() => {
       this.composed_queries = new ComposedQueries(this.dbs);
       subject.next(this.composed_queries);
+      subject.complete();
+    })
+
+    return subject.asObservable();
+  }
+
+  static getComposedData(): Observable<ComposedData> {
+
+    if (this.composed_data) {
+      return Observable.of(this.composed_data);
+    }
+
+    let subject = new Subject<ComposedData>();
+
+    this.dbs.init().subscribe(() => {
+      this.composed_data = new ComposedData(this.dbs);
+      subject.next(this.composed_data);
       subject.complete();
     })
 

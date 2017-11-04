@@ -328,6 +328,14 @@ class ComposedCommandsRoutes {
     </head>`;
         res.send(page);
     }
+    static getEpigenomicMarksCategories(req, res, next) {
+        let status = ComposedCommandsRoutes.requestManager.startRequest();
+        manager_1.Manager.getComposedData().subscribe((cs) => {
+            cs.get_epigenomic_marks_categories(status).subscribe((emc) => {
+                res.send(emc);
+            });
+        });
+    }
     static routes() {
         //get router
         let router;
@@ -343,6 +351,8 @@ class ComposedCommandsRoutes {
         router.get("/generate_track_file", this.generate_track_file);
         router.get("/export_to_genome_browser", this.export_to_genome_browser);
         router.get("/query_info", this.queryInfo);
+        // Composite data
+        router.get("/get_epigenomic_marks_categories", this.getEpigenomicMarksCategories);
         // Post:
         var storage = multer.memoryStorage();
         var upload = multer({ storage: storage });

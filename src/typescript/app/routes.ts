@@ -37,6 +37,7 @@ import * as express from 'express';
 import * as multer from 'multer';
 
 import { DeepBlueService } from 'app/service/deepblue';
+import { ComposedData } from 'app/service/composed_data';
 
 export class ComposedCommandsRoutes {
 
@@ -422,7 +423,6 @@ export class ComposedCommandsRoutes {
   }
 
   private static export_to_genome_browser(req: express.Request, res: express.Response, next: express.NextFunction) {
-
     let request_id: string = req.query["request_id"];
     let genome: string = req.query["genome"];
 
@@ -459,6 +459,18 @@ export class ComposedCommandsRoutes {
     res.send(page)
   }
 
+  private static getEpigenomicMarksCategories(req: express.Request, res: express.Response, next: express.NextFunction) {
+
+    let status = ComposedCommandsRoutes.requestManager.startRequest();
+    Manager.getComposedData().subscribe((cs: ComposedData) => {
+
+      cs.get_epigenomic_marks_categories(status).subscribe((emc: any) => {
+        res.send(emc);
+      });
+
+    });
+  }
+
   public static routes(): express.Router {
     //get router
     let router: express.Router;
@@ -476,6 +488,10 @@ export class ComposedCommandsRoutes {
     router.get("/export_to_genome_browser", this.export_to_genome_browser);
 
     router.get("/query_info", this.queryInfo);
+
+    // Composite data
+    router.get("/get_epigenomic_marks_categories", this.getEpigenomicMarksCategories);
+
 
     // Post:
     var storage = multer.memoryStorage()
