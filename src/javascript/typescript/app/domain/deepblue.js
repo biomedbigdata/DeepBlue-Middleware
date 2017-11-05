@@ -44,17 +44,18 @@ class IdName extends Name {
     }
 }
 exports.IdName = IdName;
-class IdNameCount {
+class IdNameCount extends IdName {
     constructor(id, name, count) {
+        super(id, name);
         this.id = id;
         this.name = name;
         this.count = count;
     }
-    key() {
-        return this.id;
+    Count() {
+        return this.count;
     }
     clone() {
-        return new IdName(this.id, this.name);
+        return new IdNameCount(this.id, this.name, this.count);
     }
 }
 exports.IdNameCount = IdNameCount;
@@ -129,6 +130,9 @@ class FullMetadata extends IdName {
     }
     type() {
         return this.values["type"];
+    }
+    get_extra_metadata_field(field) {
+        return this.values['extra_metadata'][field];
     }
     clone() {
         return new FullMetadata(this.values);

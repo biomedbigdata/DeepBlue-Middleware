@@ -460,14 +460,41 @@ export class ComposedCommandsRoutes {
   }
 
   private static getEpigenomicMarksCategories(req: express.Request, res: express.Response, next: express.NextFunction) {
+    let genome: string = req.query["genome"];
+    if (!(genome)) {
+      res.send(["error", "genome is missing"]);
+      return;
+    }
 
     let status = ComposedCommandsRoutes.requestManager.startRequest();
     Manager.getComposedData().subscribe((cs: ComposedData) => {
-
-      cs.get_epigenomic_marks_categories(status).subscribe((emc: any) => {
+      cs.get_epigenetic_marks_categories(genome, status).subscribe((emc: Array<string>) => {
         res.send(emc);
       });
+    });
+  }
 
+  private static getEpigenomicMarksFromCategory(req: express.Request, res: express.Response, next: express.NextFunction) {
+    let category: string = req.query["category"];
+    let genome: string = req.query["genome"];
+
+    if (!(category)) {
+      res.send(["error", "category is missing"]);
+      return;
+    }
+
+    if (!(genome)) {
+      res.send(["error", "genome is missing"]);
+      return;
+    }
+    console.log("iun");
+
+    let status = ComposedCommandsRoutes.requestManager.startRequest();
+    Manager.getComposedData().subscribe((cs: ComposedData) => {
+      cs.get_epigenetic_marks(genome, category, status).subscribe((emc: Array<string>) => {
+        console.log("sending", emc);
+        res.send(emc);
+      });
     });
   }
 
@@ -490,7 +517,8 @@ export class ComposedCommandsRoutes {
     router.get("/query_info", this.queryInfo);
 
     // Composite data
-    router.get("/get_epigenomic_marks_categories", this.getEpigenomicMarksCategories);
+    router.get("/get_epigenetic_marks_categories", this.getEpigenomicMarksCategories);
+    router.get("/get_epigenetic_marks_from_category", this.getEpigenomicMarksFromCategory);
 
 
     // Post:

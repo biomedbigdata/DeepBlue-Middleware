@@ -34,11 +34,11 @@ export class IdName extends Name {
         return this.id;
     }
 
-    Id() : Id {
+    Id(): Id {
         return new Id(this.id);
     }
 
-    Name() : Name {
+    Name(): Name {
         return new Name(this.name);
     }
 
@@ -47,16 +47,18 @@ export class IdName extends Name {
     }
 }
 
-export class IdNameCount implements IKey {
+export class IdNameCount extends IdName {
 
-    constructor(public id: string, public name: string, public count: number) { }
+    constructor(public id: string, public name: string, public count: number) {
+        super(id, name);
+    }
 
-    key(): string {
-        return this.id;
+    Count() : number {
+        return this.count;
     }
 
     clone(): IdName {
-        return new IdName(this.id, this.name);
+        return new IdNameCount(this.id, this.name, this.count);
     }
 }
 
@@ -140,8 +142,12 @@ export class FullMetadata extends IdName {
         return this.values["columns"];
     }
 
-    type() : string {
+    type(): string {
         return this.values["type"];
+    }
+
+    get_extra_metadata_field(field: string): string {
+        return <string>this.values['extra_metadata'][field];
     }
 
     clone(): FullMetadata {

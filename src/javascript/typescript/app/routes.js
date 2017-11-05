@@ -329,9 +329,34 @@ class ComposedCommandsRoutes {
         res.send(page);
     }
     static getEpigenomicMarksCategories(req, res, next) {
+        let genome = req.query["genome"];
+        if (!(genome)) {
+            res.send(["error", "genome is missing"]);
+            return;
+        }
         let status = ComposedCommandsRoutes.requestManager.startRequest();
         manager_1.Manager.getComposedData().subscribe((cs) => {
-            cs.get_epigenomic_marks_categories(status).subscribe((emc) => {
+            cs.get_epigenetic_marks_categories(genome, status).subscribe((emc) => {
+                res.send(emc);
+            });
+        });
+    }
+    static getEpigenomicMarksFromCategory(req, res, next) {
+        let category = req.query["category"];
+        let genome = req.query["genome"];
+        if (!(category)) {
+            res.send(["error", "category is missing"]);
+            return;
+        }
+        if (!(genome)) {
+            res.send(["error", "genome is missing"]);
+            return;
+        }
+        console.log("iun");
+        let status = ComposedCommandsRoutes.requestManager.startRequest();
+        manager_1.Manager.getComposedData().subscribe((cs) => {
+            cs.get_epigenetic_marks(genome, category, status).subscribe((emc) => {
+                console.log("sending", emc);
                 res.send(emc);
             });
         });
@@ -352,7 +377,8 @@ class ComposedCommandsRoutes {
         router.get("/export_to_genome_browser", this.export_to_genome_browser);
         router.get("/query_info", this.queryInfo);
         // Composite data
-        router.get("/get_epigenomic_marks_categories", this.getEpigenomicMarksCategories);
+        router.get("/get_epigenetic_marks_categories", this.getEpigenomicMarksCategories);
+        router.get("/get_epigenetic_marks_from_category", this.getEpigenomicMarksFromCategory);
         // Post:
         var storage = multer.memoryStorage();
         var upload = multer({ storage: storage });
