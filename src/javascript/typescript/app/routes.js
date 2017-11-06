@@ -357,7 +357,7 @@ class ComposedCommandsRoutes {
         manager_1.Manager.getComposedData().subscribe((cs) => {
             cs.get_epigenetic_marks(genome, category, status).subscribe((emc) => {
                 console.log("sending", emc);
-                res.send(emc);
+                res.send(["okay", emc]);
             });
         });
     }
