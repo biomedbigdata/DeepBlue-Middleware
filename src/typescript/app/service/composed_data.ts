@@ -67,7 +67,7 @@ export class ComposedData {
     }
   }
 
-  get_epigenetic_marks(genome: string, category: string, status: RequestStatus): Observable<Array<string>> {
+  get_epigenetic_marks(genome: string, category: string, status: RequestStatus): Observable<Array<FullMetadata>> {
     if (!this.categories_epigenetic_marks.get(genome)) {
       return this.load_epigenetic_marks(genome, status).map(() =>
         this.categories_epigenetic_marks[genome][category]
