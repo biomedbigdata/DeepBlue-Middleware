@@ -491,9 +491,9 @@ export class ComposedCommandsRoutes {
 
     let status = ComposedCommandsRoutes.requestManager.startRequest();
     Manager.getComposedData().subscribe((cs: ComposedData) => {
-      cs.get_epigenetic_marks(genome, category, status).subscribe((emc: Array<string>) => {
+      cs.get_epigenetic_marks(genome, category, status).subscribe((emc: Array<FullMetadata>) => {
         console.log("sending", emc);
-        res.send(emc);
+        res.send(["okay", emc]);
       });
     });
   }
