@@ -4,6 +4,8 @@ var express = require('express');
 var path = require('path');
 var logger = require('morgan');
 var bodyParser = require('body-parser');
+var http = require('http');
+var https = require('https');
 
 var datatable = require('./datatable');
 var grid = require('./grid');
@@ -11,8 +13,12 @@ var rest_to_xmlrpc = require('./rest_to_xmlrpc');
 var settings = require('./settings');
 var composed_commands_routes = require('./typescript/app/routes');
 
+http.globalAgent.maxSockets = 128;
+https.globalAgent.maxSockets = 128;
+
 var app = express();
 app.use(compression());
+
 
 app.all('*', function(req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
