@@ -43,10 +43,10 @@ class ComposedData {
     }
     get_epigenetic_marks(genome, category, status) {
         if (!this.categories_epigenetic_marks.get(genome)) {
-            return this.load_epigenetic_marks(genome, status).map(() => this.categories_epigenetic_marks[genome][category]);
+            return this.load_epigenetic_marks(genome, status).map(() => this.categories_epigenetic_marks[genome][category].sort());
         }
         else {
-            return Observable_1.Observable.of(this.categories_epigenetic_marks[genome][category]);
+            return Observable_1.Observable.of(this.categories_epigenetic_marks[genome][category].sort());
         }
     }
 }
