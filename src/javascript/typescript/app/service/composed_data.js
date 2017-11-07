@@ -26,15 +26,12 @@ class ComposedData {
                 let categories_vector = Array.from(new_categories_names).sort();
                 this.categories_epigenetic_marks[genome] = new_categories;
                 this.epigenetic_mark_categories[genome] = categories_vector;
-                console.log(categories_vector);
                 return categories_vector;
             });
         });
     }
     get_epigenetic_marks_categories(genome, status) {
-        console.log("in");
         if (!this.epigenetic_mark_categories.get(genome)) {
-            console.log("before load epigenetic marks");
             return this.load_epigenetic_marks(genome, status);
         }
         else {
