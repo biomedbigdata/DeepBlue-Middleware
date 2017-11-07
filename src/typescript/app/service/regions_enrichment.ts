@@ -1,5 +1,5 @@
 import { RequestStatus } from '../domain/status';
-import { DeepBlueResult, DeepBlueOperation, FilterParameter, DeepBlueFilter } from '../domain/operations';
+import { DeepBlueResult, DeepBlueOperation, FilterParameter, DeepBlueFilter, DeepBlueMiddlewareOverlapResult } from '../domain/operations';
 import { DeepBlueService } from "../service/deepblue";
 import { IdName, IdNameCount } from "../domain/deepblue";
 import { Observable } from "rxjs/Observable";
@@ -135,7 +135,7 @@ export class RegionsEnrichment {
     return pollSubject.asObservable();
   }
 
-  enrichRegionsOverlap(data_query_id: DeepBlueOperation[], universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult[]> {
+  enrichRegionsOverlap(data_query_id: DeepBlueOperation[], genome: string, universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult[]> {
     var start = new Date().getTime();
 
     let total = data_query_id.length * data_query_id.length * 3;
@@ -146,11 +146,53 @@ export class RegionsEnrichment {
     let observableBatch: Observable<DeepBlueResult>[] = [];
 
     data_query_id.forEach((current_op) => {
-      let o = this.deepBlueService.enrich_regions_overlap(current_op, universe_id, datasets, status);
+      let o = this.deepBlueService.enrich_regions_overlap(current_op, genome, universe_id, datasets, status);
       observableBatch.push(o);
     });
 
     return Observable.forkJoin(observableBatch);
+  }
+
+  enrichRegionsFast(data_query_id: DeepBlueOperation, genome: string, status: RequestStatus): Observable<DeepBlueResult[]> {
+
+    let em_observers = this.deepBlueService.collection_experiments_count(status, "epigenetic_marks", "peaks", genome);
+    let bs_observers = this.deepBlueService.collection_experiments_count(status, "biosources", "peaks", genome);
+
+    let o = Observable.forkJoin([
+      em_observers,
+      bs_observers
+    ]).map((exp_infos: IdNameCount[][]) => {
+      let epigenetic_marks = exp_infos[0];
+      let biosources = exp_infos[1];
+
+      console.log(epigenetic_marks);
+      console.log(biosources);
+
+      let observableBatch: Observable<DeepBlueResult>[] = [];
+      epigenetic_marks.forEach((em: IdName) => {
+        biosources.forEach((bs: IdName) => {
+          console.log("bs: ", bs.name);
+          let o: Observable<DeepBlueResult> = new Observable((observer) => {
+            console.log("execvuting?");
+            this.deepBlueService.enrich_regions_fast(data_query_id, genome, em.name, bs.name, status).subscribe((result: DeepBlueResult) => {
+              //let overlapResult = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(),
+              //  result.getFilterName(), result.getFilterQuery(),
+              //  result.resultAsCount());
+
+              console.log(result.result["enrichment"]);
+              //status.addPartialData(overlapResult);
+              observer.next(result);
+              observer.complete();
+            });
+          });
+          observableBatch.push(o);
+        });
+      });
+
+      return Observable.forkJoin(observableBatch);
+    });
+
+    return o.flatMap((results: Observable<DeepBlueResult[]>) => results);
   }
 
 }

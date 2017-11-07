@@ -254,6 +254,7 @@ export class ComposedCommandsRoutes {
 
       let queries_id: string[] = req.body.queries_id;
       let universe_id: string = req.body.universe_id;
+      let genome: string = req.body.genome;
       let datasets: Object = req.body.datasets;
 
       if (!(queries_id)) {
@@ -274,15 +275,52 @@ export class ComposedCommandsRoutes {
       res.send(["okay", status.request_id.toLocaleString()]);
 
       // TODO: Load real operations
-      let deepblue_query_ops: DeepBlueOperation[] =
+      let deepblue_query_ops =
         queries_id.map((query_id: string, i: number) => new DeepBlueSelectData(new Name(query_id), new Id(query_id), "DIVE data"));
 
 
-      var ccos = re.enrichRegionsOverlap(deepblue_query_ops, universe_id, datasets, status).subscribe((results: DeepBlueResult[]) => {
+      var ccos = re.enrichRegionsOverlap(deepblue_query_ops, genome, universe_id, datasets, status).subscribe((results: DeepBlueResult[]) => {
         let rr = [];
         for (let i = 0; i < results.length; i++) {
           let result: DeepBlueResult = results[i];
           let resultObj = new DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), new Id(universe_id), datasets, result.resultAsTuples());
+          rr.push(resultObj);
+        }
+        status.finish(rr);
+      });
+    });
+  }
+
+
+  private static enrichRegionsFast(req: express.Request, res: express.Response, next: express.NextFunction) {
+    Manager.getRegionsEnrichment().subscribe((re: RegionsEnrichment) => {
+
+      // This function received an JSON object in the body
+      let query_id: string = req.body.query_id;
+      let genome: string = req.body.genome;
+
+      if (!(query_id)) {
+        res.send(["error", "query_id is missing"]);
+        return;
+      }
+
+      if (!(genome)) {
+        res.send(["error", "genome is missing"]);
+        return;
+      }
+
+      let status = ComposedCommandsRoutes.requestManager.startRequest();
+      res.send(["okay", status.request_id.toLocaleString()]);
+
+      // TODO: Load real operations
+      let data_query = new DeepBlueSelectData(new Name(query_id), new Id(query_id), "DIVE data");
+
+      var ccos = re.enrichRegionsFast(data_query, genome, status).subscribe((results: DeepBlueResult[]) => {
+        let rr = [];
+        for (let i = 0; i < results.length; i++) {
+          let result: DeepBlueResult = results[i];
+          let resultObj = result.resultAsTuples();
+          console.log(resultObj);
           rr.push(resultObj);
         }
         status.finish(rr);
@@ -487,12 +525,10 @@ export class ComposedCommandsRoutes {
       res.send(["error", "genome is missing"]);
       return;
     }
-    console.log("iun");
 
     let status = ComposedCommandsRoutes.requestManager.startRequest();
     Manager.getComposedData().subscribe((cs: ComposedData) => {
       cs.get_epigenetic_marks(genome, category, status).subscribe((emc: Array<FullMetadata>) => {
-        console.log("sending", emc);
         res.send(["okay", emc]);
       });
     });
@@ -513,21 +549,21 @@ export class ComposedCommandsRoutes {
     router.get("/get_enrichment_databases", this.enrichmentDatabases);
     router.get("/generate_track_file", this.generate_track_file);
     router.get("/export_to_genome_browser", this.export_to_genome_browser);
-
     router.get("/query_info", this.queryInfo);
 
     // Composite data
     router.get("/get_epigenetic_marks_categories", this.getEpigenomicMarksCategories);
     router.get("/get_epigenetic_marks_from_category", this.getEpigenomicMarksFromCategory);
 
-
     // Post:
+    router.post("/input_regions", this.inputRegions);
+    router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
+    router.post("/enrich_regions_fast", this.enrichRegionsFast);
+
+    // Upload code:
     var storage = multer.memoryStorage()
     var upload = multer({ storage: storage })
     router.post("/upload_regions", upload.any(), this.uploadRegions);
-
-    router.post("/input_regions", this.inputRegions);
-    router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
 
     return router;
   }

@@ -167,6 +167,7 @@ class ComposedCommandsRoutes {
             // This function received an JSON object in the body
             let queries_id = req.body.queries_id;
             let universe_id = req.body.universe_id;
+            let genome = req.body.genome;
             let datasets = req.body.datasets;
             if (!(queries_id)) {
                 res.send(["error", "queries_id is missing"]);
@@ -183,11 +184,40 @@ class ComposedCommandsRoutes {
             res.send(["okay", status.request_id.toLocaleString()]);
             // TODO: Load real operations
             let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data"));
-            var ccos = re.enrichRegionsOverlap(deepblue_query_ops, universe_id, datasets, status).subscribe((results) => {
+            var ccos = re.enrichRegionsOverlap(deepblue_query_ops, genome, universe_id, datasets, status).subscribe((results) => {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
                     let resultObj = new operations_1.DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), new deepblue_1.Id(universe_id), datasets, result.resultAsTuples());
+                    rr.push(resultObj);
+                }
+                status.finish(rr);
+            });
+        });
+    }
+    static enrichRegionsFast(req, res, next) {
+        manager_1.Manager.getRegionsEnrichment().subscribe((re) => {
+            // This function received an JSON object in the body
+            let query_id = req.body.query_id;
+            let genome = req.body.genome;
+            if (!(query_id)) {
+                res.send(["error", "query_id is missing"]);
+                return;
+            }
+            if (!(genome)) {
+                res.send(["error", "genome is missing"]);
+                return;
+            }
+            let status = ComposedCommandsRoutes.requestManager.startRequest();
+            res.send(["okay", status.request_id.toLocaleString()]);
+            // TODO: Load real operations
+            let data_query = new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data");
+            var ccos = re.enrichRegionsFast(data_query, genome, status).subscribe((results) => {
+                let rr = [];
+                for (let i = 0; i < results.length; i++) {
+                    let result = results[i];
+                    let resultObj = result.resultAsTuples();
+                    console.log(resultObj);
                     rr.push(resultObj);
                 }
                 status.finish(rr);
@@ -352,11 +382,9 @@ class ComposedCommandsRoutes {
             res.send(["error", "genome is missing"]);
             return;
         }
-        console.log("iun");
         let status = ComposedCommandsRoutes.requestManager.startRequest();
         manager_1.Manager.getComposedData().subscribe((cs) => {
             cs.get_epigenetic_marks(genome, category, status).subscribe((emc) => {
-                console.log("sending", emc);
                 res.send(["okay", emc]);
             });
         });
@@ -380,11 +408,13 @@ class ComposedCommandsRoutes {
         router.get("/get_epigenetic_marks_categories", this.getEpigenomicMarksCategories);
         router.get("/get_epigenetic_marks_from_category", this.getEpigenomicMarksFromCategory);
         // Post:
+        router.post("/input_regions", this.inputRegions);
+        router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
+        router.post("/enrich_regions_fast", this.enrichRegionsFast);
+        // Upload code:
         var storage = multer.memoryStorage();
         var upload = multer({ storage: storage });
         router.post("/upload_regions", upload.any(), this.uploadRegions);
-        router.post("/input_regions", this.inputRegions);
-        router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
         return router;
     }
 }

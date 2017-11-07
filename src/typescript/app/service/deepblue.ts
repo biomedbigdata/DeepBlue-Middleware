@@ -313,12 +313,12 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
-  enrich_regions_overlap(data: DeepBlueOperation, universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult> {
+  enrich_regions_overlap(data: DeepBlueOperation, genome: string, universe_id: string, datasets: Object, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
     params['query_id'] = data.queryId().id;
     params['background_query_id'] = universe_id;
     params['datasets'] = datasets;
-    params["genome"] = "GRCh38";
+    params["genome"] = genome;
 
     return this.execute("enrich_regions_overlap", params, status).map((response: [string, string]) => {
       status.increment();
@@ -328,6 +328,20 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
+  enrich_regions_fast(data: DeepBlueOperation, genome: string, epigenetic_mark: string, biosource: string, status: RequestStatus): Observable<DeepBlueResult> {
+    const params: Object = new Object();
+    params['query_id'] = data.queryId().id;
+    params['genome'] = genome;
+    params['epigenetic_mark'] = epigenetic_mark;
+    params["biosource"] = biosource;
+
+    return this.execute("enrich_regions_fast", params, status).map((response: [string, string]) => {
+      status.increment();
+      return new DeepBlueRequest(data, response[1], 'enrich_regions_fast');
+    }).flatMap((request_id) => {
+      return this.getResult(request_id, status);
+    }).catch(this.handleError);
+  }
 
   list_epigenetic_marks(status: RequestStatus, type?: string): Observable<IdName[]> {
     const params: Object = new Object();

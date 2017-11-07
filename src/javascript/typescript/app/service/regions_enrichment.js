@@ -106,17 +106,51 @@ class RegionsEnrichment {
         });
         return pollSubject.asObservable();
     }
-    enrichRegionsOverlap(data_query_id, universe_id, datasets, status) {
+    enrichRegionsOverlap(data_query_id, genome, universe_id, datasets, status) {
         var start = new Date().getTime();
         let total = data_query_id.length * data_query_id.length * 3;
         status.reset(total);
         let response = new rxjs_1.Subject();
         let observableBatch = [];
         data_query_id.forEach((current_op) => {
-            let o = this.deepBlueService.enrich_regions_overlap(current_op, universe_id, datasets, status);
+            let o = this.deepBlueService.enrich_regions_overlap(current_op, genome, universe_id, datasets, status);
             observableBatch.push(o);
         });
         return Observable_1.Observable.forkJoin(observableBatch);
+    }
+    enrichRegionsFast(data_query_id, genome, status) {
+        let em_observers = this.deepBlueService.collection_experiments_count(status, "epigenetic_marks", "peaks", genome);
+        let bs_observers = this.deepBlueService.collection_experiments_count(status, "biosources", "peaks", genome);
+        let o = Observable_1.Observable.forkJoin([
+            em_observers,
+            bs_observers
+        ]).map((exp_infos) => {
+            let epigenetic_marks = exp_infos[0];
+            let biosources = exp_infos[1];
+            console.log(epigenetic_marks);
+            console.log(biosources);
+            let observableBatch = [];
+            epigenetic_marks.forEach((em) => {
+                biosources.forEach((bs) => {
+                    console.log("bs: ", bs.name);
+                    let o = new Observable_1.Observable((observer) => {
+                        console.log("execvuting?");
+                        this.deepBlueService.enrich_regions_fast(data_query_id, genome, em.name, bs.name, status).subscribe((result) => {
+                            //let overlapResult = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(),
+                            //  result.getFilterName(), result.getFilterQuery(),
+                            //  result.resultAsCount());
+                            console.log(result.result["enrichment"]);
+                            //status.addPartialData(overlapResult);
+                            observer.next(result);
+                            observer.complete();
+                        });
+                    });
+                    observableBatch.push(o);
+                });
+            });
+            return Observable_1.Observable.forkJoin(observableBatch);
+        });
+        return o.flatMap((results) => results);
     }
 }
 exports.RegionsEnrichment = RegionsEnrichment;
