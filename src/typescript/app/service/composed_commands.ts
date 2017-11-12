@@ -181,12 +181,7 @@ export class ComposedCommands {
     loadQuery(query_id: Id, status: RequestStatus): Observable<DeepBlueOperation> {
         let querySubject = new Subject<DeepBlueOperation>();
 
-        console.log("IN?");
         this.deepBlueService.info(query_id, status).subscribe((fullMetadata: FullMetadata) => {
-
-            console.log("-------");
-            console.log(fullMetadata);
-            console.log("-------");
 
             let type = fullMetadata.type();
             let id = new Id(fullMetadata.id);
@@ -198,8 +193,6 @@ export class ComposedCommands {
             } else {
                 content = new DeepBlueArgs(fullMetadata.values['args']);
             }
-
-            console.log(fullMetadata);
 
             switch (type) {
                 case "annotation_select": {

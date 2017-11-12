@@ -39,6 +39,46 @@ class RequestStatus {
     addPartialData(data) {
         this.partialData.push(data);
     }
+    mergePartialData(data) {
+        let merged = this.partialData.concat(data);
+        merged.sort((a, b) => a['p_value_log'] - b['p_value_log']);
+        let position = 0;
+        let value = merged[0]['p_value_log'];
+        for (let i = 0; i < merged.length; i++) {
+            if (merged[i]['p_value_log'] != value) {
+                position = i;
+                value = merged[i]['p_value_log'];
+            }
+            merged[i]['log_rank'] = position + 1;
+        }
+        merged.sort((a, b) => a['odds_ratio'] - b['odds_ratio']);
+        position = 0;
+        value = merged[0]['odds_ratio'];
+        for (let i = 0; i < merged.length; i++) {
+            if (merged[i]['odds_ratio'] != value) {
+                position = i;
+                value = merged[i]['odds_ratio'];
+            }
+            merged[i]['odd_rank'] = position + 1;
+        }
+        merged.sort((a, b) => a['support'] - b['support']);
+        position = 0;
+        value = merged[0]['support'];
+        for (let i = 0; i < merged.length; i++) {
+            if (merged[i]['support'] != value) {
+                position = i;
+                value = merged[i]['support'];
+            }
+            merged[i]['support_rank'] = position + 1;
+        }
+        for (let ds of merged) {
+            ds['mean_rank'] = ds['log_rank'] + ds['odd_rank'] + ds['support_rank'];
+            ds['max_rank'] = Math.max(ds['log_rank'], ds['odd_rank'], ds['support_rank']);
+        }
+        merged.sort((a, b) => a['mean_rank'] - b['mean_rank']);
+        console.log(merged);
+        this.partialData = merged;
+    }
     getPartialData() {
         return this.partialData;
     }

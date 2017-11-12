@@ -217,7 +217,6 @@ class ComposedCommandsRoutes {
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
                     let resultObj = result.resultAsTuples();
-                    console.log(resultObj);
                     rr.push(resultObj);
                 }
                 status.finish(rr);

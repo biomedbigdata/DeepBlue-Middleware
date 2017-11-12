@@ -381,6 +381,9 @@ class DeepBlueResult {
     resultAsTuples() {
         return this.result;
     }
+    resultAsEnrichment() {
+        return this.result["enrichment"]["results"];
+    }
     data() {
         return this._data;
     }

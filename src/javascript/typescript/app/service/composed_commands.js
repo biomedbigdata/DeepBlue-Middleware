@@ -122,11 +122,7 @@ class ComposedCommands {
     }
     loadQuery(query_id, status) {
         let querySubject = new rxjs_1.Subject();
-        console.log("IN?");
         this.deepBlueService.info(query_id, status).subscribe((fullMetadata) => {
-            console.log("-------");
-            console.log(fullMetadata);
-            console.log("-------");
             let type = fullMetadata.type();
             let id = new deepblue_1.Id(fullMetadata.id);
             let name = fullMetadata.name;
@@ -137,7 +133,6 @@ class ComposedCommands {
             else {
                 content = new operations_1.DeepBlueArgs(fullMetadata.values['args']);
             }
-            console.log(fullMetadata);
             switch (type) {
                 case "annotation_select": {
                     querySubject.next(new operations_1.DeepBlueSelectData(new deepblue_1.Name(name), id, type));

@@ -42,7 +42,6 @@ class RegionsEnrichment {
                         let exp_filter_id = new Array();
                         for (let filter of filters) {
                             let filter_data = filter.data();
-                            //console.log(JSON.stringify(filter_data));
                             let exp_name = filter.getDataName();
                             let exp_id = filter.getDataId().id;
                             let filter_name = filter._params.value;
@@ -66,7 +65,6 @@ class RegionsEnrichment {
                 let arr_filter = Object.keys(states).map((state) => {
                     return [state, states[state]];
                 });
-                //console.log(JSON.stringify(arr_filter));
                 this.chromatinCache = ["Chomatin States Segmentation", arr_filter];
                 response.next(this.chromatinCache);
                 response.complete();
@@ -127,26 +125,28 @@ class RegionsEnrichment {
         ]).map((exp_infos) => {
             let epigenetic_marks = exp_infos[0];
             let biosources = exp_infos[1];
-            console.log(epigenetic_marks);
-            console.log(biosources);
+            let key = "";
+            let values = [];
+            if (epigenetic_marks.length > biosources.length) {
+                key = "epigenetic_mark";
+                values = epigenetic_marks;
+            }
+            else {
+                key = "biosource";
+                values = biosources;
+            }
             let observableBatch = [];
-            epigenetic_marks.forEach((em) => {
-                biosources.forEach((bs) => {
-                    console.log("bs: ", bs.name);
-                    let o = new Observable_1.Observable((observer) => {
-                        console.log("execvuting?");
-                        this.deepBlueService.enrich_regions_fast(data_query_id, genome, em.name, bs.name, status).subscribe((result) => {
-                            //let overlapResult = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(),
-                            //  result.getFilterName(), result.getFilterQuery(),
-                            //  result.resultAsCount());
-                            console.log(result.result["enrichment"]);
-                            //status.addPartialData(overlapResult);
-                            observer.next(result);
-                            observer.complete();
-                        });
+            values.forEach((em) => {
+                let o = new Observable_1.Observable((observer) => {
+                    let filter = {};
+                    filter[key] = em.name;
+                    this.deepBlueService.enrich_regions_fast(data_query_id, genome, filter, status).subscribe((result) => {
+                        status.mergePartialData(result.resultAsEnrichment());
+                        observer.next(result);
+                        observer.complete();
                     });
-                    observableBatch.push(o);
                 });
+                observableBatch.push(o);
             });
             return Observable_1.Observable.forkJoin(observableBatch);
         });

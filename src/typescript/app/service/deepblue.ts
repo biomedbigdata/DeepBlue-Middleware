@@ -328,12 +328,24 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
-  enrich_regions_fast(data: DeepBlueOperation, genome: string, epigenetic_mark: string, biosource: string, status: RequestStatus): Observable<DeepBlueResult> {
+  enrich_regions_fast(data: DeepBlueOperation, genome: string, filter: Object, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
     params['query_id'] = data.queryId().id;
     params['genome'] = genome;
-    params['epigenetic_mark'] = epigenetic_mark;
-    params["biosource"] = biosource;
+
+    for (let o of Object.keys(filter)) {
+      params[o] = filter[o];
+    }
+
+    /*
+    if (epigenetic_mark) {
+      params['epigenetic_mark'] = epigenetic_mark;
+    }
+
+    if (biosource) {
+      params["biosource"] = biosource;
+    }
+    */
 
     return this.execute("enrich_regions_fast", params, status).map((response: [string, string]) => {
       status.increment();

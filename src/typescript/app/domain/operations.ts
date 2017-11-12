@@ -358,7 +358,7 @@ export class DeepBlueIntersection implements DeepBlueOperation {
         return this._filter.queryId();
     }
 
-    cacheIt(query_id: Id) : DeepBlueIntersection {
+    cacheIt(query_id: Id): DeepBlueIntersection {
         return new DeepBlueIntersection(this._data, this._filter, this.query_id, true);
     }
 }
@@ -403,7 +403,7 @@ export class DeepBlueFilter implements DeepBlueOperation {
         );
     }
 
-    cacheIt(query_id: Id) : DeepBlueFilter {
+    cacheIt(query_id: Id): DeepBlueFilter {
         return new DeepBlueFilter(this._data, this._params, this.query_id, this.cached);
     }
 
@@ -464,12 +464,16 @@ export class DeepBlueResult implements ICloneable {
         return <number>this.result["count"];
     }
 
-    resultAsDistinct(): {[key: string] : number} {
+    resultAsDistinct(): { [key: string]: number } {
         return this.result["distinct"];
     }
 
     resultAsTuples(): Object[] {
         return <Object[]>this.result;
+    }
+
+    resultAsEnrichment(): Object[] {
+        return <Object[]>this.result["enrichment"]["results"];
     }
 
     data(): DeepBlueRequest {
