@@ -1,9 +1,45 @@
 import { DeepBlueResult, DeepBlueSelectData, DeepBlueMiddlewareOverlapResult } from './operations';
 
 export class Statistics {
-  static percentile(arr: number[], p: number, sort?: boolean): number {
+
+  static filter(arr: number[], dropoff_sds: number, sort?: boolean) {
+    if (sort) {
+      arr.sort(function (a, b) { return a - b; });
+    }
+
+    let sum = arr.reduce((p, c) => p + c, 0);
+    const mean = sum / arr.length;
+
+    let diffs = [];
+    for (let v of arr) {
+      diffs.push(Math.pow(v - mean, 2));
+    }
+    let d = diffs.reduce((a, b, ) => a + b, 0);
+    let sd = Math.sqrt(d / (arr.length - 1));
+
+    let min_value = arr[0] + (sd * dropoff_sds);
+
+    let pos = 0;
+    for (let n of arr) {
+      if (n > min_value) {
+        break;
+      }
+      pos++;
+    }
+
+    console.log(arr[0], sd, sd*dropoff_sds, min_value, arr.length, pos);
+
+    return arr.slice(0, pos + 1);
+  }
+
+  static percentile(arr: number[], p: number, sort?: boolean, dropoff_sds?: number): number {
+
     if (arr.length === 0) {
       return 0;
+    }
+
+    if (sort) {
+      arr.sort(function (a, b) { return a - b; });
     }
 
     if (p <= 0) {
@@ -11,10 +47,6 @@ export class Statistics {
     }
     if (p >= 1) {
       return arr[arr.length - 1];
-    }
-
-    if (sort) {
-      arr.sort(function (a, b) { return a - b; });
     }
 
     const index = (arr.length - 1) * p;
@@ -88,6 +120,32 @@ export class RequestStatus {
     this.partialData.push(data);
   }
 
+  calculateStats(results: number[]): Object {
+    let high = Number.MIN_SAFE_INTEGER;
+    let low = Number.MAX_SAFE_INTEGER;
+    let sum = 0;
+
+    let filterd_results = Statistics.filter(results, 1, true);
+
+    for (const count of filterd_results) {
+      if (count < low) {
+        low = count;
+      }
+      if (count > high) {
+        high = count;
+      }
+      sum += count;
+    }
+
+    const mean = sum / filterd_results.length;
+
+    const q1 = Statistics.percentile(filterd_results, 0.25);
+    const q3 = Statistics.percentile(filterd_results, 0.75);
+    const median = Statistics.percentile(filterd_results, 0.5);
+
+    return { low: low, q1: q1, median: median, q3: q3, high: high, mean: mean, elements: filterd_results.length };
+  }
+
   mergePartialData(data: Object[]) {
     let partialData = this.partialData.concat(data);
     this.partialData = partialData;
@@ -126,7 +184,7 @@ export class RequestStatus {
     }
 
     for (let ds of partialData) {
-      ds['mean_rank'] = ds['log_rank'] + ds['odd_rank'] + ds['support_rank'];
+      ds['mean_rank'] = (ds['log_rank'] + ds['odd_rank'] + ds['support_rank']) / 3;
       ds['max_rank'] = Math.max(ds['log_rank'], ds['odd_rank'], ds['support_rank']);
     }
 
@@ -154,46 +212,27 @@ export class RequestStatus {
     let total_bs = Object.keys(biosources).length;
     let total_em = Object.keys(ems).length;
 
-
     for (let bs in biosources) {
       const results = biosources[bs];
-
-      let high = Number.MIN_SAFE_INTEGER;
-      let low = Number.MAX_SAFE_INTEGER;
-      let sum = 0;
-
-      const values: Array<number> = [];
-      for (const count of results) {
-        if (count < low) {
-          low = count;
-        }
-        if (count > high) {
-          high = count;
-        }
-        sum += count;
-        values.push(count);
-      }
-
-      values.sort((a, b) => { return a - b; });
-
-      const mean = sum / values.length;
-
-      const q1 = Statistics.percentile(values, 0.25);
-      const q3 = Statistics.percentile(values, 0.75);
-      const median = Statistics.percentile(values, 0.5);
-
-      biosources[bs] = { low: low, q1: q1, median: median, q3: q3, high: high, mean: mean, elements: values.length };
+      biosources[bs] = this.calculateStats(biosources[bs]);
     }
 
+    for (let em in ems) {
+      const results = ems[em];
+      ems[em] = this.calculateStats(ems[em]);
+    }
 
-    this.summarizedData = Object.keys(biosources).map((biosource) => [biosource, biosources[biosource]]).sort((a, b) => a[1]['mean'] - b[1]['mean']);
+    this.summarizedData = {
+      "biosources": Object.keys(biosources).map((biosource) => [biosource, biosources[biosource]]).sort((a, b) => a[1]['mean'] - b[1]['mean']),
+      "epigenetic_marks": Object.keys(ems).map((em) => [em, ems[em]]).sort((a, b) => a[1]['mean'] - b[1]['mean'])
+    }
   }
 
   getPartialData(): Object[] {
     return this.partialData;
   }
 
-  getSummarizedData() : Object {
+  getSummarizedData(): Object {
     return this.summarizedData;
   }
 
