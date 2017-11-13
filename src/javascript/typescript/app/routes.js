@@ -20,7 +20,8 @@ class ComposedCommandsRoutes {
                     step: request_data.getStep(),
                     total: request_data.getTotal(),
                     processed: request_data.getProcessed(),
-                    partial: request_data.getPartialData()
+                    partial: request_data.getPartialData(),
+                    summarized: request_data.getSummarizedData()
                 }
             ]);
         }

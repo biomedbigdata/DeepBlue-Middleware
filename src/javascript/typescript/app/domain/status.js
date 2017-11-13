@@ -1,5 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+class Statistics {
+    static percentile(arr, p, sort) {
+        if (arr.length === 0) {
+            return 0;
+        }
+        if (p <= 0) {
+            return arr[0];
+        }
+        if (p >= 1) {
+            return arr[arr.length - 1];
+        }
+        if (sort) {
+            arr.sort(function (a, b) { return a - b; });
+        }
+        const index = (arr.length - 1) * p;
+        const lower = Math.floor(index);
+        const upper = lower + 1;
+        const weight = index % 1;
+        if (upper >= arr.length) {
+            return arr[lower];
+        }
+        return arr[lower] * (1 - weight) + arr[upper] * weight;
+    }
+}
+exports.Statistics = Statistics;
 class RequestStatus {
     constructor(request_id) {
         this.total_to_load = 0;
@@ -7,6 +32,7 @@ class RequestStatus {
         this.finished = false;
         this.data = new Array();
         this.partialData = new Array();
+        this.summarizedData = null;
         this.request_id = request_id;
     }
     reset(total) {
@@ -15,6 +41,7 @@ class RequestStatus {
         this.step = "";
         this.data = new Array();
         this.partialData = new Array();
+        this.summarizedData = null;
     }
     increment() {
         this.total_loaded++;
@@ -40,47 +67,90 @@ class RequestStatus {
         this.partialData.push(data);
     }
     mergePartialData(data) {
-        let merged = this.partialData.concat(data);
-        merged.sort((a, b) => a['p_value_log'] - b['p_value_log']);
+        let partialData = this.partialData.concat(data);
+        this.partialData = partialData;
+        partialData.sort((a, b) => b['p_value_log'] - a['p_value_log']);
         let position = 0;
-        let value = merged[0]['p_value_log'];
-        for (let i = 0; i < merged.length; i++) {
-            if (merged[i]['p_value_log'] != value) {
+        let value = partialData[0]['p_value_log'];
+        for (let i = 0; i < partialData.length; i++) {
+            if (partialData[i]['p_value_log'] != value) {
                 position = i;
-                value = merged[i]['p_value_log'];
+                value = partialData[i]['p_value_log'];
             }
-            merged[i]['log_rank'] = position + 1;
+            partialData[i]['log_rank'] = position + 1;
         }
-        merged.sort((a, b) => a['odds_ratio'] - b['odds_ratio']);
+        partialData.sort((a, b) => b['odds_ratio'] - a['odds_ratio']);
         position = 0;
-        value = merged[0]['odds_ratio'];
-        for (let i = 0; i < merged.length; i++) {
-            if (merged[i]['odds_ratio'] != value) {
+        value = partialData[0]['odds_ratio'];
+        for (let i = 0; i < partialData.length; i++) {
+            if (partialData[i]['odds_ratio'] != value) {
                 position = i;
-                value = merged[i]['odds_ratio'];
+                value = partialData[i]['odds_ratio'];
             }
-            merged[i]['odd_rank'] = position + 1;
+            partialData[i]['odd_rank'] = position + 1;
         }
-        merged.sort((a, b) => a['support'] - b['support']);
+        partialData.sort((a, b) => b['support'] - a['support']);
         position = 0;
-        value = merged[0]['support'];
-        for (let i = 0; i < merged.length; i++) {
-            if (merged[i]['support'] != value) {
+        value = partialData[0]['support'];
+        for (let i = 0; i < partialData.length; i++) {
+            if (partialData[i]['support'] != value) {
                 position = i;
-                value = merged[i]['support'];
+                value = partialData[i]['support'];
             }
-            merged[i]['support_rank'] = position + 1;
+            partialData[i]['support_rank'] = position + 1;
         }
-        for (let ds of merged) {
+        for (let ds of partialData) {
             ds['mean_rank'] = ds['log_rank'] + ds['odd_rank'] + ds['support_rank'];
             ds['max_rank'] = Math.max(ds['log_rank'], ds['odd_rank'], ds['support_rank']);
         }
-        merged.sort((a, b) => a['mean_rank'] - b['mean_rank']);
-        console.log(merged);
-        this.partialData = merged;
+        partialData.sort((a, b) => a['mean_rank'] - b['mean_rank']);
+        let biosources = {};
+        let ems = {};
+        for (let ds of partialData) {
+            let biosource = ds['biosource'];
+            let em = ds['epigenetic_mark'];
+            let rank = ds['mean_rank'];
+            if (!(biosource in biosources)) {
+                biosources[biosource] = [];
+            }
+            biosources[biosource].push(rank);
+            if (!(em in ems)) {
+                ems[em] = [];
+            }
+            ems[em].push(rank);
+        }
+        let total_bs = Object.keys(biosources).length;
+        let total_em = Object.keys(ems).length;
+        for (let bs in biosources) {
+            const results = biosources[bs];
+            let high = Number.MIN_SAFE_INTEGER;
+            let low = Number.MAX_SAFE_INTEGER;
+            let sum = 0;
+            const values = [];
+            for (const count of results) {
+                if (count < low) {
+                    low = count;
+                }
+                if (count > high) {
+                    high = count;
+                }
+                sum += count;
+                values.push(count);
+            }
+            values.sort((a, b) => { return a - b; });
+            const mean = sum / values.length;
+            const q1 = Statistics.percentile(values, 0.25);
+            const q3 = Statistics.percentile(values, 0.75);
+            const median = Statistics.percentile(values, 0.5);
+            biosources[bs] = { low: low, q1: q1, median: median, q3: q3, high: high, mean: mean, elements: values.length };
+        }
+        this.summarizedData = Object.keys(biosources).map((biosource) => [biosource, biosources[biosource]]).sort((a, b) => a[1]['mean'] - b[1]['mean']);
     }
     getPartialData() {
         return this.partialData;
+    }
+    getSummarizedData() {
+        return this.summarizedData;
     }
     setData(data) {
         this.partialData = [];
