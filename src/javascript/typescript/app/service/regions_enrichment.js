@@ -140,6 +140,7 @@ class RegionsEnrichment {
                 let o = new Observable_1.Observable((observer) => {
                     let filter = {};
                     filter[key] = em.name;
+                    filter["technique"] = "chip-seq";
                     this.deepBlueService.enrich_regions_fast(data_query_id, genome, filter, status).subscribe((result) => {
                         status.mergePartialData(result.resultAsEnrichment());
                         observer.next(result);
