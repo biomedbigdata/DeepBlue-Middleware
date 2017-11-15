@@ -337,16 +337,6 @@ export class DeepBlueService {
       params[o] = filter[o];
     }
 
-    /*
-    if (epigenetic_mark) {
-      params['epigenetic_mark'] = epigenetic_mark;
-    }
-
-    if (biosource) {
-      params["biosource"] = biosource;
-    }
-    */
-
     return this.execute("enrich_regions_fast", params, status).map((response: [string, string]) => {
       status.increment();
       return new DeepBlueRequest(data, response[1], 'enrich_regions_fast');
@@ -369,15 +359,20 @@ export class DeepBlueService {
     });
   }
 
-  collection_experiments_count(status: RequestStatus, controlled_vocabulary: string, type?: string, genome?: string): Observable<IdNameCount[]> {
+  collection_experiments_count(status: RequestStatus, controlled_vocabulary: string, type?: string, genome?: string, technique?: string): Observable<IdNameCount[]> {
     const params: Object = new Object();
 
     params["controlled_vocabulary"] = controlled_vocabulary;
     if (type) {
       params["type"] = type;
     }
+
     if (genome) {
       params["genome"] = genome;
+    }
+
+    if (technique) {
+      parent["technique"] = technique
     }
 
     return this.execute("collection_experiments_count", params, status).map((response: [string, any]) => {

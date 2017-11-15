@@ -259,15 +259,6 @@ class DeepBlueService {
         for (let o of Object.keys(filter)) {
             params[o] = filter[o];
         }
-        /*
-        if (epigenetic_mark) {
-          params['epigenetic_mark'] = epigenetic_mark;
-        }
-    
-        if (biosource) {
-          params["biosource"] = biosource;
-        }
-        */
         return this.execute("enrich_regions_fast", params, status).map((response) => {
             status.increment();
             return new operations_1.DeepBlueRequest(data, response[1], 'enrich_regions_fast');
@@ -287,7 +278,7 @@ class DeepBlueService {
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
-    collection_experiments_count(status, controlled_vocabulary, type, genome) {
+    collection_experiments_count(status, controlled_vocabulary, type, genome, technique) {
         const params = new Object();
         params["controlled_vocabulary"] = controlled_vocabulary;
         if (type) {
@@ -295,6 +286,9 @@ class DeepBlueService {
         }
         if (genome) {
             params["genome"] = genome;
+        }
+        if (technique) {
+            parent["technique"] = technique;
         }
         return this.execute("collection_experiments_count", params, status).map((response) => {
             const data = response[1] || [];
