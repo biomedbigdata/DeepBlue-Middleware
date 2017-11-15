@@ -21,10 +21,9 @@ class Statistics {
             }
             pos++;
         }
-        console.log(arr[0], sd, sd * dropoff_sds, min_value, arr.length, pos);
         return arr.slice(0, pos + 1);
     }
-    static percentile(arr, p, sort, dropoff_sds) {
+    static percentile(arr, p, sort) {
         if (arr.length === 0) {
             return 0;
         }
@@ -89,99 +88,11 @@ class RequestStatus {
     addPartialData(data) {
         this.partialData.push(data);
     }
-    calculateStats(results) {
-        let high = Number.MIN_SAFE_INTEGER;
-        let low = Number.MAX_SAFE_INTEGER;
-        let sum = 0;
-        let filterd_results = Statistics.filter(results, 1, true);
-        for (const count of filterd_results) {
-            if (count < low) {
-                low = count;
-            }
-            if (count > high) {
-                high = count;
-            }
-            sum += count;
-        }
-        const mean = sum / filterd_results.length;
-        const q1 = Statistics.percentile(filterd_results, 0.25);
-        const q3 = Statistics.percentile(filterd_results, 0.75);
-        const median = Statistics.percentile(filterd_results, 0.5);
-        return { low: low, q1: q1, median: median, q3: q3, high: high, mean: mean, elements: filterd_results.length };
-    }
     mergePartialData(data) {
-        let partialData = this.partialData.concat(data);
-        this.partialData = partialData;
-        partialData.sort((a, b) => b['p_value_log'] - a['p_value_log']);
-        let position = 0;
-        let value = partialData[0]['p_value_log'];
-        for (let i = 0; i < partialData.length; i++) {
-            if (partialData[i]['p_value_log'] != value) {
-                position = i;
-                value = partialData[i]['p_value_log'];
-            }
-            partialData[i]['log_rank'] = position + 1;
-        }
-        partialData.sort((a, b) => b['odds_ratio'] - a['odds_ratio']);
-        position = 0;
-        value = partialData[0]['odds_ratio'];
-        for (let i = 0; i < partialData.length; i++) {
-            if (partialData[i]['odds_ratio'] != value) {
-                position = i;
-                value = partialData[i]['odds_ratio'];
-            }
-            partialData[i]['odd_rank'] = position + 1;
-        }
-        partialData.sort((a, b) => b['support'] - a['support']);
-        position = 0;
-        value = partialData[0]['support'];
-        for (let i = 0; i < partialData.length; i++) {
-            if (partialData[i]['support'] != value) {
-                position = i;
-                value = partialData[i]['support'];
-            }
-            partialData[i]['support_rank'] = position + 1;
-        }
-        for (let ds of partialData) {
-            ds['mean_rank'] = (ds['log_rank'] + ds['odd_rank'] + ds['support_rank']) / 3;
-            ds['max_rank'] = Math.max(ds['log_rank'], ds['odd_rank'], ds['support_rank']);
-        }
-        partialData.sort((a, b) => a['mean_rank'] - b['mean_rank']);
-        let biosources = {};
-        let ems = {};
-        for (let ds of partialData) {
-            let biosource = ds['biosource'];
-            let em = ds['epigenetic_mark'];
-            let rank = ds['mean_rank'];
-            if (!(biosource in biosources)) {
-                biosources[biosource] = [];
-            }
-            biosources[biosource].push(rank);
-            if (!(em in ems)) {
-                ems[em] = [];
-            }
-            ems[em].push(rank);
-        }
-        let total_bs = Object.keys(biosources).length;
-        let total_em = Object.keys(ems).length;
-        for (let bs in biosources) {
-            const results = biosources[bs];
-            biosources[bs] = this.calculateStats(biosources[bs]);
-        }
-        for (let em in ems) {
-            const results = ems[em];
-            ems[em] = this.calculateStats(ems[em]);
-        }
-        this.summarizedData = {
-            "biosources": Object.keys(biosources).map((biosource) => [biosource, biosources[biosource]]).sort((a, b) => a[1]['mean'] - b[1]['mean']),
-            "epigenetic_marks": Object.keys(ems).map((em) => [em, ems[em]]).sort((a, b) => a[1]['mean'] - b[1]['mean'])
-        };
+        this.partialData = this.partialData.concat(data);
     }
     getPartialData() {
         return this.partialData;
-    }
-    getSummarizedData() {
-        return this.summarizedData;
     }
     setData(data) {
         this.partialData = [];

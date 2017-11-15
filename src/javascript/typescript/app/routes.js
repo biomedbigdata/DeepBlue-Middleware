@@ -20,8 +20,7 @@ class ComposedCommandsRoutes {
                     step: request_data.getStep(),
                     total: request_data.getTotal(),
                     processed: request_data.getProcessed(),
-                    partial: request_data.getPartialData(),
-                    summarized: request_data.getSummarizedData()
+                    partial: request_data.getPartialData()
                 }
             ]);
         }
@@ -217,8 +216,8 @@ class ComposedCommandsRoutes {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
-                    let resultObj = result.resultAsTuples();
-                    rr.push(resultObj);
+                    let resultObj = result.resultAsEnrichment();
+                    rr = rr.concat(resultObj);
                 }
                 status.finish(rr);
             });
