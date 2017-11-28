@@ -27,7 +27,9 @@ import {
   DeepBlueSelectData,
   DeepBlueParameters,
   DeepBlueFilter,
-  FilterParameter
+  FilterParameter,
+  DeepBlueResultStatus,
+  DeepBlueArgs
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -155,17 +157,25 @@ export class DeepBlueService {
     return this.initalized;
   }
 
-  execute(command_name: string, parameters: Object, status: RequestStatus): Observable<[string, any]> {
+  execute(command_name: string, parameters: Object, status: RequestStatus): Observable<[DeepBlueResultStatus, any]> {
 
     let command: Command = this._commands[command_name];
     return command.makeRequest(parameters).map((body: string[]) => {
       let command_status: string = body[0];
+
+      let status_result: DeepBlueResultStatus;
+      if (command_status == "error") {
+        status_result = DeepBlueResultStatus.Error;
+      } else {
+        status_result = DeepBlueResultStatus.Okay;
+      }
+
       let response: any = body[1] || "";
       if (command_status === "error") {
         console.error(command_name, parameters, response);
       }
       status.increment();
-      return <[string, any]>[command_status, response];
+      return <[DeepBlueResultStatus, any]>[status_result, response];
     });
   }
 
@@ -404,6 +414,14 @@ export class DeepBlueService {
     });
   }
 
+  list_experiments_full(status: RequestStatus, type?: string, epigenetic_mark?: string, genome?: string): Observable<FullMetadata[]> {
+
+    return this.list_experiments(status, type, epigenetic_mark, genome).flatMap((ids: IdName[]) =>
+      this.infos(ids, status)
+    )
+  }
+
+
   list_gene_models(status: RequestStatus): Observable<IdName[]> {
     const params: Object = new Object();
 
@@ -476,6 +494,10 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
+
+
+
+
   getResult(op_request: DeepBlueRequest, status: RequestStatus): Observable<DeepBlueResult> {
 
     let result = this.resultCache.get(op_request);
@@ -497,25 +519,46 @@ export class DeepBlueService {
         return;
       }
       isProcessing = true;
-      client.methodCall("get_request_data", [op_request.request_id, 'anonymous_key'], (err: Object, value: any) => {
-        if (err) {
-          console.error(err);
-          isProcessing = false;
-          return;
-        }
 
-        if (value[0] === "okay") {
-          status.increment();
-          let op_result = new DeepBlueResult(op_request, value[1]);
-          this.resultCache.put(op_request, op_result);
+      this.execute("info", { "id": op_request.request_id }, status).subscribe((info: [DeepBlueResultStatus, any]) => {
+
+        let state = info[1][0]['state'];
+
+        if (state == "done") {
+          client.methodCall("get_request_data", [op_request.request_id, 'anonymous_key'], (err: Object, value: any) => {
+            if (err) {
+              console.error(err);
+              isProcessing = false;
+              return;
+            }
+
+            if (value[0] === "okay") {
+              status.increment();
+              let op_result = new DeepBlueResult(op_request, value[1]);
+              this.resultCache.put(op_request, op_result);
+              timer.unsubscribe();
+              pollSubject.next(op_result);
+              pollSubject.complete();
+            } else {
+              isProcessing = false;
+            }
+          });
+
+        } else if (state == "error") {
+          console.log(info);
           timer.unsubscribe();
-          pollSubject.next(op_result);
           pollSubject.complete();
+          isProcessing = false;
         } else {
+          console.log(info);
           isProcessing = false;
         }
 
-      });
+        // new
+        // running
+      })
+
+
     }).subscribe();
 
     return pollSubject.asObservable();

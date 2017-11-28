@@ -117,12 +117,19 @@ class DeepBlueService {
         let command = this._commands[command_name];
         return command.makeRequest(parameters).map((body) => {
             let command_status = body[0];
+            let status_result;
+            if (command_status == "error") {
+                status_result = operations_1.DeepBlueResultStatus.Error;
+            }
+            else {
+                status_result = operations_1.DeepBlueResultStatus.Okay;
+            }
             let response = body[1] || "";
             if (command_status === "error") {
                 console.error(command_name, parameters, response);
             }
             status.increment();
-            return [command_status, response];
+            return [status_result, response];
         });
     }
     selectExperiment(experiment, status) {
@@ -315,6 +322,9 @@ class DeepBlueService {
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
+    list_experiments_full(status, type, epigenetic_mark, genome) {
+        return this.list_experiments(status, type, epigenetic_mark, genome).flatMap((ids) => this.infos(ids, status));
+    }
     list_gene_models(status) {
         const params = new Object();
         return this.execute("list_gene_models", params, status).map((response) => {
@@ -389,21 +399,36 @@ class DeepBlueService {
                 return;
             }
             isProcessing = true;
-            client.methodCall("get_request_data", [op_request.request_id, 'anonymous_key'], (err, value) => {
-                if (err) {
-                    console.error(err);
-                    isProcessing = false;
-                    return;
+            this.execute("info", { "id": op_request.request_id }, status).subscribe((info) => {
+                let state = info[1][0]['state'];
+                if (state == "done") {
+                    client.methodCall("get_request_data", [op_request.request_id, 'anonymous_key'], (err, value) => {
+                        if (err) {
+                            console.error(err);
+                            isProcessing = false;
+                            return;
+                        }
+                        if (value[0] === "okay") {
+                            status.increment();
+                            let op_result = new operations_1.DeepBlueResult(op_request, value[1]);
+                            this.resultCache.put(op_request, op_result);
+                            timer.unsubscribe();
+                            pollSubject.next(op_result);
+                            pollSubject.complete();
+                        }
+                        else {
+                            isProcessing = false;
+                        }
+                    });
                 }
-                if (value[0] === "okay") {
-                    status.increment();
-                    let op_result = new operations_1.DeepBlueResult(op_request, value[1]);
-                    this.resultCache.put(op_request, op_result);
+                else if (state == "error") {
+                    console.log(info);
                     timer.unsubscribe();
-                    pollSubject.next(op_result);
                     pollSubject.complete();
+                    isProcessing = false;
                 }
                 else {
+                    console.log(info);
                     isProcessing = false;
                 }
             });

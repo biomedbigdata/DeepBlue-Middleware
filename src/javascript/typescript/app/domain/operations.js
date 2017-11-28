@@ -68,6 +68,11 @@ function textify(obj) {
     }
     throw new Error("Unable to textify " + obj + "! Its type isn't supported.");
 }
+var DeepBlueResultStatus;
+(function (DeepBlueResultStatus) {
+    DeepBlueResultStatus["Error"] = "Error";
+    DeepBlueResultStatus["Okay"] = "Okay";
+})(DeepBlueResultStatus = exports.DeepBlueResultStatus || (exports.DeepBlueResultStatus = {}));
 class DeepBlueArgs {
     constructor(args) {
         this.args = args;
@@ -401,6 +406,17 @@ class DeepBlueResult {
     }
 }
 exports.DeepBlueResult = DeepBlueResult;
+class DeepBlueError extends DeepBlueResult {
+    constructor(request, error) {
+        super(request, error);
+        this.request = request;
+        this.error = error;
+    }
+    getError() {
+        return this.error;
+    }
+}
+exports.DeepBlueError = DeepBlueError;
 class DeepBlueMiddlewareOverlapResult {
     constructor(data_name, data_query, filter_name, filter_query, count) {
         this.data_name = data_name;

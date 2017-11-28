@@ -84,6 +84,11 @@ function textify(obj): string {
     throw new Error("Unable to textify " + obj + "! Its type isn't supported.");
 }
 
+export enum DeepBlueResultStatus  {
+    Error = "Error",
+    Okay = "Okay"
+  }
+
 
 export class DeepBlueArgs implements IKey {
     constructor(public args: Object) { }
@@ -488,13 +493,22 @@ export class DeepBlueResult implements ICloneable {
         return this._data.getDataId();
     }
 
-
     getFilterName(): string {
         return this._data.getFilterName();
     }
 
     getFilterQuery(): Id {
         return this._data.getFilterQuery();
+    }
+}
+
+export class DeepBlueError extends DeepBlueResult {
+    constructor(private request: DeepBlueRequest, public error: string) {
+        super(request, error);
+    }
+
+    getError() {
+        return this.error;
     }
 }
 
