@@ -142,6 +142,10 @@ export class FullMetadata extends IdName {
         return this.values["columns"];
     }
 
+    biosource() : string {
+        return this.values['sample_info']['biosource_name'];
+    }
+
     type(): string {
         return this.values["type"];
     }
