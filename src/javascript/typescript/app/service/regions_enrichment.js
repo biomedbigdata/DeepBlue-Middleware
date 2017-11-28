@@ -20,7 +20,7 @@ class RegionsEnrichment {
         }
         Observable_1.Observable.forkJoin([
             this.getChromatinStates(request_status, genome),
-            this.deepBlueService.list_experiments(request_status, "peaks", "Chromatin State Segmentation", genome)
+            this.deepBlueService.list_experiments_full(request_status, "peaks", "Chromatin State Segmentation", genome)
         ]).subscribe((subs) => {
             let states = subs[0].resultAsDistinct();
             let state_names = Object.keys(states);
@@ -46,7 +46,7 @@ class RegionsEnrichment {
                             let exp_id = filter.getDataId().id;
                             let filter_name = filter._params.value;
                             let q_id = filter.queryId().id;
-                            exp_filter_id.push([exp_id, exp_name, filter_name, q_id]);
+                            exp_filter_id.push([exp_id, exp_name, experiment.biosource(), filter_name, q_id]);
                         }
                         return exp_filter_id;
                     });
@@ -56,10 +56,11 @@ class RegionsEnrichment {
                 let states = {};
                 for (let exp_filters of filters) {
                     for (let filter of exp_filters) {
-                        if (!(filter[2] in states)) {
-                            states[filter[2]] = new Array();
+                        if (!(filter[3] in states)) {
+                            states[filter[3]] = new Array();
                         }
-                        states[filter[2]].push([filter[0], filter[1], filter[3]]);
+                        // filter_nmae is the key, values are: exp_id, exp_name, biosource, and query id
+                        states[filter[3]].push([filter[0], filter[1], filter[2], filter[4]]);
                     }
                 }
                 let arr_filter = Object.keys(states).map((state) => {
@@ -74,7 +75,7 @@ class RegionsEnrichment {
     }
     ;
     listExperiments(request_status, epigenetic_mark) {
-        return this.deepBlueService.list_experiments(request_status, "peaks", epigenetic_mark).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => [experiment.id, experiment.name])]));
+        return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => [experiment.id, experiment.name, experiment.biosource()])]));
     }
     //  {[key: string]: [string, string][]};
     listExperimentsMany(request_status, epigenetic_marks, genome) {

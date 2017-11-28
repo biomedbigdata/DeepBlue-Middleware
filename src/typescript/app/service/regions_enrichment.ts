@@ -1,7 +1,7 @@
 import { RequestStatus } from '../domain/status';
 import { DeepBlueResult, DeepBlueOperation, FilterParameter, DeepBlueFilter, DeepBlueMiddlewareOverlapResult } from '../domain/operations';
 import { DeepBlueService } from "../service/deepblue";
-import { IdName, IdNameCount } from "../domain/deepblue";
+import { IdName, IdNameCount, FullMetadata } from "../domain/deepblue";
 import { Observable } from "rxjs/Observable";
 import { Subject } from "rxjs";
 
@@ -26,12 +26,12 @@ export class RegionsEnrichment {
 
     Observable.forkJoin([
       this.getChromatinStates(request_status, genome),
-      this.deepBlueService.list_experiments(request_status, "peaks", "Chromatin State Segmentation", genome)
+      this.deepBlueService.list_experiments_full(request_status, "peaks", "Chromatin State Segmentation", genome)
     ]).subscribe((subs: any[]) => {
 
       let states: { [key: string]: number } = (<DeepBlueResult>subs[0]).resultAsDistinct()
       let state_names = Object.keys(states);
-      let experiments: IdName[] = subs[1];
+      let experiments: FullMetadata[] = subs[1];
 
       let total_processed = 0;
 
@@ -57,7 +57,7 @@ export class RegionsEnrichment {
                 let exp_id = filter.getDataId().id;
                 let filter_name = filter._params.value;
                 let q_id = filter.queryId().id;
-                exp_filter_id.push([exp_id, exp_name, filter_name, q_id]);
+                exp_filter_id.push([exp_id, exp_name, experiment.biosource(), filter_name, q_id]);
               }
 
               return exp_filter_id;
@@ -71,15 +71,16 @@ export class RegionsEnrichment {
 
         for (let exp_filters of filters) {
           for (let filter of exp_filters) {
-            if (!(filter[2] in states)) {
-              states[filter[2]] = new Array<[string, string]>();
+            if (!(filter[3] in states)) {
+              states[filter[3]] = new Array<[string, string]>();
             }
-            states[filter[2]].push([filter[0], filter[1], filter[3]]);
+            // filter_nmae is the key, values are: exp_id, exp_name, biosource, and query id
+            states[filter[3]].push([filter[0], filter[1], filter[2], filter[4]]);
           }
         }
 
-        let arr_filter: [string, [string, string][]][] = Object.keys(states).map((state) => {
-          return <[string, [string, string, string][]]>[state, states[state]]
+        let arr_filter: [string, [string, string, string, string][]][] = Object.keys(states).map((state) => {
+          return <[string, [string, string, string, string][]]>[state, states[state]]
         });
 
         this.chromatinCache = ["Chomatin States Segmentation", arr_filter]
@@ -92,8 +93,9 @@ export class RegionsEnrichment {
   };
 
   private listExperiments(request_status: RequestStatus, epigenetic_mark: string): Observable<[string, any[]]> {
-    return this.deepBlueService.list_experiments(request_status, "peaks", epigenetic_mark).map(((experiments: IdName[]) =>
-      <[string, [string, string][]]>[epigenetic_mark, experiments.map((experiment: IdName) => [experiment.id, experiment.name])]
+    return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark).map(((experiments: FullMetadata[]) =>
+      <[string, [string, string][]]>[epigenetic_mark, experiments.map((experiment: FullMetadata) =>
+        [experiment.id, experiment.name, experiment.biosource()])]
     ));
   }
 
