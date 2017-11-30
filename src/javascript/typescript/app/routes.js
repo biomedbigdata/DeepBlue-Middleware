@@ -12,7 +12,12 @@ class ComposedCommandsRoutes {
         let request_id = req.query["request_id"];
         let request_data = ComposedCommandsRoutes.requestManager.getRequest(request_id);
         if (request_data.finished) {
-            res.send(["okay", request_data.getData()]);
+            if (request_data.canceled) {
+                res.send(["error", "request " + request_id + " was canceled"]);
+            }
+            else {
+                res.send(["okay", request_data.getData()]);
+            }
         }
         else {
             res.send(["error",
@@ -295,6 +300,28 @@ class ComposedCommandsRoutes {
             });
         });
     }
+    static cancel(req, res, next) {
+        let id = req.query["id"];
+        if (!(id)) {
+            res.send(["error", "id is missing"]);
+            return;
+        }
+        let status = ComposedCommandsRoutes.requestManager.startRequest();
+        manager_1.Manager.getDeepBlueService().subscribe((dbs) => {
+            console.log("going to cancel", id);
+            if (id.startsWith("mw")) {
+                ComposedCommandsRoutes.requestManager.cancelRequest(id);
+                res.send(id);
+            }
+            else if (id.startsWith("r")) {
+                // Usual DeepBlue Request
+                dbs.cancelRequest(id, status).subscribe((response) => res.send(response));
+            }
+            else {
+                res.send("Invalid ID: " + id);
+            }
+        });
+    }
     static generate_track_file(req, res, next) {
         let request_id = req.query["request_id"];
         let genome = req.query["genome"];
@@ -403,6 +430,7 @@ class ComposedCommandsRoutes {
         router.get("/generate_track_file", this.generate_track_file);
         router.get("/export_to_genome_browser", this.export_to_genome_browser);
         router.get("/query_info", this.queryInfo);
+        router.get("/cancel", this.cancel);
         // Composite data
         router.get("/get_epigenetic_marks_categories", this.getEpigenomicMarksCategories);
         router.get("/get_epigenetic_marks_from_category", this.getEpigenomicMarksFromCategory);

@@ -38,6 +38,7 @@ import * as multer from 'multer';
 
 import { DeepBlueService } from 'app/service/deepblue';
 import { ComposedData } from 'app/service/composed_data';
+import { request } from 'https';
 
 export class ComposedCommandsRoutes {
 
@@ -50,7 +51,14 @@ export class ComposedCommandsRoutes {
     let request_data: RequestStatus = ComposedCommandsRoutes.requestManager.getRequest(request_id);
 
     if (request_data.finished) {
-      res.send(["okay", request_data.getData()]);
+
+      if (request_data.canceled) {
+        res.send(["error", "request " + request_id + " was canceled"]);
+
+      } else {
+        res.send(["okay", request_data.getData()]);
+      }
+
     } else {
       res.send(["error",
         {
@@ -417,6 +425,30 @@ export class ComposedCommandsRoutes {
     });
   }
 
+  private static cancel(req: express.Request, res: express.Response, next: express.NextFunction) {
+    let id: string = req.query["id"];
+    if (!(id)) {
+      res.send(["error", "id is missing"]);
+      return;
+    }
+
+    let status = ComposedCommandsRoutes.requestManager.startRequest();
+    Manager.getDeepBlueService().subscribe((dbs: DeepBlueService) => {
+
+      console.log("going to cancel", id);
+
+      if (id.startsWith("mw")) {
+        ComposedCommandsRoutes.requestManager.cancelRequest(id);
+        res.send(id);
+      } else if (id.startsWith("r")) {
+        // Usual DeepBlue Request
+        dbs.cancelRequest(id, status).subscribe((response) => res.send(response));
+      } else {
+        res.send("Invalid ID: " + id);
+      }
+    });
+  }
+
   private static generate_track_file(req: express.Request, res: express.Response, next: express.NextFunction) {
 
     let request_id: string = req.query["request_id"];
@@ -549,6 +581,7 @@ export class ComposedCommandsRoutes {
     router.get("/generate_track_file", this.generate_track_file);
     router.get("/export_to_genome_browser", this.export_to_genome_browser);
     router.get("/query_info", this.queryInfo);
+    router.get("/cancel", this.cancel);
 
     // Composite data
     router.get("/get_epigenetic_marks_categories", this.getEpigenomicMarksCategories);
