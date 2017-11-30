@@ -52,6 +52,7 @@ class RequestStatus {
         this.total_to_load = 0;
         this.total_loaded = 0;
         this.finished = false;
+        this.canceled = false;
         this.data = new Array();
         this.partialData = new Array();
         this.summarizedData = null;
@@ -72,6 +73,11 @@ class RequestStatus {
         this.finished = true;
         this.data = data;
         this.step = "Finished";
+    }
+    cancel() {
+        this.finished = true;
+        this.canceled = true;
+        this.step = "Canceled";
     }
     setStep(step) {
         this.step = step;

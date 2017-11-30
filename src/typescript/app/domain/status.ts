@@ -62,12 +62,13 @@ export class Statistics {
 
 export class RequestStatus {
 
-  request_id: number;
+  request_id: string;
 
   total_to_load: number = 0;
   total_loaded: number = 0;
 
   finished = false;
+  canceled = false;
 
   step: string;
 
@@ -75,7 +76,7 @@ export class RequestStatus {
   partialData = new Array<Object>();
   summarizedData = null;
 
-  constructor(request_id: number) {
+  constructor(request_id: string) {
     this.request_id = request_id;
   }
 
@@ -96,6 +97,12 @@ export class RequestStatus {
     this.finished = true;
     this.data = data;
     this.step = "Finished"
+  }
+
+  cancel() {
+    this.finished = true;
+    this.canceled = true;
+    this.step = "Canceled";
   }
 
   setStep(step: string) {
@@ -125,7 +132,6 @@ export class RequestStatus {
   getPartialData(): Object[] {
     return this.partialData;
   }
-
 
   setData(data: DeepBlueResult[]) {
     this.partialData = [];
