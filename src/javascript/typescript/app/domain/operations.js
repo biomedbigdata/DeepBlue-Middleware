@@ -387,7 +387,11 @@ class DeepBlueResult {
         return this.result;
     }
     resultAsEnrichment() {
-        return this.result["enrichment"]["results"];
+        let enrichment = this.result["enrichment"];
+        if (enrichment) {
+            return enrichment["results"];
+        }
+        return [];
     }
     data() {
         return this._data;

@@ -478,7 +478,11 @@ export class DeepBlueResult implements ICloneable {
     }
 
     resultAsEnrichment(): Object[] {
-        return <Object[]>this.result["enrichment"]["results"];
+        let enrichment = this.result["enrichment"]
+        if (enrichment) {
+            return enrichment["results"];
+        }
+        return [];
     }
 
     data(): DeepBlueRequest {
