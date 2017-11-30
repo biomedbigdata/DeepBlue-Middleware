@@ -383,6 +383,14 @@ class DeepBlueService {
             return new operations_1.DeepBlueSelectData(new deepblue_1.Name("User regions"), new deepblue_1.Id(response[1]), 'input_regions');
         }).catch(this.handleError);
     }
+    cancelRequest(id, status) {
+        const params = new Object();
+        params['id'] = id;
+        return this.execute("cancel_request", params, status).map((response) => {
+            status.increment();
+            return response;
+        }).catch(this.handleError);
+    }
     getResult(op_request, status) {
         let result = this.resultCache.get(op_request);
         if (result) {
@@ -392,16 +400,26 @@ class DeepBlueService {
         let params = new Object();
         params["request_id"] = op_request.request_id;
         let pollSubject = new Subject_1.Subject();
-        let client = xmlrpc.createClient(xmlrpc_host);
         let isProcessing = false;
         let timer = Observable_1.Observable.timer(0, utils_1.Utils.rnd(500, 1000)).do(() => {
             if (isProcessing) {
                 return;
             }
             isProcessing = true;
+            if (status.canceled) {
+                this.cancelRequest(op_request.request_id, status).subscribe((id) => {
+                    isProcessing = false;
+                    let op_result = new operations_1.DeepBlueError(op_request, "Canceled by user");
+                    timer.unsubscribe();
+                    pollSubject.next(op_result);
+                    pollSubject.complete();
+                });
+                return;
+            }
             this.execute("info", { "id": op_request.request_id }, status).subscribe((info) => {
                 let state = info[1][0]['state'];
                 if (state == "done") {
+                    let client = xmlrpc.createClient(xmlrpc_host);
                     client.methodCall("get_request_data", [op_request.request_id, 'anonymous_key'], (err, value) => {
                         if (err) {
                             console.error(err);
@@ -422,13 +440,15 @@ class DeepBlueService {
                     });
                 }
                 else if (state == "error") {
-                    console.log(info);
+                    status.increment();
+                    let message = info[1][0]['message'];
+                    let op_result = new operations_1.DeepBlueError(op_request, message);
+                    this.resultCache.put(op_request, op_result);
                     timer.unsubscribe();
+                    pollSubject.next(op_result);
                     pollSubject.complete();
-                    isProcessing = false;
                 }
                 else {
-                    console.log(info);
                     isProcessing = false;
                 }
             });

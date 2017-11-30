@@ -29,7 +29,8 @@ import {
   DeepBlueFilter,
   FilterParameter,
   DeepBlueResultStatus,
-  DeepBlueArgs
+  DeepBlueArgs,
+  DeepBlueError
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -494,9 +495,15 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
+  cancelRequest(id: string, status: RequestStatus): Observable<string> {
+    const params: Object = new Object();
+    params['id'] = id;
 
-
-
+    return this.execute("cancel_request", params, status).map((response: [string, string]) => {
+      status.increment();
+      return response;
+    }).catch(this.handleError);
+  }
 
   getResult(op_request: DeepBlueRequest, status: RequestStatus): Observable<DeepBlueResult> {
 
@@ -510,7 +517,6 @@ export class DeepBlueService {
     params["request_id"] = op_request.request_id;
 
     let pollSubject = new Subject<DeepBlueResult>();
-    let client = xmlrpc.createClient(xmlrpc_host);
 
     let isProcessing = false;
 
@@ -520,11 +526,23 @@ export class DeepBlueService {
       }
       isProcessing = true;
 
+      if (status.canceled) {
+        this.cancelRequest(op_request.request_id, status).subscribe((id) => {
+          isProcessing = false;
+          let op_result = new DeepBlueError(op_request, "Canceled by user");
+          timer.unsubscribe();
+          pollSubject.next(op_result);
+          pollSubject.complete();
+        });
+        return;
+      }
+
       this.execute("info", { "id": op_request.request_id }, status).subscribe((info: [DeepBlueResultStatus, any]) => {
 
         let state = info[1][0]['state'];
 
         if (state == "done") {
+          let client = xmlrpc.createClient(xmlrpc_host);
           client.methodCall("get_request_data", [op_request.request_id, 'anonymous_key'], (err: Object, value: any) => {
             if (err) {
               console.error(err);
@@ -545,17 +563,17 @@ export class DeepBlueService {
           });
 
         } else if (state == "error") {
-          console.log(info);
+          status.increment();
+          let message = info[1][0]['message'];
+          let op_result = new DeepBlueError(op_request, message);
+          this.resultCache.put(op_request, op_result);
           timer.unsubscribe();
+          pollSubject.next(op_result);
           pollSubject.complete();
-          isProcessing = false;
-        } else {
-          console.log(info);
+
+        } else { // 'new' or 'running'
           isProcessing = false;
         }
-
-        // new
-        // running
       })
 
 
