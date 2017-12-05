@@ -361,6 +361,24 @@ export class ComposedCommandsRoutes {
     });
   }
 
+
+  private static getRelatedBioSources(req: express.Request, res: express.Response, next: express.NextFunction) {
+    Manager.getComposedData().subscribe((cd: ComposedData) => {
+
+      let biosource = req.query["biosource"];
+
+      if (!(biosource)) {
+        res.send(["error", "biosource is missing"]);
+        return;
+      }
+
+      let status = ComposedCommandsRoutes.requestManager.startRequest();
+      cd.relatedBioSources(biosource, status).subscribe((bss) => {
+        res.send([bss.status, bss.result]);
+      });
+    });
+  }
+
   private static uploadRegions(req: express.Request, res: express.Response, next: express.NextFunction) {
     Manager.getDeepBlueService().subscribe((ds: DeepBlueService) => {
 
@@ -434,9 +452,6 @@ export class ComposedCommandsRoutes {
 
     let status = ComposedCommandsRoutes.requestManager.startRequest();
     Manager.getDeepBlueService().subscribe((dbs: DeepBlueService) => {
-
-      console.log("going to cancel", id);
-
       if (id.startsWith("mw")) {
         ComposedCommandsRoutes.requestManager.cancelRequest(id);
         res.send(id);
@@ -560,7 +575,11 @@ export class ComposedCommandsRoutes {
     let status = ComposedCommandsRoutes.requestManager.startRequest();
     Manager.getComposedData().subscribe((cs: ComposedData) => {
       cs.get_epigenetic_marks(genome, category, status).subscribe((emc: Array<FullMetadata>) => {
-        res.send(["okay", emc]);
+        if (!Array.isArray(emc)) {
+          res.send(["error", emc]);
+        } else {
+          res.send(["okay", emc]);
+        }
       });
     });
   }
@@ -586,6 +605,9 @@ export class ComposedCommandsRoutes {
     // Composite data
     router.get("/get_epigenetic_marks_categories", this.getEpigenomicMarksCategories);
     router.get("/get_epigenetic_marks_from_category", this.getEpigenomicMarksFromCategory);
+
+    // Biosources
+    router.get("/get_related_biosources", this.getRelatedBioSources);
 
     // Post:
     router.post("/input_regions", this.inputRegions);

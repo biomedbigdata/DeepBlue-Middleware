@@ -248,6 +248,19 @@ class ComposedCommandsRoutes {
             });
         });
     }
+    static getRelatedBioSources(req, res, next) {
+        manager_1.Manager.getComposedData().subscribe((cd) => {
+            let biosource = req.query["biosource"];
+            if (!(biosource)) {
+                res.send(["error", "biosource is missing"]);
+                return;
+            }
+            let status = ComposedCommandsRoutes.requestManager.startRequest();
+            cd.relatedBioSources(biosource, status).subscribe((bss) => {
+                res.send([bss.status, bss.result]);
+            });
+        });
+    }
     static uploadRegions(req, res, next) {
         manager_1.Manager.getDeepBlueService().subscribe((ds) => {
             // We get only one file and return the query id of this file
@@ -308,7 +321,6 @@ class ComposedCommandsRoutes {
         }
         let status = ComposedCommandsRoutes.requestManager.startRequest();
         manager_1.Manager.getDeepBlueService().subscribe((dbs) => {
-            console.log("going to cancel", id);
             if (id.startsWith("mw")) {
                 ComposedCommandsRoutes.requestManager.cancelRequest(id);
                 res.send(id);
@@ -411,7 +423,12 @@ class ComposedCommandsRoutes {
         let status = ComposedCommandsRoutes.requestManager.startRequest();
         manager_1.Manager.getComposedData().subscribe((cs) => {
             cs.get_epigenetic_marks(genome, category, status).subscribe((emc) => {
-                res.send(["okay", emc]);
+                if (!Array.isArray(emc)) {
+                    res.send(["error", emc]);
+                }
+                else {
+                    res.send(["okay", emc]);
+                }
             });
         });
     }
@@ -434,6 +451,8 @@ class ComposedCommandsRoutes {
         // Composite data
         router.get("/get_epigenetic_marks_categories", this.getEpigenomicMarksCategories);
         router.get("/get_epigenetic_marks_from_category", this.getEpigenomicMarksFromCategory);
+        // Biosources
+        router.get("/get_related_biosources", this.getRelatedBioSources);
         // Post:
         router.post("/input_regions", this.inputRegions);
         router.post("/enrich_regions_overlap", this.enrichRegionOverlap);

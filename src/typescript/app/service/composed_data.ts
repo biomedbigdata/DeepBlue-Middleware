@@ -15,7 +15,9 @@ import {
   DeepBlueSelectData,
   DeepBlueTilingRegions,
   DeepBlueArgs,
-  DeepBlueMiddlewareOverlapResult
+  DeepBlueMiddlewareOverlapResult,
+  DeepBlueResultStatus,
+  DeepBlueCommandExecutionResult
 } from '../domain/operations';
 
 
@@ -73,6 +75,52 @@ export class ComposedData {
     } else {
       return Observable.of(this.categories_epigenetic_marks[genome][category].sort());
     }
+  }
+
+
+  biosources_related = new Map<string, DeepBlueCommandExecutionResult<string[]>>();
+
+  relatedBioSources(biosource: string, status: RequestStatus): Observable<DeepBlueCommandExecutionResult<string[]>> {
+
+    let cached = this.biosources_related[biosource];
+    if (cached) {
+      return Observable.of(cached);
+    }
+
+    console.log('bisource', biosource);
+    return this.deepBlueService.get_biosource_children(biosource, status).flatMap((cer: DeepBlueCommandExecutionResult<string[]>) => {
+      if (cer.status == DeepBlueResultStatus.Error) {
+        return Observable.of(cer);
+      }
+
+      let bss = cer.result;
+      let all_bs = new Array<Observable<DeepBlueCommandExecutionResult<string[]>>>();
+      let bs_names = bss.map((bs) => bs[1]);
+
+      // Skip the first element because it is itself
+      for (let name of bs_names) {
+        if (name != biosource) {
+          all_bs.push(this.relatedBioSources(name, status));
+        }
+      }
+
+      if (all_bs.length == 0) {
+        let r = new DeepBlueCommandExecutionResult(DeepBlueResultStatus.Okay, bs_names);
+        this.biosources_related[biosource] = r;
+        return Observable.of(r);
+      }
+
+      return Observable.forkJoin(all_bs).map((obss) => {
+        let bss = obss.map((r) => r.result)
+        let os: string[] = [].concat.apply([], bss).concat(bs_names);
+        let s = Array.from(new Set(os)).sort();
+        let r = new DeepBlueCommandExecutionResult(DeepBlueResultStatus.Okay, s);
+        this.biosources_related[biosource] = r;
+        return r;
+      });
+    });
+
+
   }
 
 }
