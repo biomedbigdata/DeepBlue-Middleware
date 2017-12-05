@@ -325,6 +325,18 @@ class DeepBlueService {
     list_experiments_full(status, type, epigenetic_mark, genome) {
         return this.list_experiments(status, type, epigenetic_mark, genome).flatMap((ids) => this.infos(ids, status));
     }
+    get_biosource_related(biosource, status) {
+        const params = new Object();
+        params["biosource"] = biosource;
+        console.log("get_biosource_related", biosource);
+        return this.execute("get_biosource_related", params, status).map((response) => new operations_1.DeepBlueCommandExecutionResult(response[0], response[1]));
+    }
+    get_biosource_children(biosource, status) {
+        const params = new Object();
+        params["biosource"] = biosource;
+        console.log("get_biosource_children", biosource);
+        return this.execute("get_biosource_children", params, status).map((response) => new operations_1.DeepBlueCommandExecutionResult(response[0], response[1]));
+    }
     list_gene_models(status) {
         const params = new Object();
         return this.execute("list_gene_models", params, status).map((response) => {

@@ -30,7 +30,8 @@ import {
   FilterParameter,
   DeepBlueResultStatus,
   DeepBlueArgs,
-  DeepBlueError
+  DeepBlueError,
+  DeepBlueCommandExecutionResult
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -422,6 +423,25 @@ export class DeepBlueService {
     )
   }
 
+  get_biosource_related(biosource: string, status: RequestStatus): Observable<DeepBlueCommandExecutionResult<string[]>> {
+    const params: Object = new Object();
+    params["biosource"] = biosource;
+
+    console.log("get_biosource_related", biosource);
+    return this.execute("get_biosource_related", params, status).map((response: [DeepBlueResultStatus, Array<string>]) =>
+      new DeepBlueCommandExecutionResult(response[0], response[1])
+    );
+  }
+
+  get_biosource_children(biosource: string, status: RequestStatus): Observable<DeepBlueCommandExecutionResult<string[]>> {
+    const params: Object = new Object();
+    params["biosource"] = biosource;
+
+    console.log("get_biosource_children", biosource);
+    return this.execute("get_biosource_children", params, status).map((response: [DeepBlueResultStatus, Array<string>]) =>
+      new DeepBlueCommandExecutionResult(response[0], response[1])
+    );
+  }
 
   list_gene_models(status: RequestStatus): Observable<IdName[]> {
     const params: Object = new Object();
