@@ -70,9 +70,16 @@ function textify(obj) {
 }
 var DeepBlueResultStatus;
 (function (DeepBlueResultStatus) {
-    DeepBlueResultStatus["Error"] = "Error";
-    DeepBlueResultStatus["Okay"] = "Okay";
+    DeepBlueResultStatus["Error"] = "error";
+    DeepBlueResultStatus["Okay"] = "okay";
 })(DeepBlueResultStatus = exports.DeepBlueResultStatus || (exports.DeepBlueResultStatus = {}));
+class DeepBlueCommandExecutionResult {
+    constructor(status, result) {
+        this.status = status;
+        this.result = result;
+    }
+}
+exports.DeepBlueCommandExecutionResult = DeepBlueCommandExecutionResult;
 class DeepBlueArgs {
     constructor(args) {
         this.args = args;

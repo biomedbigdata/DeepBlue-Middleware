@@ -85,10 +85,16 @@ function textify(obj): string {
 }
 
 export enum DeepBlueResultStatus  {
-    Error = "Error",
-    Okay = "Okay"
+    Error = "error",
+    Okay = "okay"
   }
 
+
+export class DeepBlueCommandExecutionResult<T> {
+    constructor(public status: DeepBlueResultStatus, public result: T) {
+
+    }
+}
 
 export class DeepBlueArgs implements IKey {
     constructor(public args: Object) { }
