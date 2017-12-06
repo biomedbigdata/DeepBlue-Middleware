@@ -427,7 +427,6 @@ export class DeepBlueService {
     const params: Object = new Object();
     params["biosource"] = biosource;
 
-    console.log("get_biosource_related", biosource);
     return this.execute("get_biosource_related", params, status).map((response: [DeepBlueResultStatus, Array<string>]) =>
       new DeepBlueCommandExecutionResult(response[0], response[1])
     );
@@ -437,8 +436,16 @@ export class DeepBlueService {
     const params: Object = new Object();
     params["biosource"] = biosource;
 
-    console.log("get_biosource_children", biosource);
     return this.execute("get_biosource_children", params, status).map((response: [DeepBlueResultStatus, Array<string>]) =>
+      new DeepBlueCommandExecutionResult(response[0], response[1])
+    );
+  }
+
+  get_biosource_synonyms(biosource: string, status: RequestStatus): Observable<DeepBlueCommandExecutionResult<string[]>> {
+    const params: Object = new Object();
+    params["biosource"] = biosource;
+
+    return this.execute("get_biosource_synonyms", params, status).map((response: [DeepBlueResultStatus, Array<string>]) =>
       new DeepBlueCommandExecutionResult(response[0], response[1])
     );
   }

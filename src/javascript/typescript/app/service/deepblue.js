@@ -328,14 +328,17 @@ class DeepBlueService {
     get_biosource_related(biosource, status) {
         const params = new Object();
         params["biosource"] = biosource;
-        console.log("get_biosource_related", biosource);
         return this.execute("get_biosource_related", params, status).map((response) => new operations_1.DeepBlueCommandExecutionResult(response[0], response[1]));
     }
     get_biosource_children(biosource, status) {
         const params = new Object();
         params["biosource"] = biosource;
-        console.log("get_biosource_children", biosource);
         return this.execute("get_biosource_children", params, status).map((response) => new operations_1.DeepBlueCommandExecutionResult(response[0], response[1]));
+    }
+    get_biosource_synonyms(biosource, status) {
+        const params = new Object();
+        params["biosource"] = biosource;
+        return this.execute("get_biosource_synonyms", params, status).map((response) => new operations_1.DeepBlueCommandExecutionResult(response[0], response[1]));
     }
     list_gene_models(status) {
         const params = new Object();

@@ -48,7 +48,7 @@ class ComposedData {
             return Observable_1.Observable.of(this.categories_epigenetic_marks[genome][category].sort());
         }
     }
-    relatedBioSources(biosource, status) {
+    all_children_biosources(biosource, status) {
         let cached = this.biosources_related[biosource];
         if (cached) {
             return Observable_1.Observable.of(cached);
@@ -64,7 +64,7 @@ class ComposedData {
             // Skip the first element because it is itself
             for (let name of bs_names) {
                 if (name != biosource) {
-                    all_bs.push(this.relatedBioSources(name, status));
+                    all_bs.push(this.all_children_biosources(name, status));
                 }
             }
             if (all_bs.length == 0) {
@@ -78,6 +78,32 @@ class ComposedData {
                 let s = Array.from(new Set(os)).sort();
                 let r = new operations_1.DeepBlueCommandExecutionResult(operations_1.DeepBlueResultStatus.Okay, s);
                 this.biosources_related[biosource] = r;
+                return r;
+            });
+        });
+    }
+    relatedBioSources(biosource, status) {
+        return this.all_children_biosources(biosource, status).flatMap((children) => {
+            console.log('children', children);
+            let syn_obs = new Array();
+            if (children.status == operations_1.DeepBlueResultStatus.Error) {
+                return Observable_1.Observable.of(children);
+            }
+            for (let bs of children.result) {
+                syn_obs.push(this.deepBlueService.get_biosource_synonyms(bs, status));
+            }
+            return Observable_1.Observable.forkJoin(syn_obs).map((obss) => {
+                let results = obss.map((r) => r.result);
+                console.log('results', results);
+                let syn_arrs = results.map((s) => s[0]);
+                let names = [];
+                for (let i = 0; i < results.length; i++) {
+                    for (let j = 0; j < results[i].length; j++) {
+                        names.push(results[i][j][1]);
+                    }
+                }
+                let s = Array.from(new Set(names)).sort();
+                let r = new operations_1.DeepBlueCommandExecutionResult(operations_1.DeepBlueResultStatus.Okay, s);
                 return r;
             });
         });
