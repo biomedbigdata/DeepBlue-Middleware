@@ -82,7 +82,7 @@ class ComposedData {
             });
         });
     }
-    relatedBioSources(biosource, status) {
+    synonyms_bs(biosource, status) {
         return this.all_children_biosources(biosource, status).flatMap((children) => {
             console.log('children', children);
             let syn_obs = new Array();
@@ -105,6 +105,26 @@ class ComposedData {
                 let s = Array.from(new Set(names)).sort();
                 let r = new operations_1.DeepBlueCommandExecutionResult(operations_1.DeepBlueResultStatus.Okay, s);
                 return r;
+            });
+        });
+    }
+    relatedBioSources(biosource, genome, status) {
+        return this.synonyms_bs(biosource, status).flatMap((related_bss) => {
+            if (related_bss.status == operations_1.DeepBlueResultStatus.Error) {
+                return Observable_1.Observable.of(related_bss);
+            }
+            return this.deepBlueService.collection_experiments_count(status, "biosources", "peaks", genome, "chip-seq").flatMap((bs_counts) => {
+                let names = related_bss.result;
+                let m = [];
+                for (let i = 0; i < names.length; i++) {
+                    for (let j = 0; j < bs_counts.length; j++) {
+                        if (names[i] == bs_counts[j].name) {
+                            m.push(names[i]);
+                            break;
+                        }
+                    }
+                }
+                return Observable_1.Observable.of(new operations_1.DeepBlueCommandExecutionResult(operations_1.DeepBlueResultStatus.Okay, m));
             });
         });
     }

@@ -120,7 +120,7 @@ export class ComposedData {
   }
 
 
-  relatedBioSources(biosource: string, status: RequestStatus): Observable<DeepBlueCommandExecutionResult<string[]>> {
+  synonyms_bs(biosource: string, status: RequestStatus): Observable<DeepBlueCommandExecutionResult<string[]>> {
 
     return this.all_children_biosources(biosource, status).flatMap((children) => {
       console.log('children', children);
@@ -136,7 +136,7 @@ export class ComposedData {
 
       return Observable.forkJoin(syn_obs).map((obss) => {
         let results = obss.map((r) => r.result);
-        console.log('results',results);
+        console.log('results', results);
         let syn_arrs = results.map((s) => s[0]);
 
         let names = [];
@@ -153,9 +153,30 @@ export class ComposedData {
     });
   }
 
-  /*
-    load_epigenetic_marks(genome: string, status: RequestStatus): Observable<Array<string>> {
-    return this.deepBlueService.collection_experiments_count(status, "epigenetic_marks", "peaks", genome).flatMap((ems: IdNameCount[]) => {
-      */
 
+  relatedBioSources(biosource: string, genome: string, status: RequestStatus): Observable<DeepBlueCommandExecutionResult<string[]>> {
+
+    return this.synonyms_bs(biosource, status).flatMap((related_bss) => {
+      if (related_bss.status == DeepBlueResultStatus.Error) {
+        return Observable.of(related_bss);
+      }
+
+      return this.deepBlueService.collection_experiments_count(status, "biosources", "peaks", genome, "chip-seq").flatMap((bs_counts: IdNameCount[]) => {
+
+        let names = related_bss.result;
+        let m = [];
+        for (let i = 0; i < names.length; i++) {
+          for (let j = 0; j < bs_counts.length; j++) {
+            if (names[i] == bs_counts[j].name) {
+              m.push(names[i]);
+              break;
+            }
+          }
+        }
+
+        return Observable.of(new DeepBlueCommandExecutionResult(DeepBlueResultStatus.Okay, m));
+      });
+    })
+  }
 }
+

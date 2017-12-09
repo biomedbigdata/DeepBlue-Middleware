@@ -295,7 +295,7 @@ class DeepBlueService {
             params["genome"] = genome;
         }
         if (technique) {
-            parent["technique"] = technique;
+            params["technique"] = technique;
         }
         return this.execute("collection_experiments_count", params, status).map((response) => {
             const data = response[1] || [];

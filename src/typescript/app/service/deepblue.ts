@@ -384,7 +384,7 @@ export class DeepBlueService {
     }
 
     if (technique) {
-      parent["technique"] = technique
+      params["technique"] = technique
     }
 
     return this.execute("collection_experiments_count", params, status).map((response: [string, any]) => {

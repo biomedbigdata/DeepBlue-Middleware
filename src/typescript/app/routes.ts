@@ -366,14 +366,20 @@ export class ComposedCommandsRoutes {
     Manager.getComposedData().subscribe((cd: ComposedData) => {
 
       let biosource = req.query["biosource"];
+      let genome = req.query["genome"];
 
       if (!(biosource)) {
         res.send(["error", "biosource is missing"]);
         return;
       }
 
+      if (!(genome)) {
+        res.send(["error", "genome is missing"]);
+        return;
+      }
+
       let status = ComposedCommandsRoutes.requestManager.startRequest();
-      cd.relatedBioSources(biosource, status).subscribe((bss) => {
+      cd.relatedBioSources(biosource, genome, status).subscribe((bss) => {
         res.send([bss.status, bss.result]);
       });
     });
