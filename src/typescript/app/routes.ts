@@ -460,7 +460,7 @@ export class ComposedCommandsRoutes {
     Manager.getDeepBlueService().subscribe((dbs: DeepBlueService) => {
       if (id.startsWith("mw")) {
         ComposedCommandsRoutes.requestManager.cancelRequest(id);
-        res.send(id);
+        res.send(["okay", id]);
       } else if (id.startsWith("r")) {
         // Usual DeepBlue Request
         dbs.cancelRequest(id, status).subscribe((response) => res.send(response));
