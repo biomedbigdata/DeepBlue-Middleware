@@ -24,14 +24,13 @@ import {
   DeepBlueOperation,
   DeepBlueRequest,
   DeepBlueResult,
-  DeepBlueSelectData,
-  DeepBlueParameters,
   DeepBlueFilter,
   FilterParameter,
   DeepBlueResultStatus,
-  DeepBlueArgs,
   DeepBlueError,
-  DeepBlueCommandExecutionResult
+  DeepBlueCommandExecutionResult,
+  DeepBlueDataParameter,
+  DeepBlueMetadataParameters
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -197,7 +196,7 @@ export class DeepBlueService {
 
     return this.execute("select_experiments", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueSelectData(experiment, new Id(response[1]), "select_experiment");
+      return new DeepBlueOperation(new DeepBlueDataParameter(experiment), new Id(response[1]), "select_experiment");
     }).do((operation) => {
       this.idNamesQueryCache.put(experiment, operation);
     }).catch(this.handleError);
@@ -207,11 +206,11 @@ export class DeepBlueService {
     biosource: string, sample: string, technique: string, project: string,
     status: RequestStatus): Observable<DeepBlueOperation> {
 
-    const params = new DeepBlueParameters(genome, type, epigenetic_mark, biosource, sample, technique, project);
+    const params = new DeepBlueMetadataParameters(genome, type, epigenetic_mark, biosource, sample, technique, project);
 
     return this.execute("select_regions", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueSelectData(params, new Id(response[1]), "select_regions_from_metadata");
+      return new DeepBlueOperation(params, new Id(response[1]), "select_regions_from_metadata");
     }).catch(this.handleError);
   }
 
@@ -248,7 +247,7 @@ export class DeepBlueService {
 
     return this.execute("select_genes", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueSelectData(gene_model_name, new Id(response[1]), 'select_genes');
+      return new DeepBlueOperation(new DeepBlueDataParameter(gene_model_name), new Id(response[1]), 'select_genes');
     }).do((operation) => {
       this.idNamesQueryCache.put(gene_model_name, operation);
     }).catch(this.handleError);
@@ -505,7 +504,7 @@ export class DeepBlueService {
     let observableBatch: Observable<FullMetadata>[] = [];
 
     id_names.forEach((id_name: IdName) => {
-      observableBatch.push(this.info(id_name.Id(), status));
+      observableBatch.push(this.info(id_name.id, status));
     });
 
     return Observable.forkJoin(observableBatch);
@@ -518,7 +517,7 @@ export class DeepBlueService {
 
     return this.execute("input_regions", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueSelectData(new Name("User regions"), new Id(response[1]), 'input_regions');
+      return new DeepBlueOperation(new DeepBlueDataParameter("User regions"), new Id(response[1]), 'input_regions');
     }).catch(this.handleError);
   }
 

@@ -12,9 +12,6 @@ import {
   DeepBlueOperation,
   DeepBlueResult,
   FilterParameter,
-  DeepBlueSelectData,
-  DeepBlueTilingRegions,
-  DeepBlueArgs,
   DeepBlueMiddlewareOverlapResult,
   DeepBlueResultStatus,
   DeepBlueCommandExecutionResult

@@ -52,7 +52,6 @@ export class RegionsEnrichment {
               let exp_filter_id = new Array<string[]>();
 
               for (let filter of filters) {
-                let filter_data = <IdName>filter.data();
                 let exp_name = filter.getDataName();
                 let exp_id = filter.getDataId().id;
                 let filter_name = filter._params.value;

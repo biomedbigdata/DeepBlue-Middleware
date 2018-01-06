@@ -12,11 +12,12 @@ import {
     DeepBlueOperation,
     DeepBlueResult,
     FilterParameter,
-    DeepBlueSelectData,
-    DeepBlueTilingRegions,
-    DeepBlueArgs,
-    DeepBlueMiddlewareOverlapResult
+    DeepBlueMiddlewareOverlapResult,
+    DeepBlueTiling,
+    DeepBlueOperationArgs,
+    DeepBlueDataParameter
 } from '../domain/operations';
+import { IOperation } from 'app/domain/interfaces';
 
 export class ComposedCommands {
     constructor(private deepBlueService: DeepBlueService) { }
@@ -178,37 +179,27 @@ export class ComposedCommands {
         return Observable.forkJoin(observableBatch);
     }
 
-    loadQuery(query_id: Id, status: RequestStatus): Observable<DeepBlueOperation> {
-        let querySubject = new Subject<DeepBlueOperation>();
+    loadQuery(query_id: Id, status: RequestStatus): Observable<IOperation> {
+        let querySubject = new Subject<IOperation>();
 
         this.deepBlueService.info(query_id, status).subscribe((fullMetadata: FullMetadata) => {
 
             let type = fullMetadata.type();
-            let id = new Id(fullMetadata.id);
+            let id = fullMetadata.id;
             let name = fullMetadata.name;
 
             let content;
             if (name) {
                 content = new Name(name);
             } else {
-                content = new DeepBlueArgs(fullMetadata.values['args']);
+                content = new DeepBlueOperationArgs(fullMetadata.values['args']);
             }
 
             switch (type) {
-                case "annotation_select": {
-                    querySubject.next(new DeepBlueSelectData(new Name(name), id, type));
-                    querySubject.complete();
-                    break;
-                }
-
-                case "experiment_select": {
-                    querySubject.next(new DeepBlueSelectData(content, id, type));
-                    querySubject.complete();
-                    break;
-                }
-
-                case "genes_select": {
-                    querySubject.next(new DeepBlueSelectData(new Name(fullMetadata.values['genes']), id, type));
+                case "annotation_select":
+                case "experiment_select":
+                {
+                    querySubject.next(new DeepBlueOperation(new DeepBlueDataParameter(content), id, type));
                     querySubject.complete();
                     break;
                 }
@@ -240,14 +231,15 @@ export class ComposedCommands {
                 case "tiling": {
                     let genome = fullMetadata.values['genome'];
                     let size = Number(fullMetadata.values['size'])
-                    querySubject.next(new DeepBlueTilingRegions(size, genome, id));
+                    let chromosomes = fullMetadata.values['chromosomes'];
+                    querySubject.next(new DeepBlueTiling(size, genome, chromosomes, id));
                     querySubject.complete();
                     break;
                 }
 
                 default: {
                     console.error("Invalid type", type);
-                    return new DeepBlueSelectData(new Name("name"), id, type);
+                    return new DeepBlueOperation(new DeepBlueDataParameter(name), id, type);
                 }
             }
         });

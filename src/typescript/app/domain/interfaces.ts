@@ -1,7 +1,32 @@
+import { Id } from "app/domain/deepblue";
+
 export interface ICloneable {
-    clone (): any;
+    clone (request_count?: number): any;
 }
 
-export interface IKey extends ICloneable {
-    key() : string;
+export interface ITextable {
+    text(): string;
+}
+
+export interface IKey extends ICloneable, ITextable {
+    key(): string;
+}
+
+export interface IDataParameter extends IKey {
+    name() : string;
+    id() : Id;
+}
+
+export interface IOperation extends IKey {
+    data() : IDataParameter;
+
+    queryId() : Id;
+
+    cacheIt(query_id: Id): IOperation;
+}
+
+export interface IFiltered extends IOperation {
+    getFilterName(): string;
+
+    getFilterQuery(): Id;
 }

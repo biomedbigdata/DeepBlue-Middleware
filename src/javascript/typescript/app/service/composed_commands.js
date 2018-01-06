@@ -124,31 +124,23 @@ class ComposedCommands {
         let querySubject = new rxjs_1.Subject();
         this.deepBlueService.info(query_id, status).subscribe((fullMetadata) => {
             let type = fullMetadata.type();
-            let id = new deepblue_1.Id(fullMetadata.id);
+            let id = fullMetadata.id;
             let name = fullMetadata.name;
             let content;
             if (name) {
                 content = new deepblue_1.Name(name);
             }
             else {
-                content = new operations_1.DeepBlueArgs(fullMetadata.values['args']);
+                content = new operations_1.DeepBlueOperationArgs(fullMetadata.values['args']);
             }
             switch (type) {
-                case "annotation_select": {
-                    querySubject.next(new operations_1.DeepBlueSelectData(new deepblue_1.Name(name), id, type));
-                    querySubject.complete();
-                    break;
-                }
-                case "experiment_select": {
-                    querySubject.next(new operations_1.DeepBlueSelectData(content, id, type));
-                    querySubject.complete();
-                    break;
-                }
-                case "genes_select": {
-                    querySubject.next(new operations_1.DeepBlueSelectData(new deepblue_1.Name(fullMetadata.values['genes']), id, type));
-                    querySubject.complete();
-                    break;
-                }
+                case "annotation_select":
+                case "experiment_select":
+                    {
+                        querySubject.next(new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(content), id, type));
+                        querySubject.complete();
+                        break;
+                    }
                 case "intersect":
                 case "overlap": {
                     let data = new deepblue_1.Id(fullMetadata.values['qid_1']);
@@ -172,13 +164,14 @@ class ComposedCommands {
                 case "tiling": {
                     let genome = fullMetadata.values['genome'];
                     let size = Number(fullMetadata.values['size']);
-                    querySubject.next(new operations_1.DeepBlueTilingRegions(size, genome, id));
+                    let chromosomes = fullMetadata.values['chromosomes'];
+                    querySubject.next(new operations_1.DeepBlueTiling(size, genome, chromosomes, id));
                     querySubject.complete();
                     break;
                 }
                 default: {
                     console.error("Invalid type", type);
-                    return new operations_1.DeepBlueSelectData(new deepblue_1.Name("name"), id, type);
+                    return new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(name), id, type);
                 }
             }
         });

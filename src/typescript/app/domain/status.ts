@@ -1,4 +1,4 @@
-import { DeepBlueResult, DeepBlueSelectData, DeepBlueMiddlewareOverlapResult } from './operations';
+import { DeepBlueResult, DeepBlueMiddlewareOverlapResult } from './operations';
 
 export class Statistics {
 

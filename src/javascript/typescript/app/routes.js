@@ -59,7 +59,7 @@ class ComposedCommandsRoutes {
             }
             // TODO: Load the real query
             experiments_1.Experiments.info(experiments_id).subscribe((experiments) => {
-                let deepblue_query_ops = queries_id.map((query_id) => new operations_1.DeepBlueSelectData(new deepblue_1.IdName(query_id, query_id), new deepblue_1.Id(query_id), "DIVE data"));
+                let deepblue_query_ops = queries_id.map((query_id) => new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(query_id), new deepblue_1.Id(query_id), "DIVE data"));
                 let experiments_name = experiments.map((v) => new deepblue_1.Name(v["name"]));
                 var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, filters, status).subscribe((results) => {
                     let rr = [];
@@ -83,7 +83,7 @@ class ComposedCommandsRoutes {
                 queries_id = [queries_id];
             }
             // TODO: Load real Operation
-            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data"));
+            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(query_id), new deepblue_1.Id(query_id), "DIVE data"));
             var ccos = cc.countGenesOverlaps(deepblue_query_ops, new deepblue_1.Name(gene_model_name), status).subscribe((results) => {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
@@ -113,7 +113,7 @@ class ComposedCommandsRoutes {
                 queries_id = [queries_id];
             }
             // TODO: Load real Operation
-            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data"));
+            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(query_id), new deepblue_1.Id(query_id), "DIVE data"));
             var ccos = cc.enrichRegionsGoTerms(deepblue_query_ops, new deepblue_1.Name(gene_model_name), status).subscribe((results) => {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
@@ -188,7 +188,7 @@ class ComposedCommandsRoutes {
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             res.send(["okay", status.request_id.toLocaleString()]);
             // TODO: Load real operations
-            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data"));
+            let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(query_id), new deepblue_1.Id(query_id), "DIVE data"));
             var ccos = re.enrichRegionsOverlap(deepblue_query_ops, genome, universe_id, datasets, status).subscribe((results) => {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
@@ -216,7 +216,7 @@ class ComposedCommandsRoutes {
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             res.send(["okay", status.request_id.toLocaleString()]);
             // TODO: Load real operations
-            let data_query = new operations_1.DeepBlueSelectData(new deepblue_1.Name(query_id), new deepblue_1.Id(query_id), "DIVE data");
+            let data_query = new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(query_id), new deepblue_1.Id(query_id), "DIVE data");
             var ccos = re.enrichRegionsFast(data_query, genome, status).subscribe((results) => {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
@@ -353,7 +353,7 @@ class ComposedCommandsRoutes {
         let status = ComposedCommandsRoutes.requestManager.startRequest();
         manager_1.Manager.getDeepBlueService().subscribe((dbs) => {
             // TODO: create dummy query and request
-            let sr = new operations_1.DeepBlueSimpleQuery(new deepblue_1.Id(""));
+            let sr = new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter("dummy"), new deepblue_1.Id("dummy"), "dummy");
             let dbr = new operations_1.DeepBlueRequest(sr, request_id, "export_ucsc");
             dbs.getResult(dbr, status).subscribe((result) => {
                 let regions = result.resultAsString();

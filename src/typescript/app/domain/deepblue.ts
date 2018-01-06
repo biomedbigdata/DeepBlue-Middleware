@@ -11,13 +11,22 @@ export class Id implements IKey {
     clone(): Id {
         return new Id(this.id);
     }
+
+    text() : string {
+        return 'ID: ' + this.id;
+    }
 }
 
 export class Name implements IKey {
+
     constructor(public name: string) { }
 
     key(): string {
         return this.name;
+    }
+
+    text(): string {
+        throw name;
     }
 
     clone(): Name {
@@ -26,30 +35,26 @@ export class Name implements IKey {
 }
 
 export class IdName extends Name {
-    constructor(public id: string, public name: string) {
-        super(name);
+    constructor(public id: Id, public name: string) {
+        super(name)
     }
 
     key(): string {
-        return this.id;
-    }
-
-    Id(): Id {
-        return new Id(this.id);
-    }
-
-    Name(): Name {
-        return new Name(this.name);
+        return this.id.id;
     }
 
     clone(): IdName {
         return new IdName(this.id, this.name);
     }
+
+    text() : string {
+        return this.name + "(" + this.id + ")";
+    }
 }
 
 export class IdNameCount extends IdName {
 
-    constructor(public id: string, public name: string, public count: number) {
+    constructor(public id: Id, public name: string, public count: number) {
         super(id, name);
     }
 
@@ -65,44 +70,44 @@ export class IdNameCount extends IdName {
 
 export class EpigeneticMark extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 export class BioSource extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 export class Annotation extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 export class Experiment extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 export class Genome extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 
 export class GeneModel extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 export class Gene extends IdName {
     constructor(private data: {}) {
-        super(data["_id"], data["gene_name"])
+        super(new Id(data["_id"]), data["gene_name"])
     }
 
     gene_id(): string {

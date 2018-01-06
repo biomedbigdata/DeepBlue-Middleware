@@ -41,7 +41,6 @@ class RegionsEnrichment {
                     return Observable_1.Observable.forkJoin(filter_queries).map((filters) => {
                         let exp_filter_id = new Array();
                         for (let filter of filters) {
-                            let filter_data = filter.data();
                             let exp_name = filter.getDataName();
                             let exp_id = filter.getDataId().id;
                             let filter_name = filter._params.value;

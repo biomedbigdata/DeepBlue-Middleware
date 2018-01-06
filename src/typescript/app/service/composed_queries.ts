@@ -15,8 +15,7 @@ import { Experiments } from './experiments';
 import {
   DeepBlueIntersection,
   DeepBlueOperation,
-  DeepBlueResult,
-  DeepBlueSelectData
+  DeepBlueResult
 } from '../domain/operations';
 
 export class ComposedQueries {
@@ -48,7 +47,7 @@ export class ComposedQueries {
 
     let response = new Subject<DeepBlueResult>();
 
-    this.deepBlueService.select_regions_from_metadata(genome.name, null, "Chromatin State Segmentation", null, null, null, null, status).subscribe((experiments_query: DeepBlueSelectData) => {
+    this.deepBlueService.select_regions_from_metadata(genome.name, null, "Chromatin State Segmentation", null, null, null, null, status).subscribe((experiments_query: DeepBlueOperation) => {
       this.deepBlueService.distinct_column_values(experiments_query, "NAME", status).subscribe((csss: DeepBlueResult) => {
         setTimeout(() => {
           response.next(csss);

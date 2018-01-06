@@ -10,6 +10,9 @@ class Id {
     clone() {
         return new Id(this.id);
     }
+    text() {
+        return 'ID: ' + this.id;
+    }
 }
 exports.Id = Id;
 class Name {
@@ -18,6 +21,9 @@ class Name {
     }
     key() {
         return this.name;
+    }
+    text() {
+        throw name;
     }
     clone() {
         return new Name(this.name);
@@ -31,16 +37,13 @@ class IdName extends Name {
         this.name = name;
     }
     key() {
-        return this.id;
-    }
-    Id() {
-        return new Id(this.id);
-    }
-    Name() {
-        return new Name(this.name);
+        return this.id.id;
     }
     clone() {
         return new IdName(this.id, this.name);
+    }
+    text() {
+        return this.name + "(" + this.id + ")";
     }
 }
 exports.IdName = IdName;
@@ -61,43 +64,43 @@ class IdNameCount extends IdName {
 exports.IdNameCount = IdNameCount;
 class EpigeneticMark extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.EpigeneticMark = EpigeneticMark;
 class BioSource extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.BioSource = BioSource;
 class Annotation extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.Annotation = Annotation;
 class Experiment extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.Experiment = Experiment;
 class Genome extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.Genome = Genome;
 class GeneModel extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.GeneModel = GeneModel;
 class Gene extends IdName {
     constructor(data) {
-        super(data["_id"], data["gene_name"]);
+        super(new Id(data["_id"]), data["gene_name"]);
         this.data = data;
     }
     gene_id() {
