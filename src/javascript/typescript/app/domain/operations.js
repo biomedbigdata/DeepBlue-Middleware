@@ -89,7 +89,7 @@ class DeepBlueDataParameter {
         if (this._data instanceof deepblue_1.Name) {
             return this._data.name;
         }
-        else if ('string' === typeof this._data) {
+        else if (typeof this._data === 'string') {
             return this._data;
         }
         else {
@@ -103,7 +103,7 @@ class DeepBlueDataParameter {
         if (this._data instanceof deepblue_1.Name) {
             return new deepblue_2.Id(this._data.name);
         }
-        else if (this._data instanceof String) {
+        else if (typeof this._data === 'string') {
             return new deepblue_2.Id(this._data);
         }
         else {
