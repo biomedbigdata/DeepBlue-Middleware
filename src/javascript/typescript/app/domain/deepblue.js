@@ -113,7 +113,7 @@ class Gene extends IdName {
 exports.Gene = Gene;
 class FullMetadata extends IdName {
     constructor(data) {
-        super(data["_id"], data["name"]);
+        super(new Id(data["_id"]), data["name"]);
         this.values = data;
     }
     get(key) {

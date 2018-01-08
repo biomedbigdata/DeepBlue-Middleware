@@ -94,7 +94,7 @@ export class RegionsEnrichment {
   private listExperiments(request_status: RequestStatus, epigenetic_mark: string): Observable<[string, any[]]> {
     return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark).map(((experiments: FullMetadata[]) =>
       <[string, [string, string][]]>[epigenetic_mark, experiments.map((experiment: FullMetadata) =>
-        [experiment.id, experiment.name, experiment.biosource()])]
+        [experiment.id.id, experiment.name, experiment.biosource()])]
     ));
   }
 

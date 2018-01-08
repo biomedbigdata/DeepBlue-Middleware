@@ -177,7 +177,7 @@ class DeepBlueMetadataParameters {
         return new DeepBlueMetadataParameters(this.genome, this.type, this.epigenetic_mark, this.biosource, this.sample, this.technique, this.project);
     }
     asKeyValue() {
-        const params = new Object();
+        const params = {};
         if (this.genome) {
             params['genome'] = this.genome;
         }
@@ -351,16 +351,17 @@ class DeepBlueFilter extends DeepBlueOperation {
 }
 exports.DeepBlueFilter = DeepBlueFilter;
 class DeepBlueRequest {
-    constructor(_operation, request_id, command) {
+    constructor(_operation, request_id, command, request_count) {
         this._operation = _operation;
         this.request_id = request_id;
         this.command = command;
+        this.request_count = request_count;
     }
     clone() {
         return new DeepBlueRequest(this._operation.clone(), this.request_id, this.command);
     }
     key() {
-        return this.request_id;
+        return this.request_id.id;
     }
     data() {
         return this._operation;
@@ -393,29 +394,42 @@ class DeepBlueRequest {
 }
 exports.DeepBlueRequest = DeepBlueRequest;
 class DeepBlueResult {
-    constructor(_data, result) {
+    constructor(_data, result, request_count) {
         this._data = _data;
         this.result = result;
+        this.request_count = request_count;
     }
     clone() {
-        return new DeepBlueResult(this._data.clone(), this.result);
+        return new DeepBlueResult(this._data.clone(), this.result, this.request_count);
     }
     resultAsString() {
         return this.result;
     }
+    static hasResult(result, key) {
+        return result[key] !== undefined;
+    }
     resultAsCount() {
-        return this.result["count"];
+        if (DeepBlueResult.hasResult(this.result, 'count')) {
+            return this.result.count;
+        }
+        else {
+            return null;
+        }
     }
     resultAsDistinct() {
-        return this.result["distinct"];
+        if (DeepBlueResult.hasResult(this.result, 'distinct')) {
+            return this.result.distinct;
+        }
+        else {
+            return null;
+        }
     }
     resultAsTuples() {
         return this.result;
     }
     resultAsEnrichment() {
-        let enrichment = this.result["enrichment"];
-        if (enrichment) {
-            return enrichment["results"];
+        if (DeepBlueResult.hasResult(this.result, 'enrichment')) {
+            return this.result.enrichment["results"];
         }
         return [];
     }

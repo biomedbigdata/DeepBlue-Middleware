@@ -74,7 +74,7 @@ class RegionsEnrichment {
     }
     ;
     listExperiments(request_status, epigenetic_mark) {
-        return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => [experiment.id, experiment.name, experiment.biosource()])]));
+        return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => [experiment.id.id, experiment.name, experiment.biosource()])]));
     }
     //  {[key: string]: [string, string][]};
     listExperimentsMany(request_status, epigenetic_marks, genome) {

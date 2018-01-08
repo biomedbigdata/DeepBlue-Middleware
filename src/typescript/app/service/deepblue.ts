@@ -214,13 +214,13 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
-  filter_regions(query_data_id: DeepBlueOperation, filter: FilterParameter, status: RequestStatus): Observable<DeepBlueFilter> {
+  filter_regions(query_op: DeepBlueOperation, filter: FilterParameter, status: RequestStatus): Observable<DeepBlueFilter> {
     let params = filter.asKeyValue();
-    params["query_id"] = query_data_id.queryId().id;
+    params["query_id"] = query_op.queryId().id;
 
     return this.execute("filter_regions", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueFilter(query_data_id, filter, new Id(response[1]));
+      return new DeepBlueFilter(query_op, filter, new Id(response[1]));
     }).catch(this.handleError);
   }
 
@@ -289,7 +289,7 @@ export class DeepBlueService {
       params["query_id"] = op_exp.queryId().id;
 
       return this.execute("count_regions", params, status).map((data: [string, string]) => {
-        let request = new DeepBlueRequest(op_exp, data[1], "count_regions");
+        let request = new DeepBlueRequest(op_exp, new Id(data[1]), "count_regions");
         this.requestCache.put(op_exp, request);
         return request;
       }).flatMap((request) => {
@@ -305,7 +305,7 @@ export class DeepBlueService {
 
     return this.execute("distinct_column_values", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueRequest(data, response[1], 'distinct_column_values');
+      return new DeepBlueRequest(data, new Id(response[1]), 'distinct_column_values');
     }).flatMap((request_id) => {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
@@ -318,7 +318,7 @@ export class DeepBlueService {
 
     return this.execute("enrich_regions_go_terms", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueRequest(data, response[1], 'enrich_regions_go_terms');
+      return new DeepBlueRequest(data, new Id(response[1]), 'enrich_regions_go_terms');
     }).flatMap((request_id) => {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
@@ -333,7 +333,7 @@ export class DeepBlueService {
 
     return this.execute("enrich_regions_overlap", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueRequest(data, response[1], 'enrich_regions_overlap');
+      return new DeepBlueRequest(data, new Id(response[1]), 'enrich_regions_overlap');
     }).flatMap((request_id) => {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
@@ -350,7 +350,7 @@ export class DeepBlueService {
 
     return this.execute("enrich_regions_fast", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueRequest(data, response[1], 'enrich_regions_fast');
+      return new DeepBlueRequest(data, new Id(response[1]), 'enrich_regions_fast');
     }).flatMap((request_id) => {
       return this.getResult(request_id, status);
     }).catch(this.handleError);
@@ -389,7 +389,7 @@ export class DeepBlueService {
     return this.execute("collection_experiments_count", params, status).map((response: [string, any]) => {
       const data = response[1] || [];
       return data.map((value) => {
-        return new IdNameCount(value[0], value[1], value[2]);
+        return new IdNameCount(new Id(value[0]), value[1], value[2]);
       }).sort((a: IdName, b: IdName) => a.name.localeCompare(b.name));
     });
   }
@@ -521,9 +521,9 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
-  cancelRequest(id: string, status: RequestStatus): Observable<string> {
+  cancelRequest(id: Id, status: RequestStatus): Observable<string> {
     const params: Object = new Object();
-    params['id'] = id;
+    params['id'] = id.id;
 
     return this.execute("cancel_request", params, status).map((response: [string, string]) => {
       status.increment();
@@ -540,7 +540,7 @@ export class DeepBlueService {
     }
 
     let params = new Object();
-    params["request_id"] = op_request.request_id;
+    params["request_id"] = op_request.request_id.id;
 
     let pollSubject = new Subject<DeepBlueResult>();
 
@@ -563,13 +563,13 @@ export class DeepBlueService {
         return;
       }
 
-      this.execute("info", { "id": op_request.request_id }, status).subscribe((info: [DeepBlueResultStatus, any]) => {
+      this.execute("info", { "id": op_request.request_id.id }, status).subscribe((info: [DeepBlueResultStatus, any]) => {
 
         let state = info[1][0]['state'];
 
         if (state == "done") {
           let client = xmlrpc.createClient(xmlrpc_host);
-          client.methodCall("get_request_data", [op_request.request_id, 'anonymous_key'], (err: Object, value: any) => {
+          client.methodCall("get_request_data", [op_request.request_id.id, 'anonymous_key'], (err: Object, value: any) => {
             if (err) {
               console.error(err);
               isProcessing = false;

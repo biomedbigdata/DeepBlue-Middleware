@@ -123,7 +123,7 @@ export class FullMetadata extends IdName {
     values: Object;
 
     constructor(data: Object) {
-        super(data["_id"], data["name"]);
+        super(new Id(data["_id"]), data["name"]);
         this.values = data;
     }
 

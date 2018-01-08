@@ -462,7 +462,7 @@ export class ComposedCommandsRoutes {
         res.send(["okay", id]);
       } else if (id.startsWith("r")) {
         // Usual DeepBlue Request
-        dbs.cancelRequest(id, status).subscribe((response) => res.send(response));
+        dbs.cancelRequest(new Id(id), status).subscribe((response) => res.send(response));
       } else {
         res.send("Invalid ID: " + id);
       }
@@ -489,7 +489,7 @@ export class ComposedCommandsRoutes {
     Manager.getDeepBlueService().subscribe((dbs: DeepBlueService) => {
       // TODO: create dummy query and request
       let sr = new DeepBlueOperation(new DeepBlueDataParameter("dummy"), new Id("dummy"), "dummy");
-      let dbr = new DeepBlueRequest(sr, request_id, "export_ucsc");
+      let dbr = new DeepBlueRequest(sr, new Id(request_id), "export_ucsc");
       dbs.getResult(dbr, status).subscribe((result: DeepBlueResult) => {
         let regions = result.resultAsString();
 

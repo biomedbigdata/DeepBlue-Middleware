@@ -193,7 +193,7 @@ export class DeepBlueMetadataParameters implements IDataParameter {
     }
 
     asKeyValue(): Object {
-        const params: Object = new Object();
+        const params: {[key: string]: string} = {};
 
         if (this.genome) {
             params['genome'] = this.genome;
@@ -403,7 +403,7 @@ export class DeepBlueFilter extends DeepBlueOperation {
 
 export class DeepBlueRequest implements IKey {
 
-    constructor(private _operation: IOperation | IFiltered, public request_id: string, public command: string) { }
+    constructor(private _operation: IOperation, public request_id: Id, public command: string, public request_count?: number) { }
 
     clone(): DeepBlueRequest {
         return new DeepBlueRequest(
@@ -414,7 +414,7 @@ export class DeepBlueRequest implements IKey {
     }
 
     key(): string {
-        return this.request_id;
+        return this.request_id.id;
     }
 
     data(): IOperation {
@@ -450,14 +450,19 @@ export class DeepBlueRequest implements IKey {
     }
 }
 
+export interface IResult {
+    [key: string]: any;
+}
+
 export class DeepBlueResult implements ICloneable {
-    constructor(private _data: DeepBlueRequest, public result: Object) {
+    constructor(private _data: DeepBlueRequest, public result: IResult | string, public request_count?: number) {
     }
 
     clone(): DeepBlueResult {
         return new DeepBlueResult(
             this._data.clone(),
-            this.result
+            this.result,
+            this.request_count
         );
     }
 
@@ -465,12 +470,24 @@ export class DeepBlueResult implements ICloneable {
         return <string>this.result;
     }
 
+    static hasResult(result: IResult | string, key: string) : result is IResult {
+        return (<IResult>result)[key] !== undefined;
+    }
+
     resultAsCount(): number {
-        return <number>this.result["count"];
+        if (DeepBlueResult.hasResult(this.result, 'count')) {
+            return this.result.count;
+        } else {
+            return null;
+        }
     }
 
     resultAsDistinct(): { [key: string]: number } {
-        return this.result["distinct"];
+        if (DeepBlueResult.hasResult(this.result, 'distinct')) {
+            return this.result.distinct;
+        } else {
+            return null;
+        }
     }
 
     resultAsTuples(): Object[] {
@@ -478,9 +495,8 @@ export class DeepBlueResult implements ICloneable {
     }
 
     resultAsEnrichment(): Object[] {
-        let enrichment = this.result["enrichment"]
-        if (enrichment) {
-            return enrichment["results"];
+        if (DeepBlueResult.hasResult(this.result, 'enrichment')) {
+            return this.result.enrichment["results"];
         }
         return [];
     }

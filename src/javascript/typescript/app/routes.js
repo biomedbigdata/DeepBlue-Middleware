@@ -332,7 +332,7 @@ class ComposedCommandsRoutes {
             }
             else if (id.startsWith("r")) {
                 // Usual DeepBlue Request
-                dbs.cancelRequest(id, status).subscribe((response) => res.send(response));
+                dbs.cancelRequest(new deepblue_1.Id(id), status).subscribe((response) => res.send(response));
             }
             else {
                 res.send("Invalid ID: " + id);
@@ -354,7 +354,7 @@ class ComposedCommandsRoutes {
         manager_1.Manager.getDeepBlueService().subscribe((dbs) => {
             // TODO: create dummy query and request
             let sr = new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter("dummy"), new deepblue_1.Id("dummy"), "dummy");
-            let dbr = new operations_1.DeepBlueRequest(sr, request_id, "export_ucsc");
+            let dbr = new operations_1.DeepBlueRequest(sr, new deepblue_1.Id(request_id), "export_ucsc");
             dbs.getResult(dbr, status).subscribe((result) => {
                 let regions = result.resultAsString();
                 let description = "## Export of DeepBlue Regions to UCSC genome browser\n";
