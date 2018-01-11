@@ -81,8 +81,18 @@ class DeepBlueCommandExecutionResult {
     }
 }
 exports.DeepBlueCommandExecutionResult = DeepBlueCommandExecutionResult;
-class DeepBlueDataParameter {
+class AbstractNamedDataType {
+    constructor(_data_type) {
+        this._data_type = _data_type;
+    }
+    dataType() {
+        return this._data_type;
+    }
+}
+exports.AbstractNamedDataType = AbstractNamedDataType;
+class DeepBlueDataParameter extends AbstractNamedDataType {
     constructor(_data) {
+        super("data_parameter");
         this._data = _data;
     }
     name() {
@@ -121,8 +131,9 @@ class DeepBlueDataParameter {
     }
 }
 exports.DeepBlueDataParameter = DeepBlueDataParameter;
-class DeepBlueOperationArgs {
+class DeepBlueOperationArgs extends AbstractNamedDataType {
     constructor(args) {
+        super("operation_args");
         this.args = args;
     }
     key() {
@@ -145,8 +156,9 @@ class DeepBlueOperationArgs {
     }
 }
 exports.DeepBlueOperationArgs = DeepBlueOperationArgs;
-class DeepBlueMetadataParameters {
+class DeepBlueMetadataParameters extends AbstractNamedDataType {
     constructor(genome, type, epigenetic_mark, biosource, sample, technique, project) {
+        super("metadata_parameters");
         this.genome = genome;
         this.type = type;
         this.epigenetic_mark = epigenetic_mark;
@@ -212,8 +224,9 @@ class DeepBlueMetadataParameters {
     }
 }
 exports.DeepBlueMetadataParameters = DeepBlueMetadataParameters;
-class DeepBlueOperation {
+class DeepBlueOperation extends AbstractNamedDataType {
     constructor(_data, query_id, command, request_count, cached = false) {
+        super("data_operation");
         this._data = _data;
         this.query_id = query_id;
         this.command = command;
@@ -235,13 +248,17 @@ class DeepBlueOperation {
     text() {
         return this.command + " " + this._data.name();
     }
-    queryId() {
+    name() {
+        return this.text();
+    }
+    id() {
         return this.query_id;
     }
 }
 exports.DeepBlueOperation = DeepBlueOperation;
-class DeepBlueTiling {
+class DeepBlueTiling extends AbstractNamedDataType {
     constructor(size, genome, chromosomes, query_id, request_count, cached = false) {
+        super("tiling");
         this.size = size;
         this.genome = genome;
         this.chromosomes = chromosomes;
@@ -264,11 +281,15 @@ class DeepBlueTiling {
     text() {
         return "Tiling regions of " + this.size;
     }
-    queryId() {
+    name() {
+        return this.text();
+    }
+    id() {
         return this.query_id;
     }
 }
 exports.DeepBlueTiling = DeepBlueTiling;
+//http://localhost:56572/composed_commands/query_info?query_id=q52228http://localhost:56572/composed_commands/query_info?query_id=q52228
 class DeepBlueIntersection extends DeepBlueOperation {
     constructor(_subject, _filter, query_id, cached = false) {
         super(_subject.data(), query_id, "intersection");
@@ -280,14 +301,11 @@ class DeepBlueIntersection extends DeepBlueOperation {
     clone() {
         return new DeepBlueIntersection(this._subject.clone(), this._filter.clone(), this.query_id, this.cached);
     }
-    queryId() {
-        return this.query_id;
-    }
     data() {
         return this._subject.data();
     }
     key() {
-        return "intersect_" + this._subject.queryId().id + '_' + this._filter.queryId().id;
+        return "intersect_" + this._subject.id().id + '_' + this._filter.id().id;
     }
     getDataName() {
         return this._subject.data.name;
@@ -299,7 +317,7 @@ class DeepBlueIntersection extends DeepBlueOperation {
         return this._filter.data().name();
     }
     getFilterQuery() {
-        return this._filter.queryId();
+        return this._filter.id();
     }
     cacheIt(query_id) {
         return new DeepBlueIntersection(this._subject, this._filter, this.query_id, true);
@@ -310,25 +328,21 @@ class DeepBlueIntersection extends DeepBlueOperation {
 }
 exports.DeepBlueIntersection = DeepBlueIntersection;
 class DeepBlueFilter extends DeepBlueOperation {
-    constructor(_subject, _params, query_id, cached = false) {
-        super(_subject.data(), query_id, "regions_filter");
-        this._subject = _subject;
+    constructor(_data, _params, query_id, cached = false) {
+        super(_data, query_id, "regions_filter");
+        this._data = _data;
         this._params = _params;
         this.query_id = query_id;
         this.cached = cached;
     }
-    queryId() {
-        return this.query_id;
-    }
-    ;
     data() {
-        return this._subject.data();
+        return this._data.data();
     }
     getDataName() {
-        return this._subject.data().name();
+        return this._data.data().name();
     }
     getDataId() {
-        return this._subject.data().id();
+        return this._data.data().id();
     }
     getFilterName() {
         return "filter_regions";
@@ -337,16 +351,16 @@ class DeepBlueFilter extends DeepBlueOperation {
         return new deepblue_2.Id(this._params.toString());
     }
     key() {
-        return "filter_" + this.queryId().id;
+        return "filter_" + this.id().id;
     }
     clone() {
-        return new DeepBlueFilter(this._subject.clone(), this._params.clone(), this.query_id, this.cached);
+        return new DeepBlueFilter(this._data.clone(), this._params.clone(), this.query_id, this.cached);
     }
     cacheIt(query_id) {
-        return new DeepBlueFilter(this._subject, this._params, this.query_id, this.cached);
+        return new DeepBlueFilter(this._data, this._params, this.query_id, this.cached);
     }
     text() {
-        return this._subject.text() + "(" + this._params.text() + ")";
+        return this._data.text() + "(" + this._params.text() + ")";
     }
 }
 exports.DeepBlueFilter = DeepBlueFilter;

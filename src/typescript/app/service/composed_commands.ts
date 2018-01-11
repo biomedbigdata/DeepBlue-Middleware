@@ -15,7 +15,8 @@ import {
     DeepBlueMiddlewareOverlapResult,
     DeepBlueTiling,
     DeepBlueOperationArgs,
-    DeepBlueDataParameter
+    DeepBlueDataParameter,
+    DeepBlueError
 } from '../domain/operations';
 import { IOperation } from 'app/domain/interfaces';
 
@@ -180,71 +181,74 @@ export class ComposedCommands {
     }
 
     loadQuery(query_id: Id, status: RequestStatus): Observable<IOperation> {
-        let querySubject = new Subject<IOperation>();
 
-        this.deepBlueService.info(query_id, status).subscribe((fullMetadata: FullMetadata) => {
-
+        return this.deepBlueService.info(query_id, status).map((fullMetadata: FullMetadata) => {
             let type = fullMetadata.type();
             let id = fullMetadata.id;
             let name = fullMetadata.name;
 
             let content;
             if (name) {
-                content = new Name(name);
+                content = new DeepBlueDataParameter(new Name(name));
             } else {
-                content = new DeepBlueOperationArgs(fullMetadata.values['args']);
+                content = new DeepBlueOperationArgs(fullMetadata.get('args'));
             }
+
+            console.log("\n\nFULL_INFO", fullMetadata);
+
 
             switch (type) {
                 case "annotation_select":
-                case "experiment_select":
-                {
-                    querySubject.next(new DeepBlueOperation(new DeepBlueDataParameter(content), id, type));
-                    querySubject.complete();
-                    break;
-                }
-
-                case "intersect": case "overlap": {
-                    let data = new Id(fullMetadata.values['qid_1']);
-                    let filter = new Id(fullMetadata.values['qid_1']);
-
-                    Observable.forkJoin(this.loadQuery(data, status), this.loadQuery(filter, status))
-                        .subscribe(([op_data, op_filter]) => {
-                            querySubject.next(new DeepBlueIntersection(op_data, op_filter, id));
-                            querySubject.complete();
-                        });
-                    break;
+                case "experiment_select": {
+                    console.log("annotation or exp select");
+                    return Observable.of(new DeepBlueOperation(content, id, type));
                 }
 
                 case "filter": {
                     let filter_parameters = FilterParameter.fromObject(fullMetadata['values']['args']);
-                    let query_id = new Id(fullMetadata.values['args']['query']);
-
-                    this.loadQuery(query_id, status).subscribe((op) => {
-                        querySubject.next(new DeepBlueFilter(op, filter_parameters, query_id));
-                        querySubject.complete();
-
+                    let _query = new Id(fullMetadata.get('args')['query']);
+                    console.log("filter");
+                    return this.loadQuery(_query, status).flatMap((op) => {
+                        console.log("another load query inside filter");
+                        return Observable.of(new DeepBlueFilter(op, filter_parameters, query_id));
                     });
-                    break;
                 }
 
                 case "tiling": {
-                    let genome = fullMetadata.values['genome'];
-                    let size = Number(fullMetadata.values['size'])
-                    let chromosomes = fullMetadata.values['chromosomes'];
-                    querySubject.next(new DeepBlueTiling(size, genome, chromosomes, id));
-                    querySubject.complete();
-                    break;
+                    console.log("tiling");
+                    let genome = fullMetadata.get('genome');
+                    let size = Number(fullMetadata.get('size'));
+                    let chromosomes = fullMetadata.get('chromosomes');
+                    return Observable.of(new DeepBlueTiling(size, genome, chromosomes, id));
+                }
+
+                case "intersect":
+                case "overlap": {
+                    let data = new Id(fullMetadata.get('args')['qid_1']);
+                    let filter = new Id(fullMetadata.get('args')['qid_2']);
+                    console.log("intersect");
+
+                    console.log(data);
+                    console.log(filter);
+
+                    console.log("fullmetada", fullMetadata)
+                    //console.log("data", data);
+                    //console.log("filter", filter);
+
+                    return Observable.forkJoin([
+                        this.loadQuery(data, status),
+                        this.loadQuery(filter, status)
+                    ]).map(([op_data, op_filter]) => {
+                        return new DeepBlueIntersection(op_data, op_filter, id);
+                    })
                 }
 
                 default: {
                     console.error("Invalid type", type);
-                    return new DeepBlueOperation(new DeepBlueDataParameter(name), id, type);
+                    return Observable.of(new DeepBlueOperation(new DeepBlueDataParameter(name), id, type));
                 }
             }
-        });
-
-        return querySubject.asObservable();
+        }).flatMap((o) => o);
     }
 
     private handleError(error: Response | any) {

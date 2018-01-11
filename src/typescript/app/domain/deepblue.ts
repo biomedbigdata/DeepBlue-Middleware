@@ -120,7 +120,7 @@ export class Gene extends IdName {
 }
 
 export class FullMetadata extends IdName {
-    values: Object;
+    protected values: Object;
 
     constructor(data: Object) {
         super(new Id(data["_id"]), data["name"]);

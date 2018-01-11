@@ -355,7 +355,7 @@ export class ComposedCommandsRoutes {
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
       dbs.inputRegions(new Name(genome), region_set, status).subscribe((op) => {
-        res.send(["okay", op.queryId().id]);
+        res.send(["okay", op.id().id]);
       });
     });
   }
@@ -396,7 +396,7 @@ export class ComposedCommandsRoutes {
 
         let status = ComposedCommandsRoutes.requestManager.startRequest();
         ds.inputRegions(new Name(genome), regions, status).subscribe((result) => {
-          res.send(["okay", result.queryId().id]);
+          res.send(["okay", result.id().id]);
         });
         found = true;
       }
@@ -442,6 +442,8 @@ export class ComposedCommandsRoutes {
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
       cc.loadQuery(new Id(query_id), status).subscribe((query: DeepBlueOperation) => {
+        console.log("QUERY:",query);
+        console.log();
         res.send(query);
         status.finish(null);
       });

@@ -55,7 +55,7 @@ export class RegionsEnrichment {
                 let exp_name = filter.getDataName();
                 let exp_id = filter.getDataId().id;
                 let filter_name = filter._params.value;
-                let q_id = filter.queryId().id;
+                let q_id = filter.id().id;
                 exp_filter_id.push([exp_id, exp_name, experiment.biosource(), filter_name, q_id]);
               }
 
