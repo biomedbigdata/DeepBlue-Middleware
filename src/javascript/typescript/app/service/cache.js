@@ -9,7 +9,6 @@ class DataCache {
         this._data.set(key.key(), cloneValue);
     }
     get(key) {
-        console.log(key);
         let value = this._data.get(key.key());
         if (value) {
             return value.clone();

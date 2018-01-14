@@ -82,7 +82,6 @@ export class ComposedData {
       return Observable.of(cached);
     }
 
-    console.log('bisource', biosource);
     return this.deepBlueService.get_biosource_children(biosource, status).flatMap((cer: DeepBlueCommandExecutionResult<string[]>) => {
       if (cer.status == DeepBlueResultStatus.Error) {
         return Observable.of(cer);
@@ -120,7 +119,6 @@ export class ComposedData {
   synonyms_bs(biosource: string, status: RequestStatus): Observable<DeepBlueCommandExecutionResult<string[]>> {
 
     return this.all_children_biosources(biosource, status).flatMap((children) => {
-      console.log('children', children);
       let syn_obs = new Array<Observable<DeepBlueCommandExecutionResult<string[]>>>();
 
       if (children.status == DeepBlueResultStatus.Error) {
@@ -133,7 +131,6 @@ export class ComposedData {
 
       return Observable.forkJoin(syn_obs).map((obss) => {
         let results = obss.map((r) => r.result);
-        console.log('results', results);
         let syn_arrs = results.map((s) => s[0]);
 
         let names = [];

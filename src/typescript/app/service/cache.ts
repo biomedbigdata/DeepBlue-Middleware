@@ -11,7 +11,6 @@ export class DataCache<T extends IKey, V extends ICloneable> {
     }
 
     get(key: T): V {
-        console.log(key);
         let value: V = this._data.get(key.key());
         if (value) {
             return value.clone();

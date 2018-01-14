@@ -313,8 +313,6 @@ class ComposedCommandsRoutes {
             }
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             cc.loadQuery(new deepblue_1.Id(query_id), status).subscribe((query) => {
-                console.log("QUERY:", query);
-                console.log();
                 res.send(query);
                 status.finish(null);
             });

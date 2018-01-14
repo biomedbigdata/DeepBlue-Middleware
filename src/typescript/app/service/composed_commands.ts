@@ -194,28 +194,21 @@ export class ComposedCommands {
                 content = new DeepBlueOperationArgs(fullMetadata.get('args'));
             }
 
-            console.log("\n\nFULL_INFO", fullMetadata);
-
-
             switch (type) {
                 case "annotation_select":
                 case "experiment_select": {
-                    console.log("annotation or exp select");
                     return Observable.of(new DeepBlueOperation(content, id, type));
                 }
 
                 case "filter": {
                     let filter_parameters = FilterParameter.fromObject(fullMetadata['values']['args']);
                     let _query = new Id(fullMetadata.get('args')['query']);
-                    console.log("filter");
                     return this.loadQuery(_query, status).flatMap((op) => {
-                        console.log("another load query inside filter");
                         return Observable.of(new DeepBlueFilter(op, filter_parameters, query_id));
                     });
                 }
 
                 case "tiling": {
-                    console.log("tiling");
                     let genome = fullMetadata.get('genome');
                     let size = Number(fullMetadata.get('size'));
                     let chromosomes = fullMetadata.get('chromosomes');
@@ -226,14 +219,6 @@ export class ComposedCommands {
                 case "overlap": {
                     let data = new Id(fullMetadata.get('args')['qid_1']);
                     let filter = new Id(fullMetadata.get('args')['qid_2']);
-                    console.log("intersect");
-
-                    console.log(data);
-                    console.log(filter);
-
-                    console.log("fullmetada", fullMetadata)
-                    //console.log("data", data);
-                    //console.log("filter", filter);
 
                     return Observable.forkJoin([
                         this.loadQuery(data, status),
