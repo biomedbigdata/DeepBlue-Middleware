@@ -103,7 +103,7 @@ export class AbstractNamedDataType implements INamedDataType {
 
     }
 
-    dataType() : string {
+    dataType(): string {
         return this._data_type;
     }
 }
@@ -173,13 +173,12 @@ export class DeepBlueOperationArgs extends AbstractNamedDataType implements IDat
     }
 
     name(): string {
-        throw new Error("Method not implemented.");
+        return this.text();
     }
 
     id(): Id {
-        throw new Error("Method not implemented.");
+        throw new Id(this.text());
     }
-
 }
 
 
@@ -187,8 +186,8 @@ export class DeepBlueMetadataParameters extends AbstractNamedDataType implements
 
     constructor(public genome: string, public type: string, public epigenetic_mark: string,
         public biosource: string, public sample: string, public technique: string, public project: string) {
-            super("metadata_parameters");
-        }
+        super("metadata_parameters");
+    }
 
     key(): string {
         let key = "";
@@ -209,7 +208,7 @@ export class DeepBlueMetadataParameters extends AbstractNamedDataType implements
     }
 
     asKeyValue(): Object {
-        const params: {[key: string]: string} = {};
+        const params: { [key: string]: string } = {};
 
         if (this.genome) {
             params['genome'] = this.genome;
@@ -253,8 +252,8 @@ export class DeepBlueMetadataParameters extends AbstractNamedDataType implements
 export class DeepBlueOperation extends AbstractNamedDataType implements IOperation {
     constructor(public _data: IDataParameter, public query_id: Id,
         public command: string, public request_count?: number, public cached = false) {
-            super("data_operation");
-        }
+        super("data_operation");
+    }
 
     data(): IDataParameter {
         return this._data;
@@ -288,8 +287,8 @@ export class DeepBlueOperation extends AbstractNamedDataType implements IOperati
 export class DeepBlueTiling extends AbstractNamedDataType implements IOperation {
     constructor(public size: number, public genome: string, public chromosomes: string[], public query_id: Id,
         public request_count?: number, public cached = false) {
-            super("tiling");
-        }
+        super("tiling");
+    }
 
     data(): IDataParameter {
         return new DeepBlueDataParameter(new IdName(this.query_id, "Tiling Regions of " + this.size.toLocaleString() + "bp"));
@@ -321,7 +320,6 @@ export class DeepBlueTiling extends AbstractNamedDataType implements IOperation 
     }
 }
 
-//http://localhost:56572/composed_commands/query_info?query_id=q52228http://localhost:56572/composed_commands/query_info?query_id=q52228
 
 export class DeepBlueIntersection extends DeepBlueOperation {
 
@@ -339,7 +337,7 @@ export class DeepBlueIntersection extends DeepBlueOperation {
     }
 
     data(): IDataParameter {
-        return this._subject.data();
+        return this._subject;
     }
 
     key(): string {
@@ -347,11 +345,11 @@ export class DeepBlueIntersection extends DeepBlueOperation {
     }
 
     getDataName(): string {
-        return this._subject.data.name;
+        return this._subject.name();
     }
 
     getDataId(): Id {
-        return this._subject.data().id();
+        return this._subject.id();
     }
 
     getFilterName(): string {
@@ -378,15 +376,15 @@ export class DeepBlueFilter extends DeepBlueOperation {
     }
 
     data(): IDataParameter {
-        return this._data.data();
+        return this._data;
     }
 
     getDataName(): string {
-        return this._data.data().name();
+        return this._data.name();
     }
 
     getDataId(): Id {
-        return this._data.data().id();
+        return this._data.id();
     }
 
     getFilterName(): string {
@@ -417,7 +415,6 @@ export class DeepBlueFilter extends DeepBlueOperation {
     text(): string {
         return this._data.text() + "(" + this._params.text() + ")";
     }
-
 }
 
 export class DeepBlueRequest implements IKey {
@@ -489,7 +486,7 @@ export class DeepBlueResult implements ICloneable {
         return <string>this.result;
     }
 
-    static hasResult(result: IResult | string, key: string) : result is IResult {
+    static hasResult(result: IResult | string, key: string): result is IResult {
         return (<IResult>result)[key] !== undefined;
     }
 
@@ -641,5 +638,60 @@ export class FilterParameter implements ITextable {
 
     clone(): FilterParameter {
         return new FilterParameter(this.field, this.operation, this.value, this.type);
+    }
+}
+
+
+function toClass(o: any): IDataParameter {
+    switch (o._data_type) {
+        case 'data_parameter': {
+            let data;
+            if (o._data.name) {
+                data = new Name(o._data.name);
+            } else {
+                data = o._data;
+            }
+            return new DeepBlueDataParameter(data);
+        }
+
+        case 'operation_args': {
+            return new DeepBlueOperationArgs(o.args);
+        }
+
+        case 'metadata_parameters': {
+            return new DeepBlueMetadataParameters(o.genome, o.type, o.epigenetic_mark,
+                o.biosource, o.sample, o.technique, o.project);
+        }
+
+        case 'data_operation': {
+            let data = toClass(o._data);
+            let query_id = new Id(o.query_id.id);
+            return new DeepBlueOperation(data, query_id, o.command, o.request_count, o.cached);
+        }
+
+        case 'tiling': {
+            return new DeepBlueTiling(o.size, o.genome, o.chromosomes, new Id(o.query_id.id),
+                o.request_count, o.cached);
+        }
+
+        case 'intersection': {
+            let subject = toClass(o._subject);
+            let filter = toClass(o._filter);
+            let query_id = new Id(o.query_id.id);
+
+            return new DeepBlueIntersection(<IOperation>subject, <IOperation>filter, query_id, o.cached);
+        }
+
+        case 'regions_filter': {
+            let data = toClass(o._data);
+            let filter = FilterParameter.fromObject(o._params);
+            let query_id = new Id(o.query_id.id);
+
+            return new DeepBlueFilter(<IOperation>data, filter, query_id, o.cached);
+        }
+
+        default: {
+            console.log("Invalid type: ", o._data_type);
+        }
     }
 }

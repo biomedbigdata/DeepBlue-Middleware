@@ -149,10 +149,10 @@ class DeepBlueOperationArgs extends AbstractNamedDataType {
         return textify(this.args);
     }
     name() {
-        throw new Error("Method not implemented.");
+        return this.text();
     }
     id() {
-        throw new Error("Method not implemented.");
+        throw new deepblue_2.Id(this.text());
     }
 }
 exports.DeepBlueOperationArgs = DeepBlueOperationArgs;
@@ -289,7 +289,6 @@ class DeepBlueTiling extends AbstractNamedDataType {
     }
 }
 exports.DeepBlueTiling = DeepBlueTiling;
-//http://localhost:56572/composed_commands/query_info?query_id=q52228http://localhost:56572/composed_commands/query_info?query_id=q52228
 class DeepBlueIntersection extends DeepBlueOperation {
     constructor(_subject, _filter, query_id, cached = false) {
         super(_subject.data(), query_id, "intersection");
@@ -302,16 +301,16 @@ class DeepBlueIntersection extends DeepBlueOperation {
         return new DeepBlueIntersection(this._subject.clone(), this._filter.clone(), this.query_id, this.cached);
     }
     data() {
-        return this._subject.data();
+        return this._subject;
     }
     key() {
         return "intersect_" + this._subject.id().id + '_' + this._filter.id().id;
     }
     getDataName() {
-        return this._subject.data.name;
+        return this._subject.name();
     }
     getDataId() {
-        return this._subject.data().id();
+        return this._subject.id();
     }
     getFilterName() {
         return this._filter.data().name();
@@ -336,13 +335,13 @@ class DeepBlueFilter extends DeepBlueOperation {
         this.cached = cached;
     }
     data() {
-        return this._data.data();
+        return this._data;
     }
     getDataName() {
-        return this._data.data().name();
+        return this._data.name();
     }
     getDataId() {
-        return this._data.data().id();
+        return this._data.id();
     }
     getFilterName() {
         return "filter_regions";
@@ -564,3 +563,46 @@ class FilterParameter {
     }
 }
 exports.FilterParameter = FilterParameter;
+function toClass(o) {
+    switch (o._data_type) {
+        case 'data_parameter': {
+            let data;
+            if (o._data.name) {
+                data = new deepblue_1.Name(o._data.name);
+            }
+            else {
+                data = o._data;
+            }
+            return new DeepBlueDataParameter(data);
+        }
+        case 'operation_args': {
+            return new DeepBlueOperationArgs(o.args);
+        }
+        case 'metadata_parameters': {
+            return new DeepBlueMetadataParameters(o.genome, o.type, o.epigenetic_mark, o.biosource, o.sample, o.technique, o.project);
+        }
+        case 'data_operation': {
+            let data = toClass(o._data);
+            let query_id = new deepblue_2.Id(o.query_id.id);
+            return new DeepBlueOperation(data, query_id, o.command, o.request_count, o.cached);
+        }
+        case 'tiling': {
+            return new DeepBlueTiling(o.size, o.genome, o.chromosomes, new deepblue_2.Id(o.query_id.id), o.request_count, o.cached);
+        }
+        case 'intersection': {
+            let subject = toClass(o._subject);
+            let filter = toClass(o._filter);
+            let query_id = new deepblue_2.Id(o.query_id.id);
+            return new DeepBlueIntersection(subject, filter, query_id, o.cached);
+        }
+        case 'regions_filter': {
+            let data = toClass(o._data);
+            let filter = FilterParameter.fromObject(o._params);
+            let query_id = new deepblue_2.Id(o.query_id.id);
+            return new DeepBlueFilter(data, filter, query_id, o.cached);
+        }
+        default: {
+            console.log("Invalid type: ", o._data_type);
+        }
+    }
+}
