@@ -1,5 +1,5 @@
 import { RequestStatus } from '../domain/status';
-import { DeepBlueResult, DeepBlueOperation, FilterParameter, DeepBlueFilter, DeepBlueMiddlewareOverlapResult } from '../domain/operations';
+import { DeepBlueResult, DeepBlueOperation, FilterParameter, DeepBlueFilter } from '../domain/operations';
 import { DeepBlueService } from "../service/deepblue";
 import { IdName, IdNameCount, FullMetadata } from "../domain/deepblue";
 import { Observable } from "rxjs/Observable";
@@ -91,8 +91,8 @@ export class RegionsEnrichment {
     return response.asObservable();
   };
 
-  private listExperiments(request_status: RequestStatus, epigenetic_mark: string): Observable<[string, any[]]> {
-    return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark).map(((experiments: FullMetadata[]) =>
+  private listExperiments(request_status: RequestStatus, epigenetic_mark: string, genome: string): Observable<[string, any[]]> {
+    return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark, genome).map(((experiments: FullMetadata[]) =>
       <[string, [string, string][]]>[epigenetic_mark, experiments.map((experiment: FullMetadata) =>
         [experiment.id.id, experiment.name, experiment.biosource()])]
     ));
@@ -109,7 +109,7 @@ export class RegionsEnrichment {
       if (epigenetic_mark == "Chromatin State Segmentation") {
         o = this.buildChromatinStatesQueries(request_status, genome);
       } else {
-        o = this.listExperiments(request_status, epigenetic_mark);
+        o = this.listExperiments(request_status, epigenetic_mark, genome);
       }
       observableBatch.push(o);
     });
@@ -186,7 +186,6 @@ export class RegionsEnrichment {
             observer.next(result);
             observer.complete();
           });
-
         });
         observableBatch.push(o);
       });
