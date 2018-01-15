@@ -116,7 +116,7 @@ class ComposedCommandsRoutes {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
-                    let resultObj = new operations_1.DeepBlueMiddlewareGOEnrichtmentResult(result.getDataName(), gene_model_name, result.resultAsTuples());
+                    let resultObj = new operations_1.DeepBlueMiddlewareGOEnrichtmentResult(result.getData().name(), gene_model_name, result.resultAsTuples());
                     rr.push(resultObj);
                 }
                 status.finish(rr);
@@ -191,7 +191,7 @@ class ComposedCommandsRoutes {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
-                    let resultObj = new operations_1.DeepBlueMiddlewareOverlapEnrichtmentResult(result.getDataName(), new deepblue_1.Id(universe_id), datasets, result.resultAsTuples());
+                    let resultObj = new operations_1.DeepBlueMiddlewareOverlapEnrichtmentResult(result.getData().name(), new deepblue_1.Id(universe_id), datasets, result.resultAsTuples());
                     rr.push(resultObj);
                 }
                 status.finish(rr);

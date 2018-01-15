@@ -417,52 +417,85 @@ export class DeepBlueFilter extends DeepBlueOperation {
     }
 }
 
-export class DeepBlueRequest implements IKey {
+export class AbstractDeepBlueRequest implements IKey {
 
-    constructor(private _operation: IOperation, public request_id: Id, public command: string, public request_count?: number) { }
+    canceled = false;
 
-    clone(): DeepBlueRequest {
+    constructor(public _id: Id, public command: string) { }
+
+    isCanceled(): boolean {
+        return this.canceled;
+    }
+
+    cancel() {
+        this.canceled = true;
+    }
+
+    key(): string {
+        return this._id.id;
+    }
+
+    clone(request_count: number) {
+        throw new Error("Method not implemented.");
+    }
+
+    text(): string {
+        return "Request - " + this.command + "(" + this.id + ")";
+    }
+
+    id(): Id {
+        return this._id;
+    }
+}
+
+export class DeepBlueRequest extends AbstractDeepBlueRequest {
+
+    constructor(private _operation: IOperation, public _id: Id, public command: string, public request_count?: number) {
+        super(_id, command);
+    }
+
+    static fromObject(obj: any): DeepBlueRequest {
+        return new DeepBlueRequest(
+            <IOperation>toClass(obj['_operation']), new Id(obj['_id']), obj['command']
+        );
+    }
+
+
+    clone(request_count?: number): DeepBlueRequest {
         return new DeepBlueRequest(
             this._operation.clone(),
-            this.request_id,
-            this.command
+            this._id,
+            this.command,
+            request_count
         );
     }
 
     key(): string {
-        return this.request_id.id;
+        return this._id.id;
     }
 
     data(): IOperation {
         return this._operation;
     }
 
-    getDataName(): string {
-        return this._operation.data().name();
+    getData(): IDataParameter {
+        return this._operation.data();
     }
 
-    getDataId(): Id {
-        return this._operation.data().id();
-    }
-
-    getFilterName(): string {
-        if ((<IFiltered>this._operation).getFilterName) {
-            return (<IFiltered>this._operation).getFilterName();
-        } else {
-            return null;
-        }
-    }
-
-    getFilterQuery(): Id {
-        if ((<IFiltered>this._operation).getFilterName) {
-            return (<IFiltered>this._operation).getFilterQuery();
+    getFilter(): IDataParameter {
+        if ((<IFiltered>this._operation).getFilter) {
+            return (<IFiltered>this._operation).getFilter();
         } else {
             return null;
         }
     }
 
     text(): string {
-        throw this.request_id;
+        throw "Request: " + this._id.id;
+    }
+
+    id(): Id {
+        return this._id;
     }
 }
 
@@ -471,12 +504,17 @@ export interface IResult {
 }
 
 export class DeepBlueResult implements ICloneable {
-    constructor(private _data: DeepBlueRequest, public result: IResult | string, public request_count?: number) {
+    constructor(public request: DeepBlueRequest, public result: IResult | string, public request_count?: number) {
+    }
+
+    static fromObject(obj: any): DeepBlueResult {
+        return new DeepBlueResult(
+            DeepBlueRequest.fromObject(obj['request']), obj['result']);
     }
 
     clone(): DeepBlueResult {
         return new DeepBlueResult(
-            this._data.clone(),
+            this.request.clone(),
             this.result,
             this.request_count
         );
@@ -512,39 +550,28 @@ export class DeepBlueResult implements ICloneable {
 
     resultAsEnrichment(): Object[] {
         if (DeepBlueResult.hasResult(this.result, 'enrichment')) {
-            let r = this.result.enrichment["results"];
-            if (Object.keys(r).length == 0) {
-                return []
-            }
-            return r;
+            return this.result.enrichment["results"];
         }
         return [];
     }
 
-    data(): DeepBlueRequest {
-        return this._data;
+
+    getRequestId(): Id {
+        return this.request._id;
     }
 
-    getDataName(): string {
-        return this._data.getDataName();
+    getData(): IDataParameter {
+        return this.request.getData();
     }
 
-    getDataId(): Id {
-        return this._data.getDataId();
-    }
-
-    getFilterName(): string {
-        return this._data.getFilterName();
-    }
-
-    getFilterQuery(): Id {
-        return this._data.getFilterQuery();
+    getFilter(): IDataParameter {
+        return this.request.getFilter();
     }
 }
 
 export class DeepBlueError extends DeepBlueResult {
-    constructor(private request: DeepBlueRequest, public error: string) {
-        super(request, error);
+    constructor(public request: DeepBlueRequest, public error: string, public request_count?: number) {
+        super(request, error, request_count);
     }
 
     getError() {

@@ -363,57 +363,82 @@ class DeepBlueFilter extends DeepBlueOperation {
     }
 }
 exports.DeepBlueFilter = DeepBlueFilter;
-class DeepBlueRequest {
-    constructor(_operation, request_id, command, request_count) {
+class AbstractDeepBlueRequest {
+    constructor(_id, command) {
+        this._id = _id;
+        this.command = command;
+        this.canceled = false;
+    }
+    isCanceled() {
+        return this.canceled;
+    }
+    cancel() {
+        this.canceled = true;
+    }
+    key() {
+        return this._id.id;
+    }
+    clone(request_count) {
+        throw new Error("Method not implemented.");
+    }
+    text() {
+        return "Request - " + this.command + "(" + this.id + ")";
+    }
+    id() {
+        return this._id;
+    }
+}
+exports.AbstractDeepBlueRequest = AbstractDeepBlueRequest;
+class DeepBlueRequest extends AbstractDeepBlueRequest {
+    constructor(_operation, _id, command, request_count) {
+        super(_id, command);
         this._operation = _operation;
-        this.request_id = request_id;
+        this._id = _id;
         this.command = command;
         this.request_count = request_count;
     }
-    clone() {
-        return new DeepBlueRequest(this._operation.clone(), this.request_id, this.command);
+    static fromObject(obj) {
+        return new DeepBlueRequest(toClass(obj['_operation']), new deepblue_2.Id(obj['_id']), obj['command']);
+    }
+    clone(request_count) {
+        return new DeepBlueRequest(this._operation.clone(), this._id, this.command, request_count);
     }
     key() {
-        return this.request_id.id;
+        return this._id.id;
     }
     data() {
         return this._operation;
     }
-    getDataName() {
-        return this._operation.data().name();
+    getData() {
+        return this._operation.data();
     }
-    getDataId() {
-        return this._operation.data().id();
-    }
-    getFilterName() {
-        if (this._operation.getFilterName) {
-            return this._operation.getFilterName();
-        }
-        else {
-            return null;
-        }
-    }
-    getFilterQuery() {
-        if (this._operation.getFilterName) {
-            return this._operation.getFilterQuery();
+    getFilter() {
+        if (this._operation.getFilter) {
+            return this._operation.getFilter();
         }
         else {
             return null;
         }
     }
     text() {
-        throw this.request_id;
+        throw "Request: " + this._id.id;
+    }
+    id() {
+        return this._id;
     }
 }
 exports.DeepBlueRequest = DeepBlueRequest;
 class DeepBlueResult {
-    constructor(_data, result, request_count) {
-        this._data = _data;
+    constructor(request, result, request_count) {
+        this.request = request;
         this.result = result;
         this.request_count = request_count;
     }
+    static fromObject(obj) {
+        return new DeepBlueResult(DeepBlueRequest.fromObject(obj['request']), obj['result']);
+    }
     clone() {
-        return new DeepBlueResult(this._data.clone(), this.result, this.request_count);
+        return new DeepBlueResult(this.request.clone(), this.result, this.request_count);
     }
     resultAsString() {
         return this.result;
@@ -442,36 +467,27 @@ class DeepBlueResult {
     }
     resultAsEnrichment() {
         if (DeepBlueResult.hasResult(this.result, 'enrichment')) {
-            let r = this.result.enrichment["results"];
-            if (Object.keys(r).length == 0) {
-                return [];
-            }
-            return r;
+            return this.result.enrichment["results"];
         }
         return [];
     }
-    data() {
-        return this._data;
+    getRequestId() {
+        return this.request._id;
     }
-    getDataName() {
-        return this._data.getDataName();
+    getData() {
+        return this.request.getData();
     }
-    getDataId() {
-        return this._data.getDataId();
-    }
-    getFilterName() {
-        return this._data.getFilterName();
-    }
-    getFilterQuery() {
-        return this._data.getFilterQuery();
+    getFilter() {
+        return this.request.getFilter();
     }
 }
 exports.DeepBlueResult = DeepBlueResult;
 class DeepBlueError extends DeepBlueResult {
-    constructor(request, error) {
-        super(request, error);
+    constructor(request, error, request_count) {
+        super(request, error, request_count);
         this.request = request;
         this.error = error;
+        this.request_count = request_count;
     }
     getError() {
         return this.error;

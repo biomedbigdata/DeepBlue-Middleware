@@ -539,7 +539,7 @@ export class DeepBlueService {
     }
 
     let params = new Object();
-    params["request_id"] = op_request.request_id.id;
+    params["request_id"] = op_request._id.id;
 
     let pollSubject = new Subject<DeepBlueResult>();
 
@@ -552,7 +552,7 @@ export class DeepBlueService {
       isProcessing = true;
 
       if (status.canceled) {
-        this.cancelRequest(op_request.request_id, status).subscribe((id) => {
+        this.cancelRequest(op_request._id, status).subscribe((id) => {
           isProcessing = false;
           let op_result = new DeepBlueError(op_request, "Canceled by user");
           timer.unsubscribe();
@@ -562,13 +562,13 @@ export class DeepBlueService {
         return;
       }
 
-      this.execute("info", { "id": op_request.request_id.id }, status).subscribe((info: [DeepBlueResultStatus, any]) => {
+      this.execute("info", { "id": op_request._id.id }, status).subscribe((info: [DeepBlueResultStatus, any]) => {
 
         let state = info[1][0]['state'];
 
         if (state == "done") {
           let client = xmlrpc.createClient(xmlrpc_host);
-          client.methodCall("get_request_data", [op_request.request_id.id, 'anonymous_key'], (err: Object, value: any) => {
+          client.methodCall("get_request_data", [op_request._id.id, 'anonymous_key'], (err: Object, value: any) => {
             if (err) {
               console.error(err);
               isProcessing = false;

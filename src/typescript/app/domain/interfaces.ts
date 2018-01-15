@@ -28,7 +28,5 @@ export interface IOperation extends IDataParameter {
 }
 
 export interface IFiltered extends IOperation {
-    getFilterName(): string;
-
-    getFilterQuery(): Id;
+    getFilter(): IDataParameter;
 }
