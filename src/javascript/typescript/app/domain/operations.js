@@ -442,7 +442,11 @@ class DeepBlueResult {
     }
     resultAsEnrichment() {
         if (DeepBlueResult.hasResult(this.result, 'enrichment')) {
-            return this.result.enrichment["results"];
+            let r = this.result.enrichment["results"];
+            if (Object.keys(r).length == 0) {
+                return [];
+            }
+            return r;
         }
         return [];
     }
@@ -474,31 +478,6 @@ class DeepBlueError extends DeepBlueResult {
     }
 }
 exports.DeepBlueError = DeepBlueError;
-class DeepBlueMiddlewareOverlapResult {
-    constructor(data_name, data_query, filter_name, filter_query, count) {
-        this.data_name = data_name;
-        this.data_query = data_query;
-        this.filter_name = filter_name;
-        this.filter_query = filter_query;
-        this.count = count;
-    }
-    getDataName() {
-        return this.data_name;
-    }
-    getDataQuery() {
-        return this.data_query;
-    }
-    getFilterName() {
-        return this.filter_name;
-    }
-    getFilterQuery() {
-        return this.filter_query;
-    }
-    getCount() {
-        return this.count;
-    }
-}
-exports.DeepBlueMiddlewareOverlapResult = DeepBlueMiddlewareOverlapResult;
 class DeepBlueMiddlewareGOEnrichtmentResult {
     constructor(data_name, gene_model, results) {
         this.data_name = data_name;
@@ -602,7 +581,7 @@ function toClass(o) {
             return new DeepBlueFilter(data, filter, query_id, o.cached);
         }
         default: {
-            console.log("Invalid type: ", o._data_type);
+            console.error("Invalid type: ", o._data_type);
         }
     }
 }

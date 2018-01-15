@@ -12,7 +12,6 @@ import {
     DeepBlueOperation,
     DeepBlueResult,
     FilterParameter,
-    DeepBlueMiddlewareOverlapResult,
     DeepBlueTiling,
     DeepBlueOperationArgs,
     DeepBlueDataParameter,
@@ -69,12 +68,7 @@ export class ComposedCommands {
         query_ops.forEach((op_exp, key) => {
             let o: Observable<DeepBlueResult> = new Observable((observer) => {
                 this.deepBlueService.count_regions(op_exp, status).subscribe((result) => {
-
-                    let overlapResult = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(),
-                        result.getFilterName(), result.getFilterQuery(),
-                        result.resultAsCount());
-
-                    status.addPartialData(overlapResult);
+                    status.addPartialData(result);
                     observer.next(result);
                     observer.complete();
                 })

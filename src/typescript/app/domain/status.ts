@@ -1,4 +1,4 @@
-import { DeepBlueResult, DeepBlueMiddlewareOverlapResult } from './operations';
+import { DeepBlueResult } from './operations';
 
 export class Statistics {
 
@@ -85,7 +85,7 @@ export class RequestStatus {
     this.total_loaded = 0;
     this.step = "";
     this.data = new Array<DeepBlueResult>();
-    this.partialData = new Array<Object>();
+    this.partialData = new Array<DeepBlueResult>();
     this.summarizedData = null;
   }
 
@@ -121,12 +121,17 @@ export class RequestStatus {
     return this.total_to_load;
   }
 
-  addPartialData(data: DeepBlueMiddlewareOverlapResult) {
+  addPartialData(data: DeepBlueResult) {
     this.partialData.push(data);
   }
 
-  mergePartialData(data: Object[]) {
-    this.partialData = this.partialData.concat(data);
+  mergePartialData(data: Object | Object[]) {
+    if (Array.isArray(data)) {
+      this.partialData = this.partialData.concat(data);
+    } else {
+      this.partialData.push(data);
+    }
+
   }
 
   getPartialData(): Object[] {

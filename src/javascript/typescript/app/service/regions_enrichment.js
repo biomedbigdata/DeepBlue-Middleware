@@ -73,8 +73,8 @@ class RegionsEnrichment {
         return response.asObservable();
     }
     ;
-    listExperiments(request_status, epigenetic_mark) {
-        return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => [experiment.id.id, experiment.name, experiment.biosource()])]));
+    listExperiments(request_status, epigenetic_mark, genome) {
+        return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark, genome).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => [experiment.id.id, experiment.name, experiment.biosource()])]));
     }
     //  {[key: string]: [string, string][]};
     listExperimentsMany(request_status, epigenetic_marks, genome) {
@@ -85,7 +85,7 @@ class RegionsEnrichment {
                 o = this.buildChromatinStatesQueries(request_status, genome);
             }
             else {
-                o = this.listExperiments(request_status, epigenetic_mark);
+                o = this.listExperiments(request_status, epigenetic_mark, genome);
             }
             observableBatch.push(o);
         });

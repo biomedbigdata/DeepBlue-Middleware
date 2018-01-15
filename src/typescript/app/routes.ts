@@ -13,7 +13,6 @@ import {
 
 import {
   DeepBlueMiddlewareGOEnrichtmentResult,
-  DeepBlueMiddlewareOverlapResult,
   DeepBlueOperation,
   DeepBlueRequest,
   DeepBlueResult,
@@ -114,10 +113,7 @@ export class ComposedCommandsRoutes {
           let rr = [];
           for (let i = 0; i < results.length; i++) {
             let result: DeepBlueResult = results[i];
-            let overlapResult = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(),
-              result.getFilterName(), result.getFilterQuery(),
-              result.resultAsCount());
-            rr.push(overlapResult);
+            rr.push(result);
           }
           status.finish(rr);
         });
@@ -149,10 +145,7 @@ export class ComposedCommandsRoutes {
         let rr = [];
         for (let i = 0; i < results.length; i++) {
           let result: DeepBlueResult = results[i];
-          let resultObj = new DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(),
-            result.getFilterName(), result.getFilterQuery(),
-            result.resultAsCount());
-          rr.push(resultObj);
+          rr.push(result);
         }
         status.finish(rr);
       });
@@ -323,12 +316,7 @@ export class ComposedCommandsRoutes {
       let data_query = new DeepBlueOperation(new DeepBlueDataParameter(query_id), new Id(query_id), "DIVE data");
 
       var ccos = re.enrichRegionsFast(data_query, genome, status).subscribe((results: DeepBlueResult[]) => {
-        let rr = [];
-        for (let i = 0; i < results.length; i++) {
-          let result: DeepBlueResult = results[i];
-          let resultObj = result.resultAsEnrichment();
-          rr = rr.concat(resultObj);
-        }
+        let rr = [].concat(...results.map((result) => result.resultAsEnrichment()));
         status.finish(rr);
       });
     });

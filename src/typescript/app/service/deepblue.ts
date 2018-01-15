@@ -20,7 +20,6 @@ import {
 
 import {
   DeepBlueIntersection,
-  DeepBlueMiddlewareOverlapResult,
   DeepBlueOperation,
   DeepBlueRequest,
   DeepBlueResult,

@@ -12,7 +12,6 @@ import {
   DeepBlueOperation,
   DeepBlueResult,
   FilterParameter,
-  DeepBlueMiddlewareOverlapResult,
   DeepBlueResultStatus,
   DeepBlueCommandExecutionResult
 } from '../domain/operations';

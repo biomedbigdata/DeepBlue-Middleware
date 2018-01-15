@@ -39,8 +39,7 @@ class ComposedCommands {
         query_ops.forEach((op_exp, key) => {
             let o = new Observable_1.Observable((observer) => {
                 this.deepBlueService.count_regions(op_exp, status).subscribe((result) => {
-                    let overlapResult = new operations_1.DeepBlueMiddlewareOverlapResult(result.getDataName(), result.getDataId(), result.getFilterName(), result.getFilterQuery(), result.resultAsCount());
-                    status.addPartialData(overlapResult);
+                    status.addPartialData(result);
                     observer.next(result);
                     observer.complete();
                 });

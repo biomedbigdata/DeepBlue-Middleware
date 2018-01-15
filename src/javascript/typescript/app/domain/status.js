@@ -95,7 +95,12 @@ class RequestStatus {
         this.partialData.push(data);
     }
     mergePartialData(data) {
-        this.partialData = this.partialData.concat(data);
+        if (Array.isArray(data)) {
+            this.partialData = this.partialData.concat(data);
+        }
+        else {
+            this.partialData.push(data);
+        }
     }
     getPartialData() {
         return this.partialData;
