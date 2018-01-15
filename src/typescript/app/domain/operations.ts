@@ -512,7 +512,11 @@ export class DeepBlueResult implements ICloneable {
 
     resultAsEnrichment(): Object[] {
         if (DeepBlueResult.hasResult(this.result, 'enrichment')) {
-            return this.result.enrichment["results"];
+            let r = this.result.enrichment["results"];
+            if (Object.keys(r).length == 0) {
+                return []
+            }
+            return r;
         }
         return [];
     }
@@ -548,32 +552,6 @@ export class DeepBlueError extends DeepBlueResult {
     }
 }
 
-export class DeepBlueMiddlewareOverlapResult {
-    constructor(public data_name: string, public data_query: Id,
-        public filter_name: string, public filter_query: Id,
-        public count: number) {
-    }
-
-    getDataName(): string {
-        return this.data_name;
-    }
-
-    getDataQuery(): Id {
-        return this.data_query;
-    }
-
-    getFilterName(): string {
-        return this.filter_name;
-    }
-
-    getFilterQuery(): Id {
-        return this.filter_query;
-    }
-
-    getCount(): number {
-        return this.count;
-    }
-}
 
 export class DeepBlueMiddlewareGOEnrichtmentResult {
     constructor(public data_name: string, public gene_model: string,
@@ -691,7 +669,7 @@ function toClass(o: any): IDataParameter {
         }
 
         default: {
-            console.log("Invalid type: ", o._data_type);
+            console.error("Invalid type: ", o._data_type);
         }
     }
 }
