@@ -129,9 +129,7 @@ export class RequestStatus {
     if (Array.isArray(data)) {
       this.partialData = this.partialData.concat(data);
     } else {
-      if (Object.keys(data).length > 0) {
-        this.partialData.push(data);
-      }
+      this.partialData.push(data);
     }
 
   }

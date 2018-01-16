@@ -99,9 +99,7 @@ class RequestStatus {
             this.partialData = this.partialData.concat(data);
         }
         else {
-            if (Object.keys(data).length > 0) {
-                this.partialData.push(data);
-            }
+            this.partialData.push(data);
         }
     }
     getPartialData() {

@@ -467,7 +467,11 @@ class DeepBlueResult {
     }
     resultAsEnrichment() {
         if (DeepBlueResult.hasResult(this.result, 'enrichment')) {
-            return this.result.enrichment["results"];
+            let result = this.result.enrichment["results"];
+            if (Array.isArray(result)) {
+                return result;
+            }
+            return [];
         }
         return [];
     }
