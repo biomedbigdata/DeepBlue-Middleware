@@ -11,7 +11,6 @@ import {
   DeepBlueFilter,
   DeepBlueOperation,
   DeepBlueResult,
-  FilterParameter,
   DeepBlueResultStatus,
   DeepBlueCommandExecutionResult
 } from '../domain/operations';

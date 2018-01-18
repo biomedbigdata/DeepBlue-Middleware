@@ -16,9 +16,9 @@ import {
   DeepBlueOperation,
   DeepBlueRequest,
   DeepBlueResult,
-  FilterParameter,
   DeepBlueMiddlewareOverlapEnrichtmentResult,
-  DeepBlueDataParameter
+  DeepBlueDataParameter,
+  DeepBlueFilterParameters
 } from './domain/operations';
 
 import { Router } from 'express';
@@ -76,7 +76,7 @@ export class ComposedCommandsRoutes {
       let filters = req.query["filters"];
 
       if (filters) {
-        filters = JSON.parse(filters).map((f) => FilterParameter.fromObject(f));
+        filters = JSON.parse(filters).map((f) => DeepBlueFilterParameters.fromObject(f));
       } else {
         filters = [];
       }

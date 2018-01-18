@@ -18,15 +18,18 @@ export interface IKey extends ICloneable, ITextable {
 
 export interface IDataParameter extends INamedDataType, IKey {
     name() : string;
+
     id() : Id;
 }
 
 export interface IOperation extends IDataParameter {
     data() : IDataParameter;
 
+    mainOperation() : IOperation;
+
     cacheIt(query_id: Id): IOperation;
 }
 
 export interface IFiltered extends IOperation {
-    getFilter(): IDataParameter;
+    filter(): IDataParameter;
 }

@@ -24,12 +24,12 @@ import {
   DeepBlueRequest,
   DeepBlueResult,
   DeepBlueFilter,
-  FilterParameter,
   DeepBlueResultStatus,
   DeepBlueError,
   DeepBlueCommandExecutionResult,
   DeepBlueDataParameter,
-  DeepBlueMetadataParameters
+  DeepBlueMetadataParameters,
+  DeepBlueFilterParameters
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -213,7 +213,7 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
-  filter_regions(query_op: DeepBlueOperation, filter: FilterParameter, status: RequestStatus): Observable<DeepBlueFilter> {
+  filter_regions(query_op: DeepBlueOperation, filter: DeepBlueFilterParameters, status: RequestStatus): Observable<DeepBlueFilter> {
     let params = filter.asKeyValue();
     params["query_id"] = query_op.id().id;
 

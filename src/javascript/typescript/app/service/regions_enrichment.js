@@ -34,18 +34,17 @@ class RegionsEnrichment {
                     .flatMap((exp_cached) => {
                     let filter_queries = new Array();
                     for (let state of state_names) {
-                        let filter = new operations_1.FilterParameter("NAME", "==", state, "string");
+                        let filter = new operations_1.DeepBlueFilterParameters("NAME", "==", state, "string");
                         let filter_op = this.deepBlueService.filter_regions(exp_cached, filter, request_status);
                         filter_queries.push(filter_op);
                     }
                     return Observable_1.Observable.forkJoin(filter_queries).map((filters) => {
                         let exp_filter_id = new Array();
                         for (let filter of filters) {
-                            let exp_name = filter.getDataName();
-                            let exp_id = filter.getDataId().id;
+                            let exp_name = filter.mainOperation().name();
                             let filter_name = filter._params.value;
                             let q_id = filter.id().id;
-                            exp_filter_id.push([exp_id, exp_name, experiment.biosource(), filter_name, q_id]);
+                            exp_filter_id.push([experiment.id.id, exp_name, experiment.biosource(), filter_name, q_id]);
                         }
                         return exp_filter_id;
                     });
@@ -58,7 +57,7 @@ class RegionsEnrichment {
                         if (!(filter[3] in states)) {
                             states[filter[3]] = new Array();
                         }
-                        // filter_nmae is the key, values are: exp_id, exp_name, biosource, and query id
+                        // filter_namae is the key, values are: exp_id, exp_name, biosource, and query id
                         states[filter[3]].push([filter[0], filter[1], filter[2], filter[4]]);
                     }
                 }

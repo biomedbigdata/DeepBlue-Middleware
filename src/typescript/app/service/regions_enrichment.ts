@@ -1,5 +1,5 @@
 import { RequestStatus } from '../domain/status';
-import { DeepBlueResult, DeepBlueOperation, FilterParameter, DeepBlueFilter } from '../domain/operations';
+import { DeepBlueResult, DeepBlueOperation, DeepBlueFilter, DeepBlueFilterParameters } from '../domain/operations';
 import { DeepBlueService } from "../service/deepblue";
 import { IdName, IdNameCount, FullMetadata } from "../domain/deepblue";
 import { Observable } from "rxjs/Observable";
@@ -43,7 +43,7 @@ export class RegionsEnrichment {
           .flatMap((exp_cached: DeepBlueOperation) => {
             let filter_queries = new Array<Observable<DeepBlueFilter>>();
             for (let state of state_names) {
-              let filter = new FilterParameter("NAME", "==", state, "string");
+              let filter = new DeepBlueFilterParameters("NAME", "==", state, "string");
               let filter_op = this.deepBlueService.filter_regions(exp_cached, filter, request_status);
               filter_queries.push(filter_op);
             }
@@ -52,11 +52,10 @@ export class RegionsEnrichment {
               let exp_filter_id = new Array<string[]>();
 
               for (let filter of filters) {
-                let exp_name = filter.getDataName();
-                let exp_id = filter.getDataId().id;
+                let exp_name = filter.mainOperation().name();
                 let filter_name = filter._params.value;
                 let q_id = filter.id().id;
-                exp_filter_id.push([exp_id, exp_name, experiment.biosource(), filter_name, q_id]);
+                exp_filter_id.push([experiment.id.id, exp_name, experiment.biosource(), filter_name, q_id]);
               }
 
               return exp_filter_id;
@@ -73,7 +72,8 @@ export class RegionsEnrichment {
             if (!(filter[3] in states)) {
               states[filter[3]] = new Array<[string, string]>();
             }
-            // filter_nmae is the key, values are: exp_id, exp_name, biosource, and query id
+            // filter_namae is the key, values are: exp_id, exp_name, biosource, and query id
+
             states[filter[3]].push([filter[0], filter[1], filter[2], filter[4]]);
           }
         }

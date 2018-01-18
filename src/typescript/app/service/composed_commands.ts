@@ -11,11 +11,11 @@ import {
     DeepBlueFilter,
     DeepBlueOperation,
     DeepBlueResult,
-    FilterParameter,
     DeepBlueTiling,
     DeepBlueOperationArgs,
     DeepBlueDataParameter,
-    DeepBlueError
+    DeepBlueError,
+    DeepBlueFilterParameters
 } from '../domain/operations';
 import { IOperation } from 'app/domain/interfaces';
 
@@ -49,7 +49,7 @@ export class ComposedCommands {
         return Observable.forkJoin(observableBatch);
     }
 
-    filterWithSelected(current_operations: DeepBlueOperation[], filter: FilterParameter,
+    filterWithSelected(current_operations: DeepBlueOperation[], filter: DeepBlueFilterParameters,
         status: RequestStatus): Observable<DeepBlueOperation[]> {
 
         let observableBatch: Observable<DeepBlueOperation>[] = [];
@@ -80,7 +80,7 @@ export class ComposedCommands {
         return Observable.forkJoin(observableBatch);
     }
 
-    applyFilter(current_operations: DeepBlueOperation[], filters: FilterParameter[], status: RequestStatus): Observable<DeepBlueOperation[]> {
+    applyFilter(current_operations: DeepBlueOperation[], filters: DeepBlueFilterParameters[], status: RequestStatus): Observable<DeepBlueOperation[]> {
         if (filters.length == 0) {
             return Observable.of(current_operations);
         } else {
@@ -98,7 +98,7 @@ export class ComposedCommands {
         }
     }
 
-    countOverlaps(data_query_id: DeepBlueOperation[], experiments_name: Name[], filters: FilterParameter[], status: RequestStatus): Observable<DeepBlueResult[]> {
+    countOverlaps(data_query_id: DeepBlueOperation[], experiments_name: Name[], filters: DeepBlueFilterParameters[], status: RequestStatus): Observable<DeepBlueResult[]> {
         var start = new Date().getTime();
         let total = data_query_id.length * experiments_name.length * 4;
         status.reset(total);
@@ -195,7 +195,7 @@ export class ComposedCommands {
                 }
 
                 case "filter": {
-                    let filter_parameters = FilterParameter.fromObject(fullMetadata['values']['args']);
+                    let filter_parameters = DeepBlueFilterParameters.fromObject(fullMetadata['values']['args']);
                     let _query = new Id(fullMetadata.get('args')['query']);
                     return this.loadQuery(_query, status).flatMap((op) => {
                         return Observable.of(new DeepBlueFilter(op, filter_parameters, query_id));

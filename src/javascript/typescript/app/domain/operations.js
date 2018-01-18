@@ -90,7 +90,17 @@ class AbstractNamedDataType {
     }
 }
 exports.AbstractNamedDataType = AbstractNamedDataType;
-class DeepBlueDataParameter extends AbstractNamedDataType {
+class AbstractDataParameter extends AbstractNamedDataType {
+    constructor(_data_type) {
+        super(_data_type);
+        this._data_type = _data_type;
+    }
+    dataType() {
+        return this._data_type;
+    }
+}
+exports.AbstractDataParameter = AbstractDataParameter;
+class DeepBlueDataParameter extends AbstractDataParameter {
     constructor(_data) {
         super("data_parameter");
         this._data = _data;
@@ -131,7 +141,7 @@ class DeepBlueDataParameter extends AbstractNamedDataType {
     }
 }
 exports.DeepBlueDataParameter = DeepBlueDataParameter;
-class DeepBlueOperationArgs extends AbstractNamedDataType {
+class DeepBlueOperationArgs extends AbstractDataParameter {
     constructor(args) {
         super("operation_args");
         this.args = args;
@@ -156,7 +166,7 @@ class DeepBlueOperationArgs extends AbstractNamedDataType {
     }
 }
 exports.DeepBlueOperationArgs = DeepBlueOperationArgs;
-class DeepBlueMetadataParameters extends AbstractNamedDataType {
+class DeepBlueMetadataParameters extends AbstractDataParameter {
     constructor(genome, type, epigenetic_mark, biosource, sample, technique, project) {
         super("metadata_parameters");
         this.genome = genome;
@@ -224,6 +234,42 @@ class DeepBlueMetadataParameters extends AbstractNamedDataType {
     }
 }
 exports.DeepBlueMetadataParameters = DeepBlueMetadataParameters;
+class DeepBlueFilterParameters extends AbstractDataParameter {
+    constructor(field, operation, value, type) {
+        super("filter_parameters");
+        this.field = field;
+        this.operation = operation;
+        this.value = value;
+        this.type = type;
+    }
+    static fromObject(o) {
+        return new DeepBlueFilterParameters(o.field, o.operation, o.value, o.type);
+    }
+    asKeyValue() {
+        let params = {};
+        params["field"] = this.field;
+        params["operation"] = this.operation;
+        params["value"] = this.value;
+        params["type"] = this.type;
+        return params;
+    }
+    text() {
+        return JSON.stringify(this.asKeyValue());
+    }
+    clone() {
+        return new DeepBlueFilterParameters(this.field, this.operation, this.value, this.type);
+    }
+    name() {
+        return "Filter Parameters: " + textify(this.asKeyValue);
+    }
+    id() {
+        return new deepblue_2.Id(textify(this.asKeyValue));
+    }
+    key() {
+        return this.id().id;
+    }
+}
+exports.DeepBlueFilterParameters = DeepBlueFilterParameters;
 class DeepBlueOperation extends AbstractNamedDataType {
     constructor(_data, query_id, command, request_count, cached = false) {
         super("data_operation");
@@ -235,6 +281,12 @@ class DeepBlueOperation extends AbstractNamedDataType {
     }
     data() {
         return this._data;
+    }
+    mainOperation() {
+        if (this._data instanceof DeepBlueOperation) {
+            return this._data.mainOperation();
+        }
+        return this;
     }
     clone(request_count = -1) {
         return new DeepBlueOperation(this._data, this.query_id, this.command, request_count, this.cached);
@@ -249,7 +301,7 @@ class DeepBlueOperation extends AbstractNamedDataType {
         return this.command + " " + this._data.name();
     }
     name() {
-        return this.text();
+        return this._data.name();
     }
     id() {
         return this.query_id;
@@ -268,6 +320,9 @@ class DeepBlueTiling extends AbstractNamedDataType {
     }
     data() {
         return new DeepBlueDataParameter(new deepblue_2.IdName(this.query_id, "Tiling Regions of " + this.size.toLocaleString() + "bp"));
+    }
+    mainOperation() {
+        return this;
     }
     clone(request_count = -1) {
         return new DeepBlueTiling(this.size, this.genome, this.chromosomes, this.query_id, this.request_count, this.cached);
@@ -306,17 +361,11 @@ class DeepBlueIntersection extends DeepBlueOperation {
     key() {
         return "intersect_" + this._subject.id().id + '_' + this._filter.id().id;
     }
-    getDataName() {
-        return this._subject.name();
+    mainOperation() {
+        return this._subject.mainOperation();
     }
-    getDataId() {
-        return this._subject.id();
-    }
-    getFilterName() {
-        return this._filter.data().name();
-    }
-    getFilterQuery() {
-        return this._filter.id();
+    filter() {
+        return this._filter;
     }
     cacheIt(query_id) {
         return new DeepBlueIntersection(this._subject, this._filter, this.query_id, true);
@@ -337,17 +386,11 @@ class DeepBlueFilter extends DeepBlueOperation {
     data() {
         return this._data;
     }
-    getDataName() {
-        return this._data.name();
+    mainOperation() {
+        return this._data.mainOperation();
     }
-    getDataId() {
-        return this._data.id();
-    }
-    getFilterName() {
-        return "filter_regions";
-    }
-    getFilterQuery() {
-        return new deepblue_2.Id(this._params.toString());
+    filter() {
+        return this._params;
     }
     key() {
         return "filter_" + this.id().id;
@@ -413,8 +456,8 @@ class DeepBlueRequest extends AbstractDeepBlueRequest {
         return this._operation.data();
     }
     getFilter() {
-        if (this._operation.getFilter) {
-            return this._operation.getFilter();
+        if (this._operation.filter) {
+            return this._operation.filter();
         }
         else {
             return null;
@@ -536,32 +579,6 @@ class DeepBlueMiddlewareOverlapEnrichtmentResult {
     }
 }
 exports.DeepBlueMiddlewareOverlapEnrichtmentResult = DeepBlueMiddlewareOverlapEnrichtmentResult;
-class FilterParameter {
-    constructor(field, operation, value, type) {
-        this.field = field;
-        this.operation = operation;
-        this.value = value;
-        this.type = type;
-    }
-    static fromObject(o) {
-        return new FilterParameter(o['field'], o['operation'], o['value'], o['type']);
-    }
-    asKeyValue() {
-        let params = {};
-        params["field"] = this.field;
-        params["operation"] = this.operation;
-        params["value"] = this.value;
-        params["type"] = this.type;
-        return params;
-    }
-    text() {
-        return JSON.stringify(this.asKeyValue());
-    }
-    clone() {
-        return new FilterParameter(this.field, this.operation, this.value, this.type);
-    }
-}
-exports.FilterParameter = FilterParameter;
 function toClass(o) {
     switch (o._data_type) {
         case 'data_parameter': {
@@ -596,7 +613,7 @@ function toClass(o) {
         }
         case 'regions_filter': {
             let data = toClass(o._data);
-            let filter = FilterParameter.fromObject(o._params);
+            let filter = DeepBlueFilterParameters.fromObject(o._params);
             let query_id = new deepblue_2.Id(o.query_id.id);
             return new DeepBlueFilter(data, filter, query_id, o.cached);
         }

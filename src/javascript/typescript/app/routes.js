@@ -36,7 +36,7 @@ class ComposedCommandsRoutes {
             let experiments_id = req.query["experiments_id"];
             let filters = req.query["filters"];
             if (filters) {
-                filters = JSON.parse(filters).map((f) => operations_1.FilterParameter.fromObject(f));
+                filters = JSON.parse(filters).map((f) => operations_1.DeepBlueFilterParameters.fromObject(f));
             }
             else {
                 filters = [];
