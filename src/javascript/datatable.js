@@ -52,7 +52,6 @@ var datatable = function(req, res) {
       var result = {};
       result.sEcho = req.query.sEcho;
       result.iTotalDisplayRecords = value[1][0]; //cachdownl
-      e_data.length; // - filtered;
       result.iTotalRecords = value[1][1].length;
       result.data = value[1][1];
       res.send(result);
