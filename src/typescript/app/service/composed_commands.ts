@@ -4,15 +4,20 @@ import { Subject } from "rxjs";
 
 import { DeepBlueService } from '../service/deepblue';
 
-import { IdName, Name } from '../domain/deepblue';
+import { IdName, Name, Id, FullMetadata } from '../domain/deepblue';
 
 import {
     DeepBlueIntersection,
     DeepBlueFilter,
     DeepBlueOperation,
     DeepBlueResult,
-    FilterParameter
+    DeepBlueTiling,
+    DeepBlueOperationArgs,
+    DeepBlueDataParameter,
+    DeepBlueError,
+    DeepBlueFilterParameters
 } from '../domain/operations';
+import { IOperation } from 'app/domain/interfaces';
 
 export class ComposedCommands {
     constructor(private deepBlueService: DeepBlueService) { }
@@ -44,7 +49,7 @@ export class ComposedCommands {
         return Observable.forkJoin(observableBatch);
     }
 
-    filterWithSelected(current_operations: DeepBlueOperation[], filter: FilterParameter,
+    filterWithSelected(current_operations: DeepBlueOperation[], filter: DeepBlueFilterParameters,
         status: RequestStatus): Observable<DeepBlueOperation[]> {
 
         let observableBatch: Observable<DeepBlueOperation>[] = [];
@@ -57,12 +62,13 @@ export class ComposedCommands {
         return Observable.forkJoin(observableBatch);
     }
 
-    countRegionsBatch(query_ids: DeepBlueOperation[], status: RequestStatus): Observable<DeepBlueResult[]> {
+    countRegionsBatch(query_ops: DeepBlueOperation[], status: RequestStatus): Observable<DeepBlueResult[]> {
         let observableBatch: Observable<DeepBlueResult>[] = [];
 
-        query_ids.forEach((op_exp, key) => {
+        query_ops.forEach((op_exp, key) => {
             let o: Observable<DeepBlueResult> = new Observable((observer) => {
                 this.deepBlueService.count_regions(op_exp, status).subscribe((result) => {
+                    status.addPartialData(result);
                     observer.next(result);
                     observer.complete();
                 })
@@ -74,7 +80,7 @@ export class ComposedCommands {
         return Observable.forkJoin(observableBatch);
     }
 
-    applyFilter(current_operations: DeepBlueOperation[], filters: FilterParameter[], status: RequestStatus): Observable<DeepBlueOperation[]> {
+    applyFilter(current_operations: DeepBlueOperation[], filters: DeepBlueFilterParameters[], status: RequestStatus): Observable<DeepBlueOperation[]> {
         if (filters.length == 0) {
             return Observable.of(current_operations);
         } else {
@@ -92,7 +98,7 @@ export class ComposedCommands {
         }
     }
 
-    countOverlaps(data_query_id: DeepBlueOperation[], experiments_name: Name[], filters: FilterParameter[], status: RequestStatus): Observable<DeepBlueResult[]> {
+    countOverlaps(data_query_id: DeepBlueOperation[], experiments_name: Name[], filters: DeepBlueFilterParameters[], status: RequestStatus): Observable<DeepBlueResult[]> {
         var start = new Date().getTime();
         let total = data_query_id.length * experiments_name.length * 4;
         status.reset(total);
@@ -104,11 +110,11 @@ export class ComposedCommands {
         this.selectMultipleExperiments(experiments_name, status).subscribe((selected_experiments: DeepBlueOperation[]) => {
             status.setStep("Overlaping regions");
 
-            this.applyFilter(selected_experiments, filters, status).subscribe((filtered_data_id: DeepBlueFilter[]) => {
-                this.intersectWithSelected(data_query_id, filtered_data_id, status).subscribe((overlap_ids: DeepBlueOperation[]) => {
+            this.applyFilter(selected_experiments, filters, status).subscribe((filtered_data: DeepBlueFilter[]) => {
+                this.intersectWithSelected(data_query_id, filtered_data, status).subscribe((overlap_ops: DeepBlueOperation[]) => {
                     status.setStep("Intersecting regions");
 
-                    this.countRegionsBatch(overlap_ids, status).subscribe((datum: DeepBlueResult[]) => {
+                    this.countRegionsBatch(overlap_ops, status).subscribe((datum: DeepBlueResult[]) => {
                         var end = new Date().getTime();
                         setTimeout(() => {
                             response.next(datum);
@@ -166,6 +172,62 @@ export class ComposedCommands {
         });
 
         return Observable.forkJoin(observableBatch);
+    }
+
+    loadQuery(query_id: Id, status: RequestStatus): Observable<IOperation> {
+
+        return this.deepBlueService.info(query_id, status).map((fullMetadata: FullMetadata) => {
+            let type = fullMetadata.type();
+            let id = fullMetadata.id;
+            let name = fullMetadata.name;
+
+            let content;
+            if (name) {
+                content = new DeepBlueDataParameter(new Name(name));
+            } else {
+                content = new DeepBlueOperationArgs(fullMetadata.get('args'));
+            }
+
+            switch (type) {
+                case "annotation_select":
+                case "experiment_select": {
+                    return Observable.of(new DeepBlueOperation(content, id, type));
+                }
+
+                case "filter": {
+                    let filter_parameters = DeepBlueFilterParameters.fromObject(fullMetadata['values']['args']);
+                    let _query = new Id(fullMetadata.get('args')['query']);
+                    return this.loadQuery(_query, status).flatMap((op) => {
+                        return Observable.of(new DeepBlueFilter(op, filter_parameters, query_id));
+                    });
+                }
+
+                case "tiling": {
+                    let genome = fullMetadata.get('genome');
+                    let size = Number(fullMetadata.get('size'));
+                    let chromosomes = fullMetadata.get('chromosomes');
+                    return Observable.of(new DeepBlueTiling(size, genome, chromosomes, id));
+                }
+
+                case "intersect":
+                case "overlap": {
+                    let data = new Id(fullMetadata.get('args')['qid_1']);
+                    let filter = new Id(fullMetadata.get('args')['qid_2']);
+
+                    return Observable.forkJoin([
+                        this.loadQuery(data, status),
+                        this.loadQuery(filter, status)
+                    ]).map(([op_data, op_filter]) => {
+                        return new DeepBlueIntersection(op_data, op_filter, id);
+                    })
+                }
+
+                default: {
+                    console.error("Invalid type", type);
+                    return Observable.of(new DeepBlueOperation(new DeepBlueDataParameter(name), id, type));
+                }
+            }
+        }).flatMap((o) => o);
     }
 
     private handleError(error: Response | any) {

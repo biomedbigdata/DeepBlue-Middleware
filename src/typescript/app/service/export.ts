@@ -1,12 +1,6 @@
-
 /*
-
-
 export class RegionsEnrichment {
   constructor(private deepBlueService: DeepBlueService) { }
-
-
-
 
   }
   /*
@@ -39,6 +33,6 @@ header += "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstL
 header += 'track name=EpiExplorer description="' + regionSet + '" visibility=2 url="http://epiexplorer.mpi-inf.mpg.de/index.php?userdatasets=' + regionSet + '"\n'
 regionsContent = header + regionsContent
 
-
 }
-  */
+
+*/

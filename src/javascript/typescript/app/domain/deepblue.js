@@ -1,5 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+class Id {
+    constructor(id) {
+        this.id = id;
+    }
+    key() {
+        return this.id;
+    }
+    clone() {
+        return new Id(this.id);
+    }
+    text() {
+        return 'ID: ' + this.id;
+    }
+}
+exports.Id = Id;
 class Name {
     constructor(name) {
         this.name = name;
@@ -7,77 +22,85 @@ class Name {
     key() {
         return this.name;
     }
+    text() {
+        throw name;
+    }
     clone() {
         return new Name(this.name);
     }
 }
 exports.Name = Name;
-class IdName {
+class IdName extends Name {
     constructor(id, name) {
+        super(name);
         this.id = id;
         this.name = name;
     }
     key() {
-        return this.id;
+        return this.id.id;
     }
     clone() {
         return new IdName(this.id, this.name);
     }
+    text() {
+        return this.name + "(" + this.id + ")";
+    }
 }
 exports.IdName = IdName;
-class IdNameCount {
+class IdNameCount extends IdName {
     constructor(id, name, count) {
+        super(id, name);
         this.id = id;
         this.name = name;
         this.count = count;
     }
-    key() {
-        return this.id;
+    Count() {
+        return this.count;
     }
     clone() {
-        return new IdName(this.id, this.name);
+        return new IdNameCount(this.id, this.name, this.count);
     }
 }
 exports.IdNameCount = IdNameCount;
 class EpigeneticMark extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.EpigeneticMark = EpigeneticMark;
 class BioSource extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.BioSource = BioSource;
 class Annotation extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.Annotation = Annotation;
 class Experiment extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.Experiment = Experiment;
 class Genome extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.Genome = Genome;
 class GeneModel extends IdName {
     constructor(data) {
-        super(data[0], data[1]);
+        super(new Id(data[0]), data[1]);
     }
 }
 exports.GeneModel = GeneModel;
 class Gene extends IdName {
     constructor(data) {
-        super(data["_id"], data["gene_name"]);
+        super(new Id(data["_id"]), data["gene_name"]);
         this.data = data;
     }
     gene_id() {
@@ -90,7 +113,7 @@ class Gene extends IdName {
 exports.Gene = Gene;
 class FullMetadata extends IdName {
     constructor(data) {
-        super(data["_id"], data["name"]);
+        super(new Id(data["_id"]), data["name"]);
         this.values = data;
     }
     get(key) {
@@ -107,6 +130,15 @@ class FullMetadata extends IdName {
     }
     columns() {
         return this.values["columns"];
+    }
+    biosource() {
+        return this.values['sample_info']['biosource_name'];
+    }
+    type() {
+        return this.values["type"];
+    }
+    get_extra_metadata_field(field) {
+        return this.values['extra_metadata'][field];
     }
     clone() {
         return new FullMetadata(this.values);

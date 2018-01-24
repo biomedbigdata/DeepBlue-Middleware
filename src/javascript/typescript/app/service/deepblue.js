@@ -92,13 +92,11 @@ class DeepBlueService {
         this.resultCache = new cache_1.DataCache();
     }
     init() {
+        if (this.isInitialized()) {
+            return Observable_1.Observable.of(true);
+        }
         let client = xmlrpc.createClient(xmlrpc_host);
         let subject = new Subject_1.Subject();
-        if (this.isInitialized()) {
-            subject.next(true);
-            subject.complete();
-            return subject.asObservable();
-        }
         client.methodCall("commands", [], (error, value) => {
             let commands = value[1];
             for (let command_name in commands) {
@@ -119,12 +117,19 @@ class DeepBlueService {
         let command = this._commands[command_name];
         return command.makeRequest(parameters).map((body) => {
             let command_status = body[0];
+            let status_result;
+            if (command_status == "error") {
+                status_result = operations_1.DeepBlueResultStatus.Error;
+            }
+            else {
+                status_result = operations_1.DeepBlueResultStatus.Okay;
+            }
             let response = body[1] || "";
             if (command_status === "error") {
                 console.error(command_name, parameters, response);
             }
             status.increment();
-            return [command_status, response];
+            return [status_result, response];
         });
     }
     selectExperiment(experiment, status) {
@@ -140,24 +145,33 @@ class DeepBlueService {
         params["experiment_name"] = experiment.name;
         return this.execute("select_experiments", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueSelectData(experiment, response[1], "select_experiment");
+            return new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(experiment), new deepblue_1.Id(response[1]), "select_experiment");
         }).do((operation) => {
             this.idNamesQueryCache.put(experiment, operation);
         }).catch(this.handleError);
     }
     select_regions_from_metadata(genome, type, epigenetic_mark, biosource, sample, technique, project, status) {
-        const params = new operations_1.DeepBlueParameters(genome, type, epigenetic_mark, biosource, sample, technique, project);
+        const params = new operations_1.DeepBlueMetadataParameters(genome, type, epigenetic_mark, biosource, sample, technique, project);
         return this.execute("select_regions", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueSelectData(params, response[1], "select_regions_from_metadata");
+            return new operations_1.DeepBlueOperation(params, new deepblue_1.Id(response[1]), "select_regions_from_metadata");
         }).catch(this.handleError);
     }
-    filter_regions(query_data_id, filter, status) {
+    filter_regions(query_op, filter, status) {
         let params = filter.asKeyValue();
-        params["query_id"] = query_data_id.queryId();
+        params["query_id"] = query_op.id().id;
         return this.execute("filter_regions", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueFilter(query_data_id, filter, response[1]);
+            return new operations_1.DeepBlueFilter(query_op, filter, new deepblue_1.Id(response[1]));
+        }).catch(this.handleError);
+    }
+    query_cache(query_data, status) {
+        let params = new Object();
+        params["query_id"] = query_data.id().id;
+        params["cache"] = "true";
+        return this.execute("query_cache", params, status).map((response) => {
+            status.increment();
+            return query_data.cacheIt(new deepblue_1.Id(response[1]));
         }).catch(this.handleError);
     }
     selectGenes(gene_model_name, status) {
@@ -170,7 +184,7 @@ class DeepBlueService {
         params['gene_model'] = gene_model_name.name;
         return this.execute("select_genes", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueSelectData(gene_model_name, response[1], 'select_genes');
+            return new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(gene_model_name), new deepblue_1.Id(response[1]), 'select_genes');
         }).do((operation) => {
             this.idNamesQueryCache.put(gene_model_name, operation);
         }).catch(this.handleError);
@@ -183,11 +197,11 @@ class DeepBlueService {
             return Observable_1.Observable.of(cached_intersection);
         }
         let params = {};
-        params["query_data_id"] = query_data_id.queryId();
-        params["query_filter_id"] = query_filter_id.queryId();
+        params["query_data_id"] = query_data_id.id().id;
+        params["query_filter_id"] = query_filter_id.id().id;
         return this.execute("intersection", params, status)
             .map((response) => {
-            return new operations_1.DeepBlueIntersection(query_data_id, query_filter_id, response[1]);
+            return new operations_1.DeepBlueIntersection(query_data_id, query_filter_id, new deepblue_1.Id(response[1]));
         })
             .do((operation) => this.intersectsQueryCache.put(cache_key, operation))
             .catch(this.handleError);
@@ -200,34 +214,61 @@ class DeepBlueService {
         }
         else {
             let params = new Object();
-            params["query_id"] = op_exp.queryId();
+            params["query_id"] = op_exp.id().id;
             return this.execute("count_regions", params, status).map((data) => {
-                let request = new operations_1.DeepBlueRequest(op_exp, data[1], "count_regions");
+                let request = new operations_1.DeepBlueRequest(op_exp, new deepblue_1.Id(data[1]), "count_regions");
                 this.requestCache.put(op_exp, request);
                 return request;
-            }).flatMap((request_id) => {
-                return this.getResult(request_id, status);
+            }).flatMap((request) => {
+                return this.getResult(request, status);
             });
         }
     }
     distinct_column_values(data, field, status) {
         const params = new Object();
-        params['query_id'] = data.queryId();
+        params['query_id'] = data.id().id;
         params['field'] = field;
         return this.execute("distinct_column_values", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueRequest(data, response[1], 'distinct_column_values');
+            return new operations_1.DeepBlueRequest(data, new deepblue_1.Id(response[1]), 'distinct_column_values');
         }).flatMap((request_id) => {
             return this.getResult(request_id, status);
         }).catch(this.handleError);
     }
     enrich_regions_go_terms(data, gene_model_name, status) {
         const params = new Object();
-        params['query_id'] = data.queryId();
+        params['query_id'] = data.id().id;
         params['gene_model'] = gene_model_name.name;
         return this.execute("enrich_regions_go_terms", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueRequest(data, response[1], 'enrich_regions_go_terms');
+            return new operations_1.DeepBlueRequest(data, new deepblue_1.Id(response[1]), 'enrich_regions_go_terms');
+        }).flatMap((request_id) => {
+            return this.getResult(request_id, status);
+        }).catch(this.handleError);
+    }
+    enrich_regions_overlap(data, genome, universe_id, datasets, status) {
+        const params = new Object();
+        params['query_id'] = data.id().id;
+        params['background_query_id'] = universe_id;
+        params['datasets'] = datasets;
+        params["genome"] = genome;
+        return this.execute("enrich_regions_overlap", params, status).map((response) => {
+            status.increment();
+            return new operations_1.DeepBlueRequest(data, new deepblue_1.Id(response[1]), 'enrich_regions_overlap');
+        }).flatMap((request_id) => {
+            return this.getResult(request_id, status);
+        }).catch(this.handleError);
+    }
+    enrich_regions_fast(data, genome, filter, status) {
+        const params = new Object();
+        params['query_id'] = data.id().id;
+        params['genome'] = genome;
+        for (let o of Object.keys(filter)) {
+            params[o] = filter[o];
+        }
+        return this.execute("enrich_regions_fast", params, status).map((response) => {
+            status.increment();
+            return new operations_1.DeepBlueRequest(data, new deepblue_1.Id(response[1]), 'enrich_regions_fast');
         }).flatMap((request_id) => {
             return this.getResult(request_id, status);
         }).catch(this.handleError);
@@ -244,7 +285,7 @@ class DeepBlueService {
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
-    collection_experiments_count(status, controlled_vocabulary, type, genome) {
+    collection_experiments_count(status, controlled_vocabulary, type, genome, technique) {
         const params = new Object();
         params["controlled_vocabulary"] = controlled_vocabulary;
         if (type) {
@@ -253,14 +294,17 @@ class DeepBlueService {
         if (genome) {
             params["genome"] = genome;
         }
+        if (technique) {
+            params["technique"] = technique;
+        }
         return this.execute("collection_experiments_count", params, status).map((response) => {
             const data = response[1] || [];
             return data.map((value) => {
-                return new deepblue_1.IdNameCount(value[0], value[1], value[2]);
+                return new deepblue_1.IdNameCount(new deepblue_1.Id(value[0]), value[1], value[2]);
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
-    list_experiments(status, type, epigenetic_mark) {
+    list_experiments(status, type, epigenetic_mark, genome) {
         const params = new Object();
         if (type) {
             params["type"] = type;
@@ -268,12 +312,33 @@ class DeepBlueService {
         if (epigenetic_mark) {
             params["epigenetic_mark"] = epigenetic_mark;
         }
+        if (genome) {
+            params["genome"] = genome;
+        }
         return this.execute("list_experiments", params, status).map((response) => {
             const data = response[1] || [];
             return data.map((value) => {
-                return new deepblue_1.GeneModel(value);
+                return new deepblue_1.Experiment(value);
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
+    }
+    list_experiments_full(status, type, epigenetic_mark, genome) {
+        return this.list_experiments(status, type, epigenetic_mark, genome).flatMap((ids) => this.infos(ids, status));
+    }
+    get_biosource_related(biosource, status) {
+        const params = new Object();
+        params["biosource"] = biosource;
+        return this.execute("get_biosource_related", params, status).map((response) => new operations_1.DeepBlueCommandExecutionResult(response[0], response[1]));
+    }
+    get_biosource_children(biosource, status) {
+        const params = new Object();
+        params["biosource"] = biosource;
+        return this.execute("get_biosource_children", params, status).map((response) => new operations_1.DeepBlueCommandExecutionResult(response[0], response[1]));
+    }
+    get_biosource_synonyms(biosource, status) {
+        const params = new Object();
+        params["biosource"] = biosource;
+        return this.execute("get_biosource_synonyms", params, status).map((response) => new operations_1.DeepBlueCommandExecutionResult(response[0], response[1]));
     }
     list_gene_models(status) {
         const params = new Object();
@@ -301,26 +366,45 @@ class DeepBlueService {
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
-    info(id_name, status) {
-        let object = this.IdObjectCache.get(id_name);
+    info(id, status) {
+        let object = this.IdObjectCache.get(id);
         if (object) {
             status.increment();
             return Observable_1.Observable.of(object);
         }
-        return this.execute("info", id_name, status).map((response) => {
+        const params = new Object();
+        params["id"] = id.id;
+        return this.execute("info", params, status).map((response) => {
             return new deepblue_1.FullMetadata(response[1][0]);
         })
             .do((info_object) => {
-            this.IdObjectCache.put(id_name, info_object);
+            this.IdObjectCache.put(id, info_object);
         });
     }
     infos(id_names, status) {
         let total = 0;
         let observableBatch = [];
         id_names.forEach((id_name) => {
-            observableBatch.push(this.info(id_name, status));
+            observableBatch.push(this.info(id_name.id, status));
         });
         return Observable_1.Observable.forkJoin(observableBatch);
+    }
+    inputRegions(genome, region_set, status) {
+        const params = new Object();
+        params['genome'] = genome.name;
+        params['region_set'] = region_set;
+        return this.execute("input_regions", params, status).map((response) => {
+            status.increment();
+            return new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter("User regions"), new deepblue_1.Id(response[1]), 'input_regions');
+        }).catch(this.handleError);
+    }
+    cancelRequest(id, status) {
+        const params = new Object();
+        params['id'] = id.id;
+        return this.execute("cancel_request", params, status).map((response) => {
+            status.increment();
+            return response;
+        }).catch(this.handleError);
     }
     getResult(op_request, status) {
         let result = this.resultCache.get(op_request);
@@ -329,24 +413,51 @@ class DeepBlueService {
             return Observable_1.Observable.of(result);
         }
         let params = new Object();
-        params["request_id"] = op_request.request_id;
+        params["request_id"] = op_request._id.id;
         let pollSubject = new Subject_1.Subject();
-        let client = xmlrpc.createClient(xmlrpc_host);
         let isProcessing = false;
         let timer = Observable_1.Observable.timer(0, utils_1.Utils.rnd(500, 1000)).do(() => {
             if (isProcessing) {
                 return;
             }
             isProcessing = true;
-            client.methodCall("get_request_data", [op_request.request_id, 'anonymous_key'], (err, value) => {
-                if (err) {
-                    console.error(err);
+            if (status.canceled) {
+                this.cancelRequest(op_request._id, status).subscribe((id) => {
                     isProcessing = false;
-                    return;
+                    let op_result = new operations_1.DeepBlueError(op_request, "Canceled by user");
+                    timer.unsubscribe();
+                    pollSubject.next(op_result);
+                    pollSubject.complete();
+                });
+                return;
+            }
+            this.execute("info", { "id": op_request._id.id }, status).subscribe((info) => {
+                let state = info[1][0]['state'];
+                if (state == "done") {
+                    let client = xmlrpc.createClient(xmlrpc_host);
+                    client.methodCall("get_request_data", [op_request._id.id, 'anonymous_key'], (err, value) => {
+                        if (err) {
+                            console.error(err);
+                            isProcessing = false;
+                            return;
+                        }
+                        if (value[0] === "okay") {
+                            status.increment();
+                            let op_result = new operations_1.DeepBlueResult(op_request, value[1]);
+                            this.resultCache.put(op_request, op_result);
+                            timer.unsubscribe();
+                            pollSubject.next(op_result);
+                            pollSubject.complete();
+                        }
+                        else {
+                            isProcessing = false;
+                        }
+                    });
                 }
-                if (value[0] === "okay") {
+                else if (state == "error") {
                     status.increment();
-                    let op_result = new operations_1.DeepBlueResult(op_request, value[1]);
+                    let message = info[1][0]['message'];
+                    let op_result = new operations_1.DeepBlueError(op_request, message);
                     this.resultCache.put(op_request, op_result);
                     timer.unsubscribe();
                     pollSubject.next(op_result);

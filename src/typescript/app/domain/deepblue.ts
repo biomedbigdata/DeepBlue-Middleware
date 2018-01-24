@@ -1,11 +1,32 @@
 import { IKey } from '../domain/interfaces';
 
 
+export class Id implements IKey {
+    constructor(public id: string) { }
+
+    key(): string {
+        return this.id;
+    }
+
+    clone(): Id {
+        return new Id(this.id);
+    }
+
+    text() : string {
+        return 'ID: ' + this.id;
+    }
+}
+
 export class Name implements IKey {
+
     constructor(public name: string) { }
 
     key(): string {
         return this.name;
+    }
+
+    text(): string {
+        throw name;
     }
 
     clone(): Name {
@@ -13,72 +34,80 @@ export class Name implements IKey {
     }
 }
 
-export class IdName implements IKey {
-    constructor(public id: string, public name: string) { }
+export class IdName extends Name {
+    constructor(public id: Id, public name: string) {
+        super(name)
+    }
 
     key(): string {
-        return this.id;
+        return this.id.id;
     }
 
     clone(): IdName {
         return new IdName(this.id, this.name);
+    }
+
+    text() : string {
+        return this.name + "(" + this.id + ")";
     }
 }
 
-export class IdNameCount implements IKey {
+export class IdNameCount extends IdName {
 
-    constructor(public id: string, public name: string, public count: number) { }
+    constructor(public id: Id, public name: string, public count: number) {
+        super(id, name);
+    }
 
-    key(): string {
-        return this.id;
+    Count() : number {
+        return this.count;
     }
 
     clone(): IdName {
-        return new IdName(this.id, this.name);
+        return new IdNameCount(this.id, this.name, this.count);
     }
 }
 
 
 export class EpigeneticMark extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 export class BioSource extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 export class Annotation extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 export class Experiment extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 export class Genome extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 
 export class GeneModel extends IdName {
     constructor(data: string[]) {
-        super(data[0], data[1])
+        super(new Id(data[0]), data[1])
     }
 }
 
 export class Gene extends IdName {
     constructor(private data: {}) {
-        super(data["_id"], data["gene_name"])
+        super(new Id(data["_id"]), data["gene_name"])
     }
 
     gene_id(): string {
@@ -91,10 +120,10 @@ export class Gene extends IdName {
 }
 
 export class FullMetadata extends IdName {
-    values: Object;
+    protected values: Object;
 
     constructor(data: Object) {
-        super(data["_id"], data["name"]);
+        super(new Id(data["_id"]), data["name"]);
         this.values = data;
     }
 
@@ -116,6 +145,18 @@ export class FullMetadata extends IdName {
 
     columns(): Object {
         return this.values["columns"];
+    }
+
+    biosource() : string {
+        return this.values['sample_info']['biosource_name'];
+    }
+
+    type(): string {
+        return this.values["type"];
+    }
+
+    get_extra_metadata_field(field: string): string {
+        return <string>this.values['extra_metadata'][field];
     }
 
     clone(): FullMetadata {
