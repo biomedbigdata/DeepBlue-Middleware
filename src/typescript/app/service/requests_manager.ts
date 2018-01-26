@@ -21,7 +21,6 @@ export class RequestManager {
 
   cancelRequest(request_id: string) {
     let status = this.requests[request_id];
-    this.requests[request_id];
     status.cancel();
   }
 }

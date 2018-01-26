@@ -119,10 +119,8 @@ export class DeepBlueService {
 
   idNamesQueryCache = new DataCache<Name, DeepBlueOperation>();
 
-
   intersectsQueryCache = new MultiKeyDataCache<DeepBlueOperation, DeepBlueIntersection>();
 
-  requestCache = new DataCache<DeepBlueOperation, DeepBlueRequest>();
   resultCache = new DataCache<DeepBlueRequest, DeepBlueResult>()
 
 
@@ -277,24 +275,15 @@ export class DeepBlueService {
   }
 
   count_regions(op_exp: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueResult> {
+    let params = new Object();
+    params["query_id"] = op_exp.id().id;
 
-    if (this.requestCache.get(op_exp)) {
-      status.increment();
-      let cached_result = this.requestCache.get(op_exp);
-      return this.getResult(cached_result, status);
-
-    } else {
-      let params = new Object();
-      params["query_id"] = op_exp.id().id;
-
-      return this.execute("count_regions", params, status).map((data: [string, string]) => {
-        let request = new DeepBlueRequest(op_exp, new Id(data[1]), "count_regions");
-        this.requestCache.put(op_exp, request);
-        return request;
-      }).flatMap((request) => {
-        return this.getResult(request, status);
-      })
-    }
+    return this.execute("count_regions", params, status).map((data: [string, string]) => {
+      let request = new DeepBlueRequest(op_exp, new Id(data[1]), "count_regions");
+      return request;
+    }).flatMap((request) => {
+      return this.getResult(request, status);
+    })
   }
 
   distinct_column_values(data: DeepBlueOperation, field: string, status: RequestStatus): Observable<DeepBlueResult> {
@@ -595,7 +584,6 @@ export class DeepBlueService {
           timer.unsubscribe();
           pollSubject.next(op_result);
           pollSubject.complete();
-
         } else { // 'new' or 'running'
           isProcessing = false;
         }

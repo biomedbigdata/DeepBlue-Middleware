@@ -17,7 +17,6 @@ class RequestManager {
     }
     cancelRequest(request_id) {
         let status = this.requests[request_id];
-        this.requests[request_id];
         status.cancel();
     }
 }

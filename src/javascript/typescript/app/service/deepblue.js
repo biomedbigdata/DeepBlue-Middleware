@@ -88,7 +88,6 @@ class DeepBlueService {
         this.IdObjectCache = new cache_1.DataCache();
         this.idNamesQueryCache = new cache_1.DataCache();
         this.intersectsQueryCache = new cache_1.MultiKeyDataCache();
-        this.requestCache = new cache_1.DataCache();
         this.resultCache = new cache_1.DataCache();
     }
     init() {
@@ -207,22 +206,14 @@ class DeepBlueService {
             .catch(this.handleError);
     }
     count_regions(op_exp, status) {
-        if (this.requestCache.get(op_exp)) {
-            status.increment();
-            let cached_result = this.requestCache.get(op_exp);
-            return this.getResult(cached_result, status);
-        }
-        else {
-            let params = new Object();
-            params["query_id"] = op_exp.id().id;
-            return this.execute("count_regions", params, status).map((data) => {
-                let request = new operations_1.DeepBlueRequest(op_exp, new deepblue_1.Id(data[1]), "count_regions");
-                this.requestCache.put(op_exp, request);
-                return request;
-            }).flatMap((request) => {
-                return this.getResult(request, status);
-            });
-        }
+        let params = new Object();
+        params["query_id"] = op_exp.id().id;
+        return this.execute("count_regions", params, status).map((data) => {
+            let request = new operations_1.DeepBlueRequest(op_exp, new deepblue_1.Id(data[1]), "count_regions");
+            return request;
+        }).flatMap((request) => {
+            return this.getResult(request, status);
+        });
     }
     distinct_column_values(data, field, status) {
         const params = new Object();
