@@ -350,12 +350,23 @@ class ComposedCommandsRoutes {
             let dbr = new operations_1.DeepBlueRequest(sr, new deepblue_1.Id(request_id), "export_ucsc");
             dbs.getResult(dbr, status).subscribe((result) => {
                 let regions = result.resultAsString();
-                let description = "## Export of DeepBlue Regions to UCSC genome browser\n";
-                let regionsSplit = regions.split("\n", 2);
-                let firstLine = regionsSplit[0].split("\t");
-                let position = "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n";
-                let trackInfo = 'track name=DeepBlue Regions="' + request_id + '" visibility=2 url="deepblue.mpi-inf.mpg.de/request.php?_id=' + request_id + '"\n';
-                let content = description + position + trackInfo + regions;
+                let content = "";
+                if (regions.length > 0) {
+                    let regions_chr_star_end = regions.split("\n").map((line) => {
+                        let split = line.split("\t");
+                        if (split.length < 3) {
+                            return "";
+                        }
+                        return [split[0], split[1], split[2]].join("\t");
+                    }).join("\n");
+                    console.log(regions_chr_star_end);
+                    let description = "## Export of DeepBlue Regions to UCSC genome browser\n";
+                    let regionsSplit = regions.split("\n", 2);
+                    let firstLine = regionsSplit[0].split("\t");
+                    let position = "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n";
+                    let trackInfo = 'track name=DeepBlue Regions="' + request_id + '" visibility=2 url="deepblue.mpi-inf.mpg.de/request.php?_id=' + request_id + '"\n';
+                    content = description + position + trackInfo + regions_chr_star_end;
+                }
                 res.header('Content-Type: text/plain');
                 res.header('Content-Type: application/octet-stream');
                 res.header('Content-Type: application/download');
