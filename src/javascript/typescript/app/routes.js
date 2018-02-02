@@ -359,7 +359,6 @@ class ComposedCommandsRoutes {
                         }
                         return [split[0], split[1], split[2]].join("\t");
                     }).join("\n");
-                    console.log(regions_chr_star_end);
                     let description = "## Export of DeepBlue Regions to UCSC genome browser\n";
                     let regionsSplit = regions.split("\n", 2);
                     let firstLine = regionsSplit[0].split("\t");
