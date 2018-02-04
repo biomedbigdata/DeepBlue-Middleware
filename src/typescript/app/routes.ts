@@ -37,6 +37,8 @@ import * as multer from 'multer';
 import { DeepBlueService } from 'app/service/deepblue';
 import { ComposedData } from 'app/service/composed_data';
 import { request } from 'https';
+import { CANCELLED } from 'dns';
+import { Observable } from 'rxjs/Observable';
 
 export class ComposedCommandsRoutes {
 
@@ -472,45 +474,80 @@ export class ComposedCommandsRoutes {
       return;
     }
 
+
+    let request_id_object = new Id(request_id);
     let status = ComposedCommandsRoutes.requestManager.startRequest();
 
-    Manager.getDeepBlueService().subscribe((dbs: DeepBlueService) => {
-      // TODO: create dummy query and request
-      let sr = new DeepBlueOperation(new DeepBlueDataParameter("dummy"), new Id("dummy"), "dummy");
-      let dbr = new DeepBlueRequest(sr, new Id(request_id), "export_ucsc");
-      dbs.getResult(dbr, status).subscribe((result: DeepBlueResult) => {
-        let regions = result.resultAsString();
+    Observable.forkJoin([Manager.getDeepBlueService(), Manager.getComposedCommands()]).subscribe(([a, b]: any[]) => {
+      let dbs: DeepBlueService = a;
+      let cc: ComposedCommands = b;
 
-        let content = "";
-        if (regions.length > 0) {
+      dbs.info(request_id_object, status).subscribe((info) => {
+        let query_id = new Id(info.get('query_id'));
 
-          let regions_chr_star_end = regions.split("\n").map((line) => {
-            let split = line.split("\t")
+        cc.loadQuery(query_id, status).subscribe((operation) => {
+          let state = info.get('state');
 
-            if (split.length < 3) {
-              return "";
+          if (["cleared", "canceled", "processing"].indexOf(state) > -1) {
+
+            let format = info.format();
+            if (!(format)) {
+              res.send("The request " + request_id + " is not a get_regions command");
+              return;
             }
-            return [split[0], split[1], split[2]].join("\t");
-          }).join("\n");
 
-          let description = "## Export of DeepBlue Regions to UCSC genome browser\n";
-          let regionsSplit = regions.split("\n", 2);
-          let firstLine = regionsSplit[0].split("\t");
-          let position = "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n";
-          let trackInfo = 'track name=DeepBlue Regions="' + request_id + '" visibility=2 url="deepblue.mpi-inf.mpg.de/request.php?_id=' + request_id + '"\n';
+            dbs.getRegions(operation, format, status).subscribe((dbr) => {
+              ComposedCommandsRoutes.build_track_file(dbr, dbs, status, res);
+            });
 
-          content = description + position + trackInfo + regions_chr_star_end;
-        }
-
-        res.header('Content-Type: text/plain');
-        res.header('Content-Type: application/octet-stream');
-        res.header('Content-Type: application/download');
-        res.header('Content-Description: File Transfer');
-
-        res.send(content);
+          } else {
+            let sr = new DeepBlueOperation(new DeepBlueDataParameter("dummy"), new Id("dummy"), "dummy");
+            let dbr = new DeepBlueRequest(sr, request_id_object, "export_ucsc");
+            ComposedCommandsRoutes.build_track_file(dbr, dbs, status, res);
+          }
+        });
       });
     });
   }
+
+  private static build_track_file(request: DeepBlueRequest, dbs: DeepBlueService,
+    status: RequestStatus, res: express.Response) {
+
+    let request_id = request.id().id;
+
+    dbs.getResult(request, status).subscribe((result: DeepBlueResult) => {
+      let regions = result.resultAsString();
+
+      let content = "";
+      if (regions.length > 0) {
+
+        let regions_chr_star_end = regions.split("\n").map((line) => {
+          let split = line.split("\t")
+
+          if (split.length < 3) {
+            return "";
+          }
+          return [split[0], split[1], split[2]].join("\t");
+        }).join("\n");
+
+        let description = "## Export of DeepBlue Regions to UCSC genome browser\n";
+        let regionsSplit = regions.split("\n", 2);
+        let firstLine = regionsSplit[0].split("\t");
+        let position = "browser position " + firstLine[0] + ":" + firstLine[1] + "-" + firstLine[2] + "\n";
+        let trackInfo = 'track name=DeepBlue Regions="' + request_id + '" visibility=2 url="deepblue.mpi-inf.mpg.de/request.php?_id=' + request_id + '"\n';
+
+        content = description + position + trackInfo + regions_chr_star_end;
+      }
+
+      res.header('Content-Type: text/plain');
+      res.header('Content-Type: application/octet-stream');
+      res.header('Content-Type: application/download');
+      res.header('Content-Description: File Transfer');
+
+      res.send(content);
+    });
+  }
+
 
   private static export_to_genome_browser(req: express.Request, res: express.Response, next: express.NextFunction) {
     let request_id: string = req.query["request_id"];
