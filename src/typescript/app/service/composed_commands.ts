@@ -191,7 +191,8 @@ export class ComposedCommands {
 
             switch (type) {
                 case "annotation_select":
-                case "experiment_select": {
+                case "experiment_select":
+                case "input_regions": {
                     return Observable.of(new DeepBlueOperation(content, id, type));
                 }
 
@@ -204,9 +205,9 @@ export class ComposedCommands {
                 }
 
                 case "tiling": {
-                    let genome = fullMetadata.get('genome');
-                    let size = Number(fullMetadata.get('size'));
-                    let chromosomes = fullMetadata.get('chromosomes');
+                    let genome = fullMetadata.get('args')['genome'];
+                    let size = Number(fullMetadata.get('args')['size']);
+                    let chromosomes = fullMetadata.get('args')['chromosomes'];
                     return Observable.of(new DeepBlueTiling(size, genome, chromosomes, id));
                 }
 

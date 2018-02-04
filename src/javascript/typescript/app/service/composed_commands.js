@@ -133,7 +133,8 @@ class ComposedCommands {
             }
             switch (type) {
                 case "annotation_select":
-                case "experiment_select": {
+                case "experiment_select":
+                case "input_regions": {
                     return Observable_1.Observable.of(new operations_1.DeepBlueOperation(content, id, type));
                 }
                 case "filter": {
@@ -144,9 +145,9 @@ class ComposedCommands {
                     });
                 }
                 case "tiling": {
-                    let genome = fullMetadata.get('genome');
-                    let size = Number(fullMetadata.get('size'));
-                    let chromosomes = fullMetadata.get('chromosomes');
+                    let genome = fullMetadata.get('args')['genome'];
+                    let size = Number(fullMetadata.get('args')['size']);
+                    let chromosomes = fullMetadata.get('args')['chromosomes'];
                     return Observable_1.Observable.of(new operations_1.DeepBlueTiling(size, genome, chromosomes, id));
                 }
                 case "intersect":
