@@ -35,6 +35,7 @@ import {
 import 'rxjs/Rx';
 
 import * as xmlrpc from 'xmlrpc';
+import { IOperation } from 'app/domain/interfaces';
 
 let settings = require('../../../settings');
 let xmlrpc_host = settings.xmlrpc_host();
@@ -285,6 +286,17 @@ export class DeepBlueService {
       return this.getResult(request, status);
     })
   }
+
+  getRegions(op_exp: IOperation, output_format: string, status: RequestStatus): Observable<DeepBlueRequest> {
+    const params: Object = new Object();
+    params["query_id"] = op_exp.id().id;
+    params["output_format"] = output_format;
+
+    return this.execute("get_regions", params, status).map((data: [string, string]) => {
+      status.increment();
+      return new DeepBlueRequest(op_exp, new Id(data[1]), "get_regions");
+    }).catch(this.handleError);
+}
 
   distinct_column_values(data: DeepBlueOperation, field: string, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();

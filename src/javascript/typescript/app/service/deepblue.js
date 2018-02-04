@@ -215,6 +215,15 @@ class DeepBlueService {
             return this.getResult(request, status);
         });
     }
+    getRegions(op_exp, output_format, status) {
+        const params = new Object();
+        params["query_id"] = op_exp.id().id;
+        params["output_format"] = output_format;
+        return this.execute("get_regions", params, status).map((data) => {
+            status.increment();
+            return new operations_1.DeepBlueRequest(op_exp, new deepblue_1.Id(data[1]), "get_regions");
+        }).catch(this.handleError);
+    }
     distinct_column_values(data, field, status) {
         const params = new Object();
         params['query_id'] = data.id().id;
