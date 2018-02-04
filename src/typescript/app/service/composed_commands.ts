@@ -15,7 +15,8 @@ import {
     DeepBlueOperationArgs,
     DeepBlueDataParameter,
     DeepBlueError,
-    DeepBlueFilterParameters
+    DeepBlueFilterParameters,
+    DeepBlueAggregate
 } from '../domain/operations';
 import { IOperation } from 'app/domain/interfaces';
 
@@ -222,8 +223,21 @@ export class ComposedCommands {
                     })
                 }
 
+                case "aggregate": {
+                    let data_id = new Id(fullMetadata.get('args')['data_id']);
+                    let ranges_id = new Id(fullMetadata.get('args')['ranges_id']);
+                    let field = fullMetadata.get('args')['field'];
+
+                    return Observable.forkJoin([
+                        this.loadQuery(data_id, status),
+                        this.loadQuery(ranges_id, status)
+                    ]).map(([op_data, op_ranges]) => {
+                        return new DeepBlueAggregate(op_data, op_ranges, field, id);
+                    });
+                }
+
                 default: {
-                    console.error("Invalid type", type);
+                    console.error("Invalid type ", type, " at ", JSON.stringify(fullMetadata));
                     return Observable.of(new DeepBlueOperation(new DeepBlueDataParameter(name), id, type));
                 }
             }
