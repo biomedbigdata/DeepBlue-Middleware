@@ -463,6 +463,14 @@ class DeepBlueService {
                     pollSubject.next(op_result);
                     pollSubject.complete();
                 }
+                else if (state == "removed" || state == "canceled") {
+                    let client = xmlrpc.createClient(xmlrpc_host);
+                    console.log("removed or cancelled");
+                    client.methodCall("reprocess", [op_request._id.id, 'anonymous_key'], (err, value) => {
+                        console.log(value);
+                    });
+                    isProcessing = false;
+                }
                 else {
                     isProcessing = false;
                 }
