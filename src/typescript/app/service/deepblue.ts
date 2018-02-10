@@ -596,6 +596,12 @@ export class DeepBlueService {
           timer.unsubscribe();
           pollSubject.next(op_result);
           pollSubject.complete();
+        } else if (state == "removed" ||  state == "canceled") {
+          let client = xmlrpc.createClient(xmlrpc_host);
+          client.methodCall("reprocess", [op_request._id.id, 'anonymous_key'], (err: Object, value: any) => {
+            console.log(value);
+          });
+          isProcessing = false;
         } else { // 'new' or 'running'
           isProcessing = false;
         }
