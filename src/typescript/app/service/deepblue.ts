@@ -30,7 +30,8 @@ import {
   DeepBlueDataParameter,
   DeepBlueMetadataParameters,
   DeepBlueFilterParameters,
-  DeepBlueOperationError
+  DeepBlueOperationError,
+  DeepBlueEmptyParameter
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -519,7 +520,7 @@ export class DeepBlueService {
     return this.execute("input_regions", params, status).map((response: [string, string]) => {
       status.increment();
       if (response[0] == "okay") {
-        return new DeepBlueOperation(new DeepBlueDataParameter("User regions"), new Id(response[1]), 'input_regions');
+        return new DeepBlueOperation(new DeepBlueEmptyParameter(), new Id(response[1]), 'input_regions');
       } else {
         return new DeepBlueOperationError(response[1]);
       }

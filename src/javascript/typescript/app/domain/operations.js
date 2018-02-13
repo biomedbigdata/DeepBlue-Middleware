@@ -100,6 +100,27 @@ class AbstractDataParameter extends AbstractNamedDataType {
     }
 }
 exports.AbstractDataParameter = AbstractDataParameter;
+class DeepBlueEmptyParameter extends AbstractDataParameter {
+    constructor() {
+        super("empty_parameter");
+    }
+    name() {
+        return "";
+    }
+    id() {
+        return null;
+    }
+    key() {
+        return "";
+    }
+    clone(request_count) {
+        return this;
+    }
+    text() {
+        return "";
+    }
+}
+exports.DeepBlueEmptyParameter = DeepBlueEmptyParameter;
 class DeepBlueDataParameter extends AbstractDataParameter {
     constructor(_data) {
         super("data_parameter");

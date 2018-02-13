@@ -396,7 +396,7 @@ class DeepBlueService {
         return this.execute("input_regions", params, status).map((response) => {
             status.increment();
             if (response[0] == "okay") {
-                return new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter("User regions"), new deepblue_1.Id(response[1]), 'input_regions');
+                return new operations_1.DeepBlueOperation(new operations_1.DeepBlueEmptyParameter(), new deepblue_1.Id(response[1]), 'input_regions');
             }
             else {
                 return new operations_1.DeepBlueOperationError(response[1]);
