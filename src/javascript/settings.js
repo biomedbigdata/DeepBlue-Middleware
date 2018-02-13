@@ -1,5 +1,3 @@
-
-
 /*
 exports.xmlrpc_host = function() {
 	return {
@@ -14,7 +12,8 @@ exports.xmlrpc_host = function() {
 exports.xmlrpc_host = function() {
 	return {
 		host: 'localhost',
-		port: 31415,
+		port: 56573,
 		path: '/xmlrpc'
 	}
 }
+
