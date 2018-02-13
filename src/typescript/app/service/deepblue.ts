@@ -90,26 +90,14 @@ class Command {
 
     let subject: Subject<string[]> = new Subject<string[]>();
 
-    let isProcessing = false;
-
-
-    let timer = Observable.timer(0, Utils.rnd(0, 250)).do(() => {
-      if (isProcessing) {
+    client.methodCall(this.name, xmlrpc_parameters, (err: Object, value: any) => {
+      if (err) {
+        console.error(this.name, xmlrpc_parameters, err);
         return;
       }
-      isProcessing = true;
-      client.methodCall(this.name, xmlrpc_parameters, (err: Object, value: any) => {
-        if (err) {
-          console.error(this.name, xmlrpc_parameters, err);
-          isProcessing = false;
-          return;
-        }
-        subject.next(value);
-        subject.complete();
-        isProcessing = false;
-        timer.unsubscribe();
-      });
-    }).subscribe();
+      subject.next(value);
+      subject.complete();
+    });
 
     return subject.asObservable();
   }
@@ -298,7 +286,7 @@ export class DeepBlueService {
       status.increment();
       return new DeepBlueRequest(op_exp, new Id(data[1]), "get_regions");
     }).catch(this.handleError);
-}
+  }
 
   distinct_column_values(data: DeepBlueOperation, field: string, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
@@ -603,7 +591,7 @@ export class DeepBlueService {
           timer.unsubscribe();
           pollSubject.next(op_result);
           pollSubject.complete();
-        } else if (state == "removed" ||  state == "canceled") {
+        } else if (state == "removed" || state == "canceled") {
           let client = xmlrpc.createClient(xmlrpc_host);
           client.methodCall("reprocess", [op_request._id.id, 'anonymous_key'], (err: Object, value: any) => {
             console.log(value);

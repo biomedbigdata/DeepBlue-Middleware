@@ -61,24 +61,14 @@ class Command {
         var client = xmlrpc.createClient(xmlrpc_host);
         var methodCall = Observable_1.Observable.bindCallback(client.methodCall);
         let subject = new Subject_1.Subject();
-        let isProcessing = false;
-        let timer = Observable_1.Observable.timer(0, utils_1.Utils.rnd(0, 250)).do(() => {
-            if (isProcessing) {
+        client.methodCall(this.name, xmlrpc_parameters, (err, value) => {
+            if (err) {
+                console.error(this.name, xmlrpc_parameters, err);
                 return;
             }
-            isProcessing = true;
-            client.methodCall(this.name, xmlrpc_parameters, (err, value) => {
-                if (err) {
-                    console.error(this.name, xmlrpc_parameters, err);
-                    isProcessing = false;
-                    return;
-                }
-                subject.next(value);
-                subject.complete();
-                isProcessing = false;
-                timer.unsubscribe();
-            });
-        }).subscribe();
+            subject.next(value);
+            subject.complete();
+        });
         return subject.asObservable();
     }
 }
