@@ -438,6 +438,38 @@ class DeepBlueFilter extends DeepBlueOperation {
     }
 }
 exports.DeepBlueFilter = DeepBlueFilter;
+class DeepBlueOperationError extends AbstractNamedDataType {
+    constructor(message, request_count) {
+        super("error");
+        this.message = message;
+        this.request_count = request_count;
+    }
+    data() {
+        throw new DeepBlueDataParameter(this.message);
+    }
+    mainOperation() {
+        return this;
+    }
+    cacheIt(query_id) {
+        return this;
+    }
+    name() {
+        return this.message;
+    }
+    id() {
+        return new deepblue_2.Id(this.message);
+    }
+    key() {
+        return this.message;
+    }
+    clone(request_count) {
+        return new DeepBlueOperationError(this.message, this.request_count);
+    }
+    text() {
+        return this.message;
+    }
+}
+exports.DeepBlueOperationError = DeepBlueOperationError;
 class AbstractDeepBlueRequest {
     constructor(_id, command) {
         this._id = _id;
@@ -561,7 +593,7 @@ class DeepBlueResult {
     }
 }
 exports.DeepBlueResult = DeepBlueResult;
-class DeepBlueError extends DeepBlueResult {
+class DeepBlueResultError extends DeepBlueResult {
     constructor(request, error, request_count) {
         super(request, error, request_count);
         this.request = request;
@@ -572,7 +604,7 @@ class DeepBlueError extends DeepBlueResult {
         return this.error;
     }
 }
-exports.DeepBlueError = DeepBlueError;
+exports.DeepBlueResultError = DeepBlueResultError;
 class DeepBlueMiddlewareGOEnrichtmentResult {
     constructor(data_name, gene_model, results) {
         this.data_name = data_name;

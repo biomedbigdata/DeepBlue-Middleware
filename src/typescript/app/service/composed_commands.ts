@@ -14,7 +14,7 @@ import {
     DeepBlueTiling,
     DeepBlueOperationArgs,
     DeepBlueDataParameter,
-    DeepBlueError,
+    DeepBlueResultError,
     DeepBlueFilterParameters,
     DeepBlueAggregate
 } from '../domain/operations';

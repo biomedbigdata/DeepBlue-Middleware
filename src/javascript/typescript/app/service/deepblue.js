@@ -395,7 +395,12 @@ class DeepBlueService {
         params['region_set'] = region_set;
         return this.execute("input_regions", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter("User regions"), new deepblue_1.Id(response[1]), 'input_regions');
+            if (response[0] == "okay") {
+                return new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter("User regions"), new deepblue_1.Id(response[1]), 'input_regions');
+            }
+            else {
+                return new operations_1.DeepBlueOperationError(response[1]);
+            }
         }).catch(this.handleError);
     }
     cancelRequest(id, status) {
@@ -424,7 +429,7 @@ class DeepBlueService {
             if (status.canceled) {
                 this.cancelRequest(op_request._id, status).subscribe((id) => {
                     isProcessing = false;
-                    let op_result = new operations_1.DeepBlueError(op_request, "Canceled by user");
+                    let op_result = new operations_1.DeepBlueResultError(op_request, "Canceled by user");
                     timer.unsubscribe();
                     pollSubject.next(op_result);
                     pollSubject.complete();
@@ -457,7 +462,7 @@ class DeepBlueService {
                 else if (state == "error") {
                     status.increment();
                     let message = info[1][0]['message'];
-                    let op_result = new operations_1.DeepBlueError(op_request, message);
+                    let op_result = new operations_1.DeepBlueResultError(op_request, message);
                     this.resultCache.put(op_request, op_result);
                     timer.unsubscribe();
                     pollSubject.next(op_result);
@@ -465,7 +470,6 @@ class DeepBlueService {
                 }
                 else if (state == "removed" || state == "canceled") {
                     let client = xmlrpc.createClient(xmlrpc_host);
-                    console.log("removed or cancelled");
                     client.methodCall("reprocess", [op_request._id.id, 'anonymous_key'], (err, value) => {
                         console.log(value);
                     });

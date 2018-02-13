@@ -270,7 +270,12 @@ class ComposedCommandsRoutes {
                 let regions = f.buffer.toString('utf-8');
                 let status = ComposedCommandsRoutes.requestManager.startRequest();
                 ds.inputRegions(new deepblue_1.Name(genome), regions, status).subscribe((result) => {
-                    res.send(["okay", result.id().id]);
+                    if (result.dataType() == "error") {
+                        res.send(["error", result.text()]);
+                    }
+                    else {
+                        res.send(["okay", result.id().id]);
+                    }
                 });
                 found = true;
             }

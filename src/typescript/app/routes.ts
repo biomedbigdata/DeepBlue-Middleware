@@ -386,7 +386,11 @@ export class ComposedCommandsRoutes {
 
         let status = ComposedCommandsRoutes.requestManager.startRequest();
         ds.inputRegions(new Name(genome), regions, status).subscribe((result) => {
-          res.send(["okay", result.id().id]);
+          if (result.dataType() == "error") {
+            res.send(["error", result.text()])
+          } else {
+            res.send(["okay", result.id().id]);
+          }
         });
         found = true;
       }

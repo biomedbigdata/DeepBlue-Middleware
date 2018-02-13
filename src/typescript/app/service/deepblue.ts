@@ -25,11 +25,12 @@ import {
   DeepBlueResult,
   DeepBlueFilter,
   DeepBlueResultStatus,
-  DeepBlueError,
+  DeepBlueResultError,
   DeepBlueCommandExecutionResult,
   DeepBlueDataParameter,
   DeepBlueMetadataParameters,
-  DeepBlueFilterParameters
+  DeepBlueFilterParameters,
+  DeepBlueOperationError
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -517,7 +518,12 @@ export class DeepBlueService {
 
     return this.execute("input_regions", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueOperation(new DeepBlueDataParameter("User regions"), new Id(response[1]), 'input_regions');
+      if (response[0] == "okay") {
+        return new DeepBlueOperation(new DeepBlueDataParameter("User regions"), new Id(response[1]), 'input_regions');
+      } else {
+        return new DeepBlueOperationError(response[1]);
+      }
+
     }).catch(this.handleError);
   }
 
@@ -555,7 +561,7 @@ export class DeepBlueService {
       if (status.canceled) {
         this.cancelRequest(op_request._id, status).subscribe((id) => {
           isProcessing = false;
-          let op_result = new DeepBlueError(op_request, "Canceled by user");
+          let op_result = new DeepBlueResultError(op_request, "Canceled by user");
           timer.unsubscribe();
           pollSubject.next(op_result);
           pollSubject.complete();
@@ -591,7 +597,7 @@ export class DeepBlueService {
         } else if (state == "error") {
           status.increment();
           let message = info[1][0]['message'];
-          let op_result = new DeepBlueError(op_request, message);
+          let op_result = new DeepBlueResultError(op_request, message);
           this.resultCache.put(op_request, op_result);
           timer.unsubscribe();
           pollSubject.next(op_result);
