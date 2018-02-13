@@ -25,11 +25,13 @@ import {
   DeepBlueResult,
   DeepBlueFilter,
   DeepBlueResultStatus,
-  DeepBlueError,
+  DeepBlueResultError,
   DeepBlueCommandExecutionResult,
   DeepBlueDataParameter,
   DeepBlueMetadataParameters,
-  DeepBlueFilterParameters
+  DeepBlueFilterParameters,
+  DeepBlueOperationError,
+  DeepBlueEmptyParameter
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -88,26 +90,14 @@ class Command {
 
     let subject: Subject<string[]> = new Subject<string[]>();
 
-    let isProcessing = false;
-
-
-    let timer = Observable.timer(0, Utils.rnd(0, 250)).do(() => {
-      if (isProcessing) {
+    client.methodCall(this.name, xmlrpc_parameters, (err: Object, value: any) => {
+      if (err) {
+        console.error(this.name, xmlrpc_parameters, err);
         return;
       }
-      isProcessing = true;
-      client.methodCall(this.name, xmlrpc_parameters, (err: Object, value: any) => {
-        if (err) {
-          console.error(this.name, xmlrpc_parameters, err);
-          isProcessing = false;
-          return;
-        }
-        subject.next(value);
-        subject.complete();
-        isProcessing = false;
-        timer.unsubscribe();
-      });
-    }).subscribe();
+      subject.next(value);
+      subject.complete();
+    });
 
     return subject.asObservable();
   }
@@ -296,7 +286,7 @@ export class DeepBlueService {
       status.increment();
       return new DeepBlueRequest(op_exp, new Id(data[1]), "get_regions");
     }).catch(this.handleError);
-}
+  }
 
   distinct_column_values(data: DeepBlueOperation, field: string, status: RequestStatus): Observable<DeepBlueResult> {
     const params: Object = new Object();
@@ -517,7 +507,12 @@ export class DeepBlueService {
 
     return this.execute("input_regions", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueOperation(new DeepBlueDataParameter("User regions"), new Id(response[1]), 'input_regions');
+      if (response[0] == "okay") {
+        return new DeepBlueOperation(new DeepBlueEmptyParameter(), new Id(response[1]), 'input_regions');
+      } else {
+        return new DeepBlueOperationError(response[1]);
+      }
+
     }).catch(this.handleError);
   }
 
@@ -555,7 +550,7 @@ export class DeepBlueService {
       if (status.canceled) {
         this.cancelRequest(op_request._id, status).subscribe((id) => {
           isProcessing = false;
-          let op_result = new DeepBlueError(op_request, "Canceled by user");
+          let op_result = new DeepBlueResultError(op_request, "Canceled by user");
           timer.unsubscribe();
           pollSubject.next(op_result);
           pollSubject.complete();
@@ -591,12 +586,12 @@ export class DeepBlueService {
         } else if (state == "error") {
           status.increment();
           let message = info[1][0]['message'];
-          let op_result = new DeepBlueError(op_request, message);
+          let op_result = new DeepBlueResultError(op_request, message);
           this.resultCache.put(op_request, op_result);
           timer.unsubscribe();
           pollSubject.next(op_result);
           pollSubject.complete();
-        } else if (state == "removed" ||  state == "canceled") {
+        } else if (state == "removed" || state == "canceled") {
           let client = xmlrpc.createClient(xmlrpc_host);
           client.methodCall("reprocess", [op_request._id.id, 'anonymous_key'], (err: Object, value: any) => {
             console.log(value);

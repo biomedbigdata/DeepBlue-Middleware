@@ -129,6 +129,29 @@ export abstract class AbstractDataParameter extends AbstractNamedDataType implem
     }
 }
 
+export class DeepBlueEmptyParameter extends AbstractDataParameter {
+
+    constructor() {
+         super("empty_parameter");
+    }
+
+    name(): string {
+        return "";
+    }
+    id(): Id {
+        return null;
+    }
+    key(): string {
+        return "";
+    }
+    clone(request_count?: number): AbstractDataParameter {
+        return this;
+    }
+    text(): string {
+        return "";
+    }
+}
+
 export class DeepBlueDataParameter extends AbstractDataParameter {
 
     constructor(private _data: Name | string | string[]) {
@@ -519,6 +542,45 @@ export class DeepBlueFilter extends DeepBlueOperation implements IFiltered {
     }
 }
 
+export class DeepBlueOperationError extends AbstractNamedDataType implements IOperation {
+
+    constructor(public message: string, public request_count?: number) {
+        super("error");
+    }
+
+    data(): IDataParameter {
+        throw new DeepBlueDataParameter(this.message);
+    }
+
+    mainOperation(): IOperation {
+        return this;
+    }
+
+    cacheIt(query_id: Id): IOperation {
+        return this;
+    }
+
+    name(): string {
+        return this.message;
+    }
+
+    id(): Id {
+        return new Id(this.message);
+    }
+
+    key(): string {
+        return this.message;
+    }
+
+    clone(request_count?: number) {
+        return new DeepBlueOperationError(this.message, this.request_count);
+    }
+
+    text(): string {
+        return this.message;
+    }
+}
+
 export class AbstractDeepBlueRequest implements IKey {
 
     canceled = false;
@@ -675,7 +737,7 @@ export class DeepBlueResult implements ICloneable {
     }
 }
 
-export class DeepBlueError extends DeepBlueResult {
+export class DeepBlueResultError extends DeepBlueResult {
     constructor(public request: DeepBlueRequest, public error: string, public request_count?: number) {
         super(request, error, request_count);
     }
