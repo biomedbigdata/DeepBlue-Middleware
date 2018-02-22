@@ -44,7 +44,8 @@ class RegionsEnrichment {
                             let exp_name = filter.mainOperation().name();
                             let filter_name = filter._params.value;
                             let q_id = filter.id().id;
-                            exp_filter_id.push([experiment.id.id, exp_name, experiment.biosource(), filter_name, q_id]);
+                            console.log(experiment);
+                            exp_filter_id.push([experiment.id.id, exp_name, experiment.biosource(), filter_name, experiment.project(), q_id]);
                         }
                         return exp_filter_id;
                     });
@@ -58,7 +59,7 @@ class RegionsEnrichment {
                             states[filter[3]] = new Array();
                         }
                         // filter_namae is the key, values are: exp_id, exp_name, biosource, and query id
-                        states[filter[3]].push([filter[0], filter[1], filter[2], filter[4]]);
+                        states[filter[3]].push([filter[0], filter[1], filter[2], filter[4], filter[5]]);
                     }
                 }
                 let arr_filter = Object.keys(states).map((state) => {
@@ -73,7 +74,7 @@ class RegionsEnrichment {
     }
     ;
     listExperiments(request_status, epigenetic_mark, genome) {
-        return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark, genome).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => [experiment.id.id, experiment.name, experiment.biosource()])]));
+        return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark, genome).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => [experiment.id.id, experiment.name, experiment.biosource(), experiment.project()])]));
     }
     //  {[key: string]: [string, string][]};
     listExperimentsMany(request_status, epigenetic_marks, genome) {
