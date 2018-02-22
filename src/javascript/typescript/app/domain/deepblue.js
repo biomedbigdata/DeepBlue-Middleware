@@ -122,6 +122,9 @@ class FullMetadata extends IdName {
     genome() {
         return this.values["genome"];
     }
+    project() {
+        return this.values["project"];
+    }
     description() {
         return this.values["description"];
     }

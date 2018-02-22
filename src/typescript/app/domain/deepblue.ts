@@ -135,6 +135,10 @@ export class FullMetadata extends IdName {
         return this.values["genome"];
     }
 
+    project(): string {
+        return this.values["project"];
+    }
+
     description(): string {
         return this.values["description"];
     }
