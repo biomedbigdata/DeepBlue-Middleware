@@ -64,13 +64,13 @@ export class RegionsEnrichment {
       })
 
       Observable.forkJoin(exp_states_obs).subscribe((filters) => {
-        let states: { [key: string]: [string, string][] } = {};
+        let states: { [key: string]: [string, string, string, string][] } = {};
 
 
         for (let exp_filters of filters) {
           for (let filter of exp_filters) {
             if (!(filter[3] in states)) {
-              states[filter[3]] = new Array<[string, string]>();
+              states[filter[3]] = new Array<[string, string, string, string]>();
             }
             // filter_namae is the key, values are: exp_id, exp_name, biosource, and query id
 
