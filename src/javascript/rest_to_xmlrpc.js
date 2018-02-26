@@ -17,13 +17,20 @@ var Command = function(name, parameters) {
   self.doRequest = function(req, res) {
     var xmlrpc_request_parameters = [];
 
+    values = []
+    if (req.method == "POST") {
+      values = req.body;
+    } else {
+      values = req.query;
+    }
+
     for (pos in self.parameters) {
       var parameter = self.parameters[pos];
       var parameter_name = parameter[0];
       var parameter_type = parameter[1];
       var multiple = parameter[2];
-      if (parameter_name in req.query) {
-        var raw_value = req.query[parameter_name];
+      if (parameter_name in values) {
+        var raw_value = values[parameter_name];
         if (parameter_type == "string") {
           xmlrpc_request_parameters.push(raw_value);
         } else if (parameter_type == "int") {
@@ -48,6 +55,8 @@ var Command = function(name, parameters) {
         }
       }
     }
+
+    console.log(name, parameters, xmlrpc_request_parameters);
 
     client.methodCall(name, xmlrpc_request_parameters, function(error, value) {
       if (error) {
@@ -77,6 +86,7 @@ client.methodCall('commands', [], function(error, value) {
     for (var command_name in commands) {
       var command = new Command(command_name, commands[command_name]["parameters"]);
       router.get("/" + command_name, command.doRequest);
+      router.post("/" + command_name, command.doRequest);
     }
   }
 });
