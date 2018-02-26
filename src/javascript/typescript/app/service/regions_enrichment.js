@@ -44,7 +44,6 @@ class RegionsEnrichment {
                             let exp_name = filter.mainOperation().name();
                             let filter_name = filter._params.value;
                             let q_id = filter.id().id;
-                            console.log(experiment);
                             exp_filter_id.push([experiment.id.id, exp_name, experiment.biosource(), filter_name, experiment.project(), q_id]);
                         }
                         return exp_filter_id;
