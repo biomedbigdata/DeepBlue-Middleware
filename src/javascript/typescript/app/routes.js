@@ -33,14 +33,15 @@ class ComposedCommandsRoutes {
     }
     static countOverlaps(req, res, next) {
         manager_1.Manager.getComposedCommands().subscribe((cc) => {
-            let queries_id = req.query["queries_id"];
-            let experiments_id = req.query["experiments_id"];
-            let filters = req.query["filters"];
+            let queries_id = req.body.queries_id;
+            let experiments_id = req.body.experiments_id;
+            let filters = req.body.filters;
+            let filterObj = [];
             if (filters) {
-                filters = JSON.parse(filters).map((f) => operations_1.DeepBlueFilterParameters.fromObject(f));
+                filterObj = JSON.parse(filters).map((f) => operations_1.DeepBlueFilterParameters.fromObject(f));
             }
             else {
-                filters = [];
+                filterObj = [];
             }
             if (!(queries_id)) {
                 res.send(['error', '"queried_id" not informed']);
@@ -62,7 +63,7 @@ class ComposedCommandsRoutes {
             experiments_1.Experiments.info(experiments_id).subscribe((experiments) => {
                 let deepblue_query_ops = queries_id.map((query_id) => new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(query_id), new deepblue_1.Id(query_id), "DIVE data"));
                 let experiments_name = experiments.map((v) => new deepblue_1.Name(v["name"]));
-                var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, filters, status).subscribe((results) => {
+                var ccos = cc.countOverlaps(deepblue_query_ops, experiments_name, filterObj, status).subscribe((results) => {
                     let rr = [];
                     for (let i = 0; i < results.length; i++) {
                         let result = results[i];
@@ -479,7 +480,6 @@ class ComposedCommandsRoutes {
         //get router
         let router;
         router = express.Router();
-        router.get("/count_overlaps", this.countOverlaps);
         router.get("/count_genes_overlaps", this.countGenesOverlaps);
         router.get("/enrich_regions_go_terms", this.enrichRegionsGoTerms);
         router.get("/get_request", this.getRequest);
@@ -497,6 +497,7 @@ class ComposedCommandsRoutes {
         // Biosources
         router.get("/get_related_biosources", this.getRelatedBioSources);
         // Post:
+        router.post("/count_overlaps", this.countOverlaps);
         router.post("/input_regions", this.inputRegions);
         router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
         router.post("/enrich_regions_fast", this.enrichRegionsFast);

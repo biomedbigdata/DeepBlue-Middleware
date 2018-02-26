@@ -56,8 +56,6 @@ var Command = function(name, parameters) {
       }
     }
 
-    console.log(name, parameters, xmlrpc_request_parameters);
-
     client.methodCall(name, xmlrpc_request_parameters, function(error, value) {
       if (error) {
         console.log('error:', error);
