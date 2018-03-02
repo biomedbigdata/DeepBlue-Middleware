@@ -212,6 +212,18 @@ export class DeepBlueService {
     }).catch(this.handleError);
   }
 
+  flank(query_op: DeepBlueOperation, start: number, end: number, status: RequestStatus): Observable<DeepBlueOperation> {
+    let params: Object = new Object();
+    params["query_id"] = query_op.id().id;
+    params["start"] = start;
+    params["end"] = end;
+
+    return this.execute("filter_regions", params, status).map((response: [string, string]) => {
+      status.increment();
+      return new DeepBlueFilter(query_op, filter, new Id(response[1]));
+    }).catch(this.handleError);
+  }
+
   query_cache(query_data: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueOperation> {
     let params = new Object();
     params["query_id"] = query_data.id().id;

@@ -153,6 +153,16 @@ class DeepBlueService {
             return new operations_1.DeepBlueFilter(query_op, filter, new deepblue_1.Id(response[1]));
         }).catch(this.handleError);
     }
+    flank(query_op, start, end, status) {
+        let params = new Object();
+        params["query_id"] = query_op.id().id;
+        params["start"] = start;
+        params["end"] = end;
+        return this.execute("filter_regions", params, status).map((response) => {
+            status.increment();
+            return new operations_1.DeepBlueFilter(query_op, filter, new deepblue_1.Id(response[1]));
+        }).catch(this.handleError);
+    }
     query_cache(query_data, status) {
         let params = new Object();
         params["query_id"] = query_data.id().id;
