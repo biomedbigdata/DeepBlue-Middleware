@@ -542,6 +542,50 @@ export class DeepBlueFilter extends DeepBlueOperation implements IFiltered {
     }
 }
 
+export class DeepBlueFlank extends DeepBlueOperation implements IFiltered {
+
+    _params: IDataParameter;
+
+    constructor(public _data: IOperation, public _start: number, public _end: number, public query_id: Id, public cached = false) {
+        super(_data, query_id, "regions_flank")
+        this._params = new DeepBlueOperationArgs({"start": _start, "end": _end});
+    }
+
+    data(): IDataParameter {
+        return this._data;
+    }
+
+    mainOperation(): IOperation {
+        return this._data.mainOperation();
+    }
+
+    filter(): IDataParameter {
+        return this._params;
+    }
+
+    key(): string {
+        return "filter_" + this.id().id;
+    }
+
+    clone(): DeepBlueFilter {
+        return new DeepBlueFilter(
+            this._data.clone(),
+            this._params.clone(),
+            this.query_id,
+            this.cached
+        );
+    }
+
+    cacheIt(query_id: Id): DeepBlueFlank {
+        return new DeepBlueFlank(this._data, this._params['start'], this._params['end'], this.query_id, this.cached);
+    }
+
+    text(): string {
+        return this._data.text() + "(" + this._params.text() + ")";
+    }
+}
+
+
 export class DeepBlueOperationError extends AbstractNamedDataType implements IOperation {
 
     constructor(public message: string, public request_count?: number) {
