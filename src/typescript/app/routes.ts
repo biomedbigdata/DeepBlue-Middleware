@@ -130,8 +130,9 @@ export class ComposedCommandsRoutes {
   private static countGenesOverlaps(req: express.Request, res: express.Response, next: express.NextFunction) {
     Manager.getComposedCommands().subscribe((cc: ComposedCommands) => {
 
-      let queries_id = req.query["queries_id"];
-      let gene_model_name: string = req.query["gene_model_name"];
+      let queries_id: string[] = req.body.queries_id;
+      let gene_model_name: string[] = req.body.gene_model_name;
+      let filters: object[] = req.body.filters;
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
 
@@ -642,7 +643,6 @@ export class ComposedCommandsRoutes {
     let router: express.Router;
     router = express.Router();
 
-    router.get("/count_genes_overlaps", this.countGenesOverlaps);
     router.get("/enrich_regions_go_terms", this.enrichRegionsGoTerms);
     router.get("/get_request", this.getRequest)
     router.get("/gene_models_by_genome", this.geneModelsByGenome);
@@ -662,6 +662,7 @@ export class ComposedCommandsRoutes {
     router.get("/get_related_biosources", this.getRelatedBioSources);
 
     // Post:
+    router.post("/count_genes_overlaps", this.countGenesOverlaps);
     router.post("/count_overlaps", this.countOverlaps);
     router.post("/input_regions", this.inputRegions);
     router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
