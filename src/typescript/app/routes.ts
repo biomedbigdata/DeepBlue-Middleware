@@ -129,10 +129,10 @@ export class ComposedCommandsRoutes {
 
   private static countGenesOverlaps(req: express.Request, res: express.Response, next: express.NextFunction) {
     Manager.getComposedCommands().subscribe((cc: ComposedCommands) => {
-
       let queries_id: string[] = req.body.queries_id;
-      let gene_model_name: string[] = req.body.gene_model_name;
+      let gene_model_name: string = req.body.gene_model_name;
       let filters: object[] = req.body.filters;
+
 
       let status = ComposedCommandsRoutes.requestManager.startRequest();
 
@@ -146,7 +146,7 @@ export class ComposedCommandsRoutes {
       let deepblue_query_ops: DeepBlueOperation[] =
         queries_id.map((query_id: string, i: number) => new DeepBlueOperation(new DeepBlueDataParameter(query_id), new Id(query_id), "DIVE data"));
 
-      var ccos = cc.countGenesOverlaps(deepblue_query_ops, new Name(gene_model_name), status).subscribe((results: DeepBlueResult[]) => {
+      var ccos = cc.countGenesOverlaps(deepblue_query_ops, new Name(gene_model_name), filters, status).subscribe((results: DeepBlueResult[]) => {
         let rr = [];
         for (let i = 0; i < results.length; i++) {
           let result: DeepBlueResult = results[i];
