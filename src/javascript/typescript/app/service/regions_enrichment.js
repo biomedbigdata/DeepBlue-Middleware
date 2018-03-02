@@ -135,6 +135,7 @@ class RegionsEnrichment {
                 values = biosources;
             }
             let observableBatch = [];
+            status.reset(values.length * 2);
             values.forEach((em) => {
                 let o = new Observable_1.Observable((observer) => {
                     let filter = {};

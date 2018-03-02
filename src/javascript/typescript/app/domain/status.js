@@ -101,6 +101,7 @@ class RequestStatus {
         else {
             this.partialData.push(data);
         }
+        this.increment();
     }
     getPartialData() {
         return this.partialData;

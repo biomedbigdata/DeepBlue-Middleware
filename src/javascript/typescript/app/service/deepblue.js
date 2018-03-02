@@ -117,7 +117,6 @@ class DeepBlueService {
             if (command_status === "error") {
                 console.error(command_name, parameters, response);
             }
-            status.increment();
             return [status_result, response];
         });
     }
@@ -256,8 +255,8 @@ class DeepBlueService {
         for (let o of Object.keys(filter)) {
             params[o] = filter[o];
         }
+        status.increment();
         return this.execute("enrich_regions_fast", params, status).map((response) => {
-            status.increment();
             return new operations_1.DeepBlueRequest(data, new deepblue_1.Id(response[1]), 'enrich_regions_fast');
         }).flatMap((request_id) => {
             return this.getResult(request_id, status);
@@ -397,14 +396,12 @@ class DeepBlueService {
         const params = new Object();
         params['id'] = id.id;
         return this.execute("cancel_request", params, status).map((response) => {
-            status.increment();
             return response;
         }).catch(this.handleError);
     }
     getResult(op_request, status) {
         let result = this.resultCache.get(op_request);
         if (result) {
-            status.increment();
             return Observable_1.Observable.of(result);
         }
         let params = new Object();
@@ -437,7 +434,6 @@ class DeepBlueService {
                             return;
                         }
                         if (value[0] === "okay") {
-                            status.increment();
                             let op_result = new operations_1.DeepBlueResult(op_request, value[1]);
                             this.resultCache.put(op_request, op_result);
                             timer.unsubscribe();
@@ -450,7 +446,6 @@ class DeepBlueService {
                     });
                 }
                 else if (state == "error") {
-                    status.increment();
                     let message = info[1][0]['message'];
                     let op_result = new operations_1.DeepBlueResultError(op_request, message);
                     this.resultCache.put(op_request, op_result);
