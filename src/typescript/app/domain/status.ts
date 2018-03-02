@@ -132,6 +132,7 @@ export class RequestStatus {
       this.partialData.push(data);
     }
 
+    this.increment();
   }
 
   getPartialData(): Object[] {

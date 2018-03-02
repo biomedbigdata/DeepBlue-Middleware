@@ -177,6 +177,8 @@ export class RegionsEnrichment {
 
       let observableBatch: Observable<DeepBlueResult>[] = [];
 
+      status.reset(values.length * 2);
+
       values.forEach((em: IdName) => {
         let o: Observable<DeepBlueResult> = new Observable((observer) => {
           let filter = {};
