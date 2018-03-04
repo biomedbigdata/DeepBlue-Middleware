@@ -78,8 +78,7 @@ class ComposedCommandsRoutes {
         manager_1.Manager.getComposedCommands().subscribe((cc) => {
             let queries_id = req.body.queries_id;
             let gene_model_name = req.body.gene_model_name;
-            let filters = req.body.filters;
-
+            let filters = JSON.parse(req.body.filters);
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             res.send(["okay", status.request_id.toLocaleString()]);
             if (!(Array.isArray(queries_id))) {
@@ -91,6 +90,7 @@ class ComposedCommandsRoutes {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
+                    console.log(result);
                     rr.push(result);
                 }
                 status.finish(rr);

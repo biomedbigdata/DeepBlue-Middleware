@@ -129,44 +129,36 @@ export class ComposedCommands {
         return response.asObservable();
     }
 
-    countGenesOverlaps(data_query_id: DeepBlueOperation[], gene_model: Name, filters: any[], status: RequestStatus): Observable<DeepBlueResult[]> {
+    countGenesOverlaps(data_query_id: DeepBlueOperation[], gene_model: Name, filters: any[], status: RequestStatus): Observable<DeepBlueResult[][]> {
         var start = new Date().getTime();
 
         let total = data_query_id.length * data_query_id.length * 3;
         status.reset(total);
 
-        let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
+        filters.unshift({});
 
         status.setStep("Selecting genes regions");
 
-        this.deepBlueService.selectGenes(gene_model, status).subscribe((selected_genes: DeepBlueOperation) => {
+        return this.deepBlueService.selectGenes(gene_model, status).flatMap((selected_genes: DeepBlueOperation) => {
+            let observableCounts = new Array<Observable<DeepBlueResult[]>>();
 
             for (let filter of filters) {
-
-                //this.addFilterAndSend({ type: 'flank', start: this.start, length: this.length });
-                // this.addFilterAndSend({ type: 'extend', length: this.length, direction: this.selectedDirection.code });
-
+                let modificator = Observable.of(selected_genes);
                 if (filter.type == "flank") {
-                    this.deepBlueService.flank(selected_genes, filter.start, filter.end, "true")
+                    modificator = this.deepBlueService.flank(selected_genes, filter.start, filter.length, status)
                 } else if (filter.type == "extend") {
-                    this.deepBlueService.extend(selected_genes, filter.length, filter.direction, "true")
+                    modificator = this.deepBlueService.extend(selected_genes, filter.length, filter.direction, status)
                 }
 
-                this.intersectWithSelected(data_query_id, [selected_genes], status).subscribe((overlap_ids: DeepBlueOperation[]) => {
-                    status.setStep("Intersecting regions");
-
-                    this.countRegionsBatch(overlap_ids, status).subscribe((datum: DeepBlueResult[]) => {
-                        var end = new Date().getTime();
-                        setTimeout(() => {
-                            response.next(datum);
-                            response.complete();
-                        });
-                    });
+                let obs = modificator.flatMap((modified_genes) => {
+                    return this.intersectWithSelected(data_query_id, [modified_genes], status).flatMap((overlap_ids: DeepBlueOperation[]) =>
+                        this.countRegionsBatch(overlap_ids, status)
+                    );
                 });
+                observableCounts.push(obs);
             }
+            return Observable.forkJoin(observableCounts);
         });
-
-        return response.asObservable();
     }
 
     enrichRegionsGoTerms(data_query_id: DeepBlueOperation[], gene_model: Name, status: RequestStatus): Observable<DeepBlueResult[]> {

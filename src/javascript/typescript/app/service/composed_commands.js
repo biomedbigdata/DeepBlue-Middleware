@@ -91,31 +91,25 @@ class ComposedCommands {
         var start = new Date().getTime();
         let total = data_query_id.length * data_query_id.length * 3;
         status.reset(total);
-        let response = new rxjs_1.Subject();
+        filters.unshift({});
         status.setStep("Selecting genes regions");
-        this.deepBlueService.selectGenes(gene_model, status).subscribe((selected_genes) => {
+        return this.deepBlueService.selectGenes(gene_model, status).flatMap((selected_genes) => {
+            let observableCounts = new Array();
             for (let filter of filters) {
-                //this.addFilterAndSend({ type: 'flank', start: this.start, length: this.length });
-                // this.addFilterAndSend({ type: 'extend', length: this.length, direction: this.selectedDirection.code });
+                let modificator = Observable_1.Observable.of(selected_genes);
                 if (filter.type == "flank") {
-                    this.deepBlueService.flank(selected_genes, filter.start, filter.end, "true");
+                    modificator = this.deepBlueService.flank(selected_genes, filter.start, filter.length, status);
                 }
                 else if (filter.type == "extend") {
-                    this.deepBlueService.extend(selected_genes, filter.length, filter.direction, "true");
+                    modificator = this.deepBlueService.extend(selected_genes, filter.length, filter.direction, status);
                 }
-                this.intersectWithSelected(data_query_id, [selected_genes], status).subscribe((overlap_ids) => {
-                    status.setStep("Intersecting regions");
-                    this.countRegionsBatch(overlap_ids, status).subscribe((datum) => {
-                        var end = new Date().getTime();
-                        setTimeout(() => {
-                            response.next(datum);
-                            response.complete();
-                        });
-                    });
+                let obs = modificator.flatMap((modified_genes) => {
+                    return this.intersectWithSelected(data_query_id, [modified_genes], status).flatMap((overlap_ids) => this.countRegionsBatch(overlap_ids, status));
                 });
+                observableCounts.push(obs);
             }
+            return Observable_1.Observable.forkJoin(observableCounts);
         });
-        return response.asObservable();
     }
     enrichRegionsGoTerms(data_query_id, gene_model, status) {
         var start = new Date().getTime();
