@@ -544,11 +544,8 @@ export class DeepBlueFilter extends DeepBlueOperation implements IFiltered {
 
 export class DeepBlueFlank extends DeepBlueOperation implements IFiltered {
 
-    _params: IDataParameter;
-
-    constructor(public _data: IOperation, public _start: number, public _end: number, public query_id: Id, public cached = false) {
-        super(_data, query_id, "regions_flank")
-        this._params = new DeepBlueOperationArgs({"start": _start, "end": _end});
+    constructor(public _data: IOperation, public _params: IDataParameter, public query_id: Id, public cached = false) {
+        super(_data, query_id, "flank")
     }
 
     data(): IDataParameter {
@@ -564,11 +561,11 @@ export class DeepBlueFlank extends DeepBlueOperation implements IFiltered {
     }
 
     key(): string {
-        return "filter_" + this.id().id;
+        return "extend_" + this.id().id;
     }
 
-    clone(): DeepBlueFilter {
-        return new DeepBlueFilter(
+    clone(): DeepBlueFlank {
+        return new DeepBlueFlank(
             this._data.clone(),
             this._params.clone(),
             this.query_id,
@@ -577,7 +574,47 @@ export class DeepBlueFlank extends DeepBlueOperation implements IFiltered {
     }
 
     cacheIt(query_id: Id): DeepBlueFlank {
-        return new DeepBlueFlank(this._data, this._params['start'], this._params['end'], this.query_id, this.cached);
+        return new DeepBlueFlank(this._data, this._params, this.query_id, this.cached);
+    }
+
+    text(): string {
+        return this._data.text() + "(" + this._params.text() + ")";
+    }
+}
+
+export class DeepBlueExtend extends DeepBlueOperation implements IFiltered {
+
+    constructor(public _data: IOperation, public _params: IDataParameter, public query_id: Id, public cached = false) {
+        super(_data, query_id, "extend")
+    }
+
+    data(): IDataParameter {
+        return this._data;
+    }
+
+    mainOperation(): IOperation {
+        return this._data.mainOperation();
+    }
+
+    filter(): IDataParameter {
+        return this._params;
+    }
+
+    key(): string {
+        return "extend_" + this.id().id;
+    }
+
+    clone(): DeepBlueExtend {
+        return new DeepBlueExtend(
+            this._data.clone(),
+            this._params.clone(),
+            this.query_id,
+            this.cached
+        );
+    }
+
+    cacheIt(query_id: Id): DeepBlueExtend {
+        return new DeepBlueExtend(this._data, this._params, this.query_id, this.cached);
     }
 
     text(): string {

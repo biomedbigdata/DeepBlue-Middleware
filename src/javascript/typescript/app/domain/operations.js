@@ -460,14 +460,12 @@ class DeepBlueFilter extends DeepBlueOperation {
 }
 exports.DeepBlueFilter = DeepBlueFilter;
 class DeepBlueFlank extends DeepBlueOperation {
-    constructor(_data, _start, _end, query_id, cached = false) {
-        super(_data, query_id, "regions_flank");
+    constructor(_data, _params, query_id, cached = false) {
+        super(_data, query_id, "flank");
         this._data = _data;
-        this._start = _start;
-        this._end = _end;
+        this._params = _params;
         this.query_id = query_id;
         this.cached = cached;
-        this._params = new DeepBlueOperationArgs({ "start": _start, "end": _end });
     }
     data() {
         return this._data;
@@ -479,19 +477,50 @@ class DeepBlueFlank extends DeepBlueOperation {
         return this._params;
     }
     key() {
-        return "filter_" + this.id().id;
+        return "extend_" + this.id().id;
     }
     clone() {
-        return new DeepBlueFilter(this._data.clone(), this._params.clone(), this.query_id, this.cached);
+        return new DeepBlueFlank(this._data.clone(), this._params.clone(), this.query_id, this.cached);
     }
     cacheIt(query_id) {
-        return new DeepBlueFlank(this._data, this._params['start'], this._params['end'], this.query_id, this.cached);
+        return new DeepBlueFlank(this._data, this._params, this.query_id, this.cached);
     }
     text() {
         return this._data.text() + "(" + this._params.text() + ")";
     }
 }
 exports.DeepBlueFlank = DeepBlueFlank;
+class DeepBlueExtend extends DeepBlueOperation {
+    constructor(_data, _params, query_id, cached = false) {
+        super(_data, query_id, "extend");
+        this._data = _data;
+        this._params = _params;
+        this.query_id = query_id;
+        this.cached = cached;
+    }
+    data() {
+        return this._data;
+    }
+    mainOperation() {
+        return this._data.mainOperation();
+    }
+    filter() {
+        return this._params;
+    }
+    key() {
+        return "extend_" + this.id().id;
+    }
+    clone() {
+        return new DeepBlueExtend(this._data.clone(), this._params.clone(), this.query_id, this.cached);
+    }
+    cacheIt(query_id) {
+        return new DeepBlueExtend(this._data, this._params, this.query_id, this.cached);
+    }
+    text() {
+        return this._data.text() + "(" + this._params.text() + ")";
+    }
+}
+exports.DeepBlueExtend = DeepBlueExtend;
 class DeepBlueOperationError extends AbstractNamedDataType {
     constructor(message, request_count) {
         super("error");
