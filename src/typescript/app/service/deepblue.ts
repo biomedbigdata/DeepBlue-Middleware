@@ -31,7 +31,10 @@ import {
   DeepBlueMetadataParameters,
   DeepBlueFilterParameters,
   DeepBlueOperationError,
-  DeepBlueEmptyParameter
+  DeepBlueEmptyParameter,
+  DeepBlueFlank,
+  DeepBlueOperationArgs,
+  DeepBlueExtend
 } from '../domain/operations';
 
 import 'rxjs/Rx';
@@ -211,6 +214,35 @@ export class DeepBlueService {
       return new DeepBlueFilter(query_op, filter, new Id(response[1]));
     }).catch(this.handleError);
   }
+
+  flank(query_op: DeepBlueOperation, start: number, length: number, status: RequestStatus): Observable<DeepBlueOperation> {
+    let params: Object = new Object();
+    params["query_id"] = query_op.id().id;
+    params["start"] = start;
+    params["length"] = length;
+    params["use_strand"] = true;
+
+    return this.execute("flank", params, status).map((response: [string, string]) => {
+      status.increment();
+      let args = new DeepBlueOperationArgs(params);
+      return new DeepBlueFlank(query_op, args, new Id(response[1]));
+    }).catch(this.handleError);
+  }
+
+  extend(query_op: DeepBlueOperation, length: number, direction: string, status: RequestStatus): Observable<DeepBlueOperation> {
+    let params: Object = new Object();
+    params["query_id"] = query_op.id().id;
+    params["length"] = length;
+    params["direction"] = direction;
+    params["use_strand"] = true;
+
+    return this.execute("extend", params, status).map((response: [string, string]) => {
+      status.increment();
+      let args = new DeepBlueOperationArgs(params);
+      return new DeepBlueExtend(query_op, args, new Id(response[1]));
+    }).catch(this.handleError);
+  }
+
 
   query_cache(query_data: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueOperation> {
     let params = new Object();

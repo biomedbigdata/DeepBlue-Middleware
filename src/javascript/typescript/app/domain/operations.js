@@ -459,6 +459,68 @@ class DeepBlueFilter extends DeepBlueOperation {
     }
 }
 exports.DeepBlueFilter = DeepBlueFilter;
+class DeepBlueFlank extends DeepBlueOperation {
+    constructor(_data, _params, query_id, cached = false) {
+        super(_data, query_id, "flank");
+        this._data = _data;
+        this._params = _params;
+        this.query_id = query_id;
+        this.cached = cached;
+    }
+    data() {
+        return this._data;
+    }
+    mainOperation() {
+        return this._data.mainOperation();
+    }
+    filter() {
+        return this._params;
+    }
+    key() {
+        return "extend_" + this.id().id;
+    }
+    clone() {
+        return new DeepBlueFlank(this._data.clone(), this._params.clone(), this.query_id, this.cached);
+    }
+    cacheIt(query_id) {
+        return new DeepBlueFlank(this._data, this._params, this.query_id, this.cached);
+    }
+    text() {
+        return this._data.text() + "(" + this._params.text() + ")";
+    }
+}
+exports.DeepBlueFlank = DeepBlueFlank;
+class DeepBlueExtend extends DeepBlueOperation {
+    constructor(_data, _params, query_id, cached = false) {
+        super(_data, query_id, "extend");
+        this._data = _data;
+        this._params = _params;
+        this.query_id = query_id;
+        this.cached = cached;
+    }
+    data() {
+        return this._data;
+    }
+    mainOperation() {
+        return this._data.mainOperation();
+    }
+    filter() {
+        return this._params;
+    }
+    key() {
+        return "extend_" + this.id().id;
+    }
+    clone() {
+        return new DeepBlueExtend(this._data.clone(), this._params.clone(), this.query_id, this.cached);
+    }
+    cacheIt(query_id) {
+        return new DeepBlueExtend(this._data, this._params, this.query_id, this.cached);
+    }
+    text() {
+        return this._data.text() + "(" + this._params.text() + ")";
+    }
+}
+exports.DeepBlueExtend = DeepBlueExtend;
 class DeepBlueOperationError extends AbstractNamedDataType {
     constructor(message, request_count) {
         super("error");

@@ -76,8 +76,9 @@ class ComposedCommandsRoutes {
     }
     static countGenesOverlaps(req, res, next) {
         manager_1.Manager.getComposedCommands().subscribe((cc) => {
-            let queries_id = req.query["queries_id"];
-            let gene_model_name = req.query["gene_model_name"];
+            let queries_id = req.body.queries_id;
+            let gene_model_name = req.body.gene_model_name;
+            let filters = JSON.parse(req.body.filters);
             let status = ComposedCommandsRoutes.requestManager.startRequest();
             res.send(["okay", status.request_id.toLocaleString()]);
             if (!(Array.isArray(queries_id))) {
@@ -85,10 +86,11 @@ class ComposedCommandsRoutes {
             }
             // TODO: Load real Operation
             let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(query_id), new deepblue_1.Id(query_id), "DIVE data"));
-            var ccos = cc.countGenesOverlaps(deepblue_query_ops, new deepblue_1.Name(gene_model_name), status).subscribe((results) => {
+            var ccos = cc.countGenesOverlaps(deepblue_query_ops, new deepblue_1.Name(gene_model_name), filters, status).subscribe((results) => {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];
+                    console.log(result);
                     rr.push(result);
                 }
                 status.finish(rr);
@@ -480,7 +482,6 @@ class ComposedCommandsRoutes {
         //get router
         let router;
         router = express.Router();
-        router.get("/count_genes_overlaps", this.countGenesOverlaps);
         router.get("/enrich_regions_go_terms", this.enrichRegionsGoTerms);
         router.get("/get_request", this.getRequest);
         router.get("/gene_models_by_genome", this.geneModelsByGenome);
@@ -497,6 +498,7 @@ class ComposedCommandsRoutes {
         // Biosources
         router.get("/get_related_biosources", this.getRelatedBioSources);
         // Post:
+        router.post("/count_genes_overlaps", this.countGenesOverlaps);
         router.post("/count_overlaps", this.countOverlaps);
         router.post("/input_regions", this.inputRegions);
         router.post("/enrich_regions_overlap", this.enrichRegionOverlap);
