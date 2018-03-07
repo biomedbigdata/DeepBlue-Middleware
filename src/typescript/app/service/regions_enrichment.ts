@@ -1,7 +1,7 @@
 import { RequestStatus } from '../domain/status';
 import { DeepBlueResult, DeepBlueOperation, DeepBlueFilter, DeepBlueFilterParameters } from '../domain/operations';
 import { DeepBlueService } from "../service/deepblue";
-import { IdName, IdNameCount, FullMetadata, FullExperiment } from "../domain/deepblue";
+import { IdName, IdNameCount, FullMetadata, FullExperiment, Name } from "../domain/deepblue";
 import { Observable } from "rxjs/Observable";
 import { Subject } from "rxjs";
 
@@ -198,5 +198,28 @@ export class RegionsEnrichment {
 
     return o.flatMap((results: Observable<DeepBlueResult[]>) => results);
   }
+
+
+  enrichRegionsGoTerms(data_query_id: DeepBlueOperation[], gene_model: Name, status: RequestStatus): Observable<DeepBlueResult[]> {
+    let total = data_query_id.length * data_query_id.length * 3;
+    status.reset(total);
+
+    let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
+
+    let observableBatch: Observable<DeepBlueResult>[] = [];
+
+    data_query_id.forEach((current_op) => {
+        let o : Observable<DeepBlueResult> = new Observable((observer) => {
+          this.deepBlueService.enrich_regions_go_terms(current_op, gene_model, status).subscribe((result: DeepBlueResult) => {
+            status.mergePartialData(result.resultAsEnrichment());
+            observer.next(result);
+            observer.complete();
+          });
+        });
+        observableBatch.push(o);
+    });
+
+    return Observable.forkJoin(observableBatch);
+}
 
 }

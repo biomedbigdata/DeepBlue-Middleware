@@ -153,5 +153,22 @@ class RegionsEnrichment {
         });
         return o.flatMap((results) => results);
     }
+    enrichRegionsGoTerms(data_query_id, gene_model, status) {
+        let total = data_query_id.length * data_query_id.length * 3;
+        status.reset(total);
+        let response = new rxjs_1.Subject();
+        let observableBatch = [];
+        data_query_id.forEach((current_op) => {
+            let o = new Observable_1.Observable((observer) => {
+                this.deepBlueService.enrich_regions_go_terms(current_op, gene_model, status).subscribe((result) => {
+                    status.mergePartialData(result.resultAsEnrichment());
+                    observer.next(result);
+                    observer.complete();
+                });
+            });
+            observableBatch.push(o);
+        });
+        return Observable_1.Observable.forkJoin(observableBatch);
+    }
 }
 exports.RegionsEnrichment = RegionsEnrichment;

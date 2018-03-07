@@ -111,18 +111,6 @@ class ComposedCommands {
             return Observable_1.Observable.forkJoin(observableCounts);
         });
     }
-    enrichRegionsGoTerms(data_query_id, gene_model, status) {
-        var start = new Date().getTime();
-        let total = data_query_id.length * data_query_id.length * 3;
-        status.reset(total);
-        let response = new rxjs_1.Subject();
-        let observableBatch = [];
-        data_query_id.forEach((current_op) => {
-            let o = this.deepBlueService.enrich_regions_go_terms(current_op, gene_model, status);
-            observableBatch.push(o);
-        });
-        return Observable_1.Observable.forkJoin(observableBatch);
-    }
     loadQuery(query_id, status) {
         return this.deepBlueService.info(query_id, status).map((fullMetadata) => {
             let type = fullMetadata.type();
