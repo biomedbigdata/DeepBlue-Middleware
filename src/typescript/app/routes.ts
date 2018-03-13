@@ -159,7 +159,7 @@ export class ComposedCommandsRoutes {
 
 
   private static enrichRegionsGoTerms(req: express.Request, res: express.Response, next: express.NextFunction) {
-    Manager.getComposedCommands().subscribe((cc: ComposedCommands) => {
+    Manager.getRegionsEnrichment().subscribe((re: RegionsEnrichment) => {
 
       let queries_id = req.query["queries_id"];
       let gene_model_name: string = req.query["gene_model_name"];
@@ -186,7 +186,7 @@ export class ComposedCommandsRoutes {
       let deepblue_query_ops: DeepBlueOperation[] =
         queries_id.map((query_id: string, i: number) => new DeepBlueOperation(new DeepBlueDataParameter(query_id), new Id(query_id), "DIVE data"));
 
-      var ccos = cc.enrichRegionsGoTerms(deepblue_query_ops, new Name(gene_model_name), status).subscribe((results: DeepBlueResult[]) => {
+      var ccos = re.enrichRegionsGoTerms(deepblue_query_ops, new Name(gene_model_name), status).subscribe((results: DeepBlueResult[]) => {
         let rr = [];
         for (let i = 0; i < results.length; i++) {
           let result: DeepBlueResult = results[i];

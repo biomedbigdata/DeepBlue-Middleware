@@ -98,7 +98,7 @@ class ComposedCommandsRoutes {
         });
     }
     static enrichRegionsGoTerms(req, res, next) {
-        manager_1.Manager.getComposedCommands().subscribe((cc) => {
+        manager_1.Manager.getRegionsEnrichment().subscribe((re) => {
             let queries_id = req.query["queries_id"];
             let gene_model_name = req.query["gene_model_name"];
             if (!(queries_id)) {
@@ -116,7 +116,7 @@ class ComposedCommandsRoutes {
             }
             // TODO: Load real Operation
             let deepblue_query_ops = queries_id.map((query_id, i) => new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(query_id), new deepblue_1.Id(query_id), "DIVE data"));
-            var ccos = cc.enrichRegionsGoTerms(deepblue_query_ops, new deepblue_1.Name(gene_model_name), status).subscribe((results) => {
+            var ccos = re.enrichRegionsGoTerms(deepblue_query_ops, new deepblue_1.Name(gene_model_name), status).subscribe((results) => {
                 let rr = [];
                 for (let i = 0; i < results.length; i++) {
                     let result = results[i];

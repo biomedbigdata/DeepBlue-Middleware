@@ -161,24 +161,6 @@ export class ComposedCommands {
         });
     }
 
-    enrichRegionsGoTerms(data_query_id: DeepBlueOperation[], gene_model: Name, status: RequestStatus): Observable<DeepBlueResult[]> {
-        var start = new Date().getTime();
-
-        let total = data_query_id.length * data_query_id.length * 3;
-        status.reset(total);
-
-        let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
-
-        let observableBatch: Observable<DeepBlueResult>[] = [];
-
-        data_query_id.forEach((current_op) => {
-            let o = this.deepBlueService.enrich_regions_go_terms(current_op, gene_model, status);
-            observableBatch.push(o);
-        });
-
-        return Observable.forkJoin(observableBatch);
-    }
-
     loadQuery(query_id: Id, status: RequestStatus): Observable<IOperation> {
 
         return this.deepBlueService.info(query_id, status).map((fullMetadata: FullMetadata) => {
