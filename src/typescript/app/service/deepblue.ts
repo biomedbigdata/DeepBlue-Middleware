@@ -267,16 +267,16 @@ export class DeepBlueService {
 
     return this.execute("select_genes", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueOperation(new DeepBlueDataParameter(gene_model_name), new Id(response[1]), 'select_genes');
+      return new DeepBlueOperation(new DeepBlueOperationArgs({ "gene_model": gene_model_name }), new Id(response[1]), 'select_genes');
     }).do((operation) => {
       this.idNamesQueryCache.put(gene_model_name, operation);
     }).catch(this.handleError);
   }
 
 
-  intersection(query_data_id: DeepBlueOperation, query_filter_id: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueIntersection> {
+  intersection(query_data: DeepBlueOperation, query_filter: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueIntersection> {
 
-    let cache_key = [query_data_id, query_filter_id];
+    let cache_key = [query_data, query_filter];
 
     let cached_intersection = this.intersectsQueryCache.get(cache_key);
     if (cached_intersection) {
@@ -285,11 +285,11 @@ export class DeepBlueService {
     }
 
     let params = {};
-    params["query_data_id"] = query_data_id.id().id;
-    params["query_filter_id"] = query_filter_id.id().id;
+    params["query_data_id"] = query_data.id().id;
+    params["query_filter_id"] = query_filter.id().id;
     return this.execute("intersection", params, status)
       .map((response: [string, string]) => {
-        return new DeepBlueIntersection(query_data_id, query_filter_id, new Id(response[1]))
+        return new DeepBlueIntersection(query_data, query_filter, true, new Id(response[1]))
       })
 
       .do((operation: DeepBlueIntersection) => this.intersectsQueryCache.put(cache_key, operation))
