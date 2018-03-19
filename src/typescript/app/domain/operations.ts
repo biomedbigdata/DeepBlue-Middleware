@@ -204,12 +204,7 @@ export class DeepBlueOperationArgs extends AbstractDataParameter {
     }
 
     static fromObject(o: any): DeepBlueOperationArgs {
-        let newO = {
-            start : o.start,
-            length : o.length,
-            use_strand : o.use_strand
-        }
-        return new DeepBlueOperationArgs(newO);
+        return new DeepBlueOperationArgs(o);
     }
 
     key(): string {

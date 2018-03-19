@@ -208,7 +208,6 @@ class DeepBlueService {
             status.increment();
             return Observable_1.Observable.of(cached_intersection);
         }
-        console.log(query_data.id().id, query_filter.id().id);
         let params = {};
         params["query_data_id"] = query_data.id().id;
         params["query_filter_id"] = query_filter.id().id;

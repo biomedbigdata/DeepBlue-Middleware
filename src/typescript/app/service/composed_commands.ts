@@ -183,8 +183,6 @@ export class ComposedCommands {
                 case "experiment_select":
                 case "genes_select":
                 case "input_regions": {
-                    console.log(JSON.stringify(content));
-                    console.log(JSON.stringify(id));
                     return Observable.of(new DeepBlueOperation(content, id, type));
                 }
 
@@ -231,13 +229,13 @@ export class ComposedCommands {
 
                 case "flank":
                 case 'extend': {
-                    let filter_parameters = DeepBlueOperationArgs.fromObject(fullMetadata['values']['args']);
+                    let args = DeepBlueOperationArgs.fromObject(fullMetadata.get('args'));
                     let _data = new Id(fullMetadata.get('args')['query_id']);
                     return this.loadQuery(_data, status).flatMap((op) => {
                         if (type == "flank") {
-                            return Observable.of(new DeepBlueFlank(op, filter_parameters, query_id));
+                            return Observable.of(new DeepBlueFlank(op, args, query_id));
                         } else if (type == "extend") {
-                            return Observable.of(new DeepBlueExtend(op, filter_parameters, query_id));
+                            return Observable.of(new DeepBlueExtend(op, args, query_id));
                         } else {
                             console.log("Unknow type", type);
                             return Observable.of(null);

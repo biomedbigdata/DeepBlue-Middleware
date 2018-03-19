@@ -167,14 +167,14 @@ class ComposedCommands {
                 }
                 case "flank":
                 case 'extend': {
-                    let filter_parameters = operations_1.DeepBlueOperationArgs.fromObject(fullMetadata['values']['args']);
+                    let args = operations_1.DeepBlueOperationArgs.fromObject(fullMetadata.get('args'));
                     let _data = new deepblue_1.Id(fullMetadata.get('args')['query_id']);
                     return this.loadQuery(_data, status).flatMap((op) => {
                         if (type == "flank") {
-                            return Observable_1.Observable.of(new operations_1.DeepBlueFlank(op, filter_parameters, query_id));
+                            return Observable_1.Observable.of(new operations_1.DeepBlueFlank(op, args, query_id));
                         }
                         else if (type == "extend") {
-                            return Observable_1.Observable.of(new operations_1.DeepBlueExtend(op, filter_parameters, query_id));
+                            return Observable_1.Observable.of(new operations_1.DeepBlueExtend(op, args, query_id));
                         }
                         else {
                             console.log("Unknow type", type);
