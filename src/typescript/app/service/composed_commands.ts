@@ -16,7 +16,10 @@ import {
     DeepBlueDataParameter,
     DeepBlueResultError,
     DeepBlueFilterParameters,
-    DeepBlueAggregate
+    DeepBlueAggregate,
+    DeepBlueFlank,
+    DeepBlueExtend,
+    DeepBlueError
 } from '../domain/operations';
 import { IOperation } from 'app/domain/interfaces';
 
@@ -178,7 +181,10 @@ export class ComposedCommands {
             switch (type) {
                 case "annotation_select":
                 case "experiment_select":
+                case "genes_select":
                 case "input_regions": {
+                    console.log(JSON.stringify(content));
+                    console.log(JSON.stringify(id));
                     return Observable.of(new DeepBlueOperation(content, id, type));
                 }
 
@@ -206,7 +212,7 @@ export class ComposedCommands {
                         this.loadQuery(data, status),
                         this.loadQuery(filter, status)
                     ]).map(([op_data, op_filter]) => {
-                        return new DeepBlueIntersection(op_data, op_filter, id);
+                        return new DeepBlueIntersection(op_data, op_filter, true, id);
                     })
                 }
 
@@ -220,6 +226,22 @@ export class ComposedCommands {
                         this.loadQuery(ranges_id, status)
                     ]).map(([op_data, op_ranges]) => {
                         return new DeepBlueAggregate(op_data, op_ranges, field, id);
+                    });
+                }
+
+                case "flank":
+                case 'extend': {
+                    let filter_parameters = DeepBlueOperationArgs.fromObject(fullMetadata['values']['args']);
+                    let _data = new Id(fullMetadata.get('args')['query_id']);
+                    return this.loadQuery(_data, status).flatMap((op) => {
+                        if (type == "flank") {
+                            return Observable.of(new DeepBlueFlank(op, filter_parameters, query_id));
+                        } else if (type == "extend") {
+                            return Observable.of(new DeepBlueExtend(op, filter_parameters, query_id));
+                        } else {
+                            console.log("Unknow type", type);
+                            return Observable.of(null);
+                        }
                     });
                 }
 

@@ -126,6 +126,7 @@ class ComposedCommands {
             switch (type) {
                 case "annotation_select":
                 case "experiment_select":
+                case "genes_select":
                 case "input_regions": {
                     return Observable_1.Observable.of(new operations_1.DeepBlueOperation(content, id, type));
                 }
@@ -150,7 +151,7 @@ class ComposedCommands {
                         this.loadQuery(data, status),
                         this.loadQuery(filter, status)
                     ]).map(([op_data, op_filter]) => {
-                        return new operations_1.DeepBlueIntersection(op_data, op_filter, id);
+                        return new operations_1.DeepBlueIntersection(op_data, op_filter, true, id);
                     });
                 }
                 case "aggregate": {
@@ -162,6 +163,23 @@ class ComposedCommands {
                         this.loadQuery(ranges_id, status)
                     ]).map(([op_data, op_ranges]) => {
                         return new operations_1.DeepBlueAggregate(op_data, op_ranges, field, id);
+                    });
+                }
+                case "flank":
+                case 'extend': {
+                    let filter_parameters = operations_1.DeepBlueOperationArgs.fromObject(fullMetadata['values']['args']);
+                    let _data = new deepblue_1.Id(fullMetadata.get('args')['query_id']);
+                    return this.loadQuery(_data, status).flatMap((op) => {
+                        if (type == "flank") {
+                            return Observable_1.Observable.of(new operations_1.DeepBlueFlank(op, filter_parameters, query_id));
+                        }
+                        else if (type == "extend") {
+                            return Observable_1.Observable.of(new operations_1.DeepBlueExtend(op, filter_parameters, query_id));
+                        }
+                        else {
+                            console.log("Unknow type", type);
+                            return Observable_1.Observable.of(null);
+                        }
                     });
                 }
                 default: {

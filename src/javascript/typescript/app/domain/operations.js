@@ -100,6 +100,9 @@ class AbstractDataParameter extends AbstractNamedDataType {
     }
 }
 exports.AbstractDataParameter = AbstractDataParameter;
+class AbstractFilterParameter extends AbstractDataParameter {
+}
+exports.AbstractFilterParameter = AbstractFilterParameter;
 class DeepBlueEmptyParameter extends AbstractDataParameter {
     constructor() {
         super("empty_parameter");
@@ -166,6 +169,14 @@ class DeepBlueOperationArgs extends AbstractDataParameter {
     constructor(args) {
         super("operation_args");
         this.args = args;
+    }
+    static fromObject(o) {
+        let newO = {
+            start: o.start,
+            length: o.length,
+            use_strand: o.use_strand
+        };
+        return new DeepBlueOperationArgs(newO);
     }
     key() {
         return textify(this.args);
@@ -255,7 +266,7 @@ class DeepBlueMetadataParameters extends AbstractDataParameter {
     }
 }
 exports.DeepBlueMetadataParameters = DeepBlueMetadataParameters;
-class DeepBlueFilterParameters extends AbstractDataParameter {
+class DeepBlueFilterParameters extends AbstractFilterParameter {
     constructor(field, operation, value, type) {
         super("filter_parameters");
         this.field = field;
@@ -275,7 +286,10 @@ class DeepBlueFilterParameters extends AbstractDataParameter {
         return params;
     }
     text() {
-        return JSON.stringify(this.asKeyValue());
+        if (this.field.length > 0 && this.field[0] == "@") {
+            this.field = this.field.replace("@", "");
+        }
+        return this.field + " " + this.operation + " " + this.value;
     }
     clone() {
         return new DeepBlueFilterParameters(this.field, this.operation, this.value, this.type);
@@ -291,6 +305,36 @@ class DeepBlueFilterParameters extends AbstractDataParameter {
     }
 }
 exports.DeepBlueFilterParameters = DeepBlueFilterParameters;
+class DeepBlueFilterMotifParameters extends AbstractFilterParameter {
+    constructor(motif) {
+        super("filter_motif_parameter");
+        this.motif = motif;
+    }
+    static fromObject(o) {
+        return new DeepBlueFilterMotifParameters(o.motif);
+    }
+    asKeyValue() {
+        let params = {};
+        params["motif"] = this.motif;
+        return params;
+    }
+    text() {
+        return this.motif;
+    }
+    clone() {
+        return new DeepBlueFilterMotifParameters(this.motif);
+    }
+    name() {
+        return "Filter Motif: " + this.motif;
+    }
+    id() {
+        return new deepblue_2.Id(textify(this.asKeyValue));
+    }
+    key() {
+        return this.id().id;
+    }
+}
+exports.DeepBlueFilterMotifParameters = DeepBlueFilterMotifParameters;
 class DeepBlueOperation extends AbstractNamedDataType {
     constructor(_data, query_id, command, request_count, cached = false) {
         super("data_operation");
@@ -366,15 +410,16 @@ class DeepBlueTiling extends AbstractNamedDataType {
 }
 exports.DeepBlueTiling = DeepBlueTiling;
 class DeepBlueIntersection extends DeepBlueOperation {
-    constructor(_subject, _filter, query_id, cached = false) {
+    constructor(_subject, _filter, overlap, query_id, cached = false) {
         super(_subject.data(), query_id, "intersection");
         this._subject = _subject;
         this._filter = _filter;
+        this.overlap = overlap;
         this.query_id = query_id;
         this.cached = cached;
     }
     clone() {
-        return new DeepBlueIntersection(this._subject.clone(), this._filter.clone(), this.query_id, this.cached);
+        return new DeepBlueIntersection(this._subject.clone(), this._filter.clone(), this.overlap, this.query_id, this.cached);
     }
     data() {
         return this._subject;
@@ -389,10 +434,15 @@ class DeepBlueIntersection extends DeepBlueOperation {
         return this._filter;
     }
     cacheIt(query_id) {
-        return new DeepBlueIntersection(this._subject, this._filter, this.query_id, true);
+        return new DeepBlueIntersection(this._subject, this._filter, this.overlap, this.query_id, true);
     }
     text() {
-        return this._subject.text() + " filtered by " + this._filter.text();
+        if (this.overlap) {
+            return "Overlapping " + this._filter.text();
+        }
+        else {
+            return "Not overlapping " + this._filter.text();
+        }
     }
 }
 exports.DeepBlueIntersection = DeepBlueIntersection;
@@ -406,7 +456,7 @@ class DeepBlueAggregate extends DeepBlueOperation {
         this.cached = cached;
     }
     clone() {
-        return new DeepBlueIntersection(this._subject.clone(), this._ranges.clone(), this.query_id, this.cached);
+        return new DeepBlueAggregate(this._subject.clone(), this._ranges.clone(), this.field, this.query_id, this.cached);
     }
     data() {
         return this._subject;
@@ -421,7 +471,7 @@ class DeepBlueAggregate extends DeepBlueOperation {
         return this._ranges;
     }
     cacheIt(query_id) {
-        return new DeepBlueIntersection(this._subject, this._ranges, this.query_id, true);
+        return new DeepBlueAggregate(this._subject, this._ranges, this.field, this.query_id, true);
     }
     text() {
         return this._subject.text() + " aggregated by " + this._ranges.text();
@@ -455,7 +505,7 @@ class DeepBlueFilter extends DeepBlueOperation {
         return new DeepBlueFilter(this._data, this._params, this.query_id, this.cached);
     }
     text() {
-        return this._data.text() + "(" + this._params.text() + ")";
+        return this._data.text() + " by " + this._params.text();
     }
 }
 exports.DeepBlueFilter = DeepBlueFilter;
@@ -477,7 +527,7 @@ class DeepBlueFlank extends DeepBlueOperation {
         return this._params;
     }
     key() {
-        return "extend_" + this.id().id;
+        return "flank_" + this.id().id;
     }
     clone() {
         return new DeepBlueFlank(this._data.clone(), this._params.clone(), this.query_id, this.cached);
@@ -486,7 +536,7 @@ class DeepBlueFlank extends DeepBlueOperation {
         return new DeepBlueFlank(this._data, this._params, this.query_id, this.cached);
     }
     text() {
-        return this._data.text() + "(" + this._params.text() + ")";
+        return "flanking at " + this._params.args['start'] + " by " + this._params.args['length'] + "bp";
     }
 }
 exports.DeepBlueFlank = DeepBlueFlank;
@@ -517,7 +567,7 @@ class DeepBlueExtend extends DeepBlueOperation {
         return new DeepBlueExtend(this._data, this._params, this.query_id, this.cached);
     }
     text() {
-        return this._data.text() + "(" + this._params.text() + ")";
+        return "extend by " + this._params.args['length'] + "bp to " + this._params.args['direction'].toLocaleLowerCase() + " direction(s)";
     }
 }
 exports.DeepBlueExtend = DeepBlueExtend;
@@ -553,6 +603,141 @@ class DeepBlueOperationError extends AbstractNamedDataType {
     }
 }
 exports.DeepBlueOperationError = DeepBlueOperationError;
+class DeepBlueResult {
+    constructor(request, result, request_count) {
+        this.request = request;
+        this.result = result;
+        this.request_count = request_count;
+    }
+    static fromObject(obj) {
+        return new DeepBlueResult(DeepBlueRequest.fromObject(obj['request']), obj['result']);
+    }
+    clone() {
+        return new DeepBlueResult(this.request.clone(), this.result, this.request_count);
+    }
+    resultAsString() {
+        return this.result;
+    }
+    static hasResult(result, key) {
+        return result[key] !== undefined;
+    }
+    resultAsCount() {
+        if (DeepBlueResult.hasResult(this.result, 'count')) {
+            return this.result.count;
+        }
+        else {
+            return null;
+        }
+    }
+    resultAsDistinct() {
+        if (DeepBlueResult.hasResult(this.result, 'distinct')) {
+            return this.result.distinct;
+        }
+        else {
+            return null;
+        }
+    }
+    resultAsTuples() {
+        return this.result;
+    }
+    resultAsEnrichment() {
+        if (DeepBlueResult.hasResult(this.result, 'enrichment')) {
+            return this.result.enrichment["results"];
+        }
+        return [];
+    }
+    getRequestId() {
+        return this.request._id;
+    }
+    getData() {
+        return this.request.getData();
+    }
+    getFilter() {
+        return this.request.getFilter();
+    }
+}
+exports.DeepBlueResult = DeepBlueResult;
+class DeepBlueResultError extends DeepBlueResult {
+    constructor(request, error, request_count) {
+        super(request, error, request_count);
+        this.request = request;
+        this.error = error;
+        this.request_count = request_count;
+    }
+}
+exports.DeepBlueResultError = DeepBlueResultError;
+class StackValue {
+    constructor(stack, value) {
+        this.stack = stack;
+        this.value = value;
+    }
+    getDeepBlueOperation() {
+        return this.value;
+    }
+    getDeepBlueRequest() {
+        return this.value;
+    }
+    getDeepBlueResult() {
+        return this.value;
+    }
+}
+exports.StackValue = StackValue;
+class DeepBlueError extends DeepBlueResult {
+    constructor(request, error, request_count) {
+        super(request, error, request_count);
+        this.request = request;
+        this.error = error;
+        this.request_count = request_count;
+    }
+    getError() {
+        return this.error;
+    }
+}
+exports.DeepBlueError = DeepBlueError;
+class DeepBlueMiddlewareGOEnrichtmentResult {
+    constructor(data_name, gene_model, results) {
+        this.data_name = data_name;
+        this.gene_model = gene_model;
+        this.results = results;
+    }
+    static fromObject(obj) {
+        return new DeepBlueMiddlewareGOEnrichtmentResult(obj['data_name'], obj['gene_model'], obj['results']);
+    }
+    getDataName() {
+        return this.data_name;
+    }
+    getGeneModel() {
+        return this.gene_model;
+    }
+    getResults() {
+        return this.results;
+    }
+}
+exports.DeepBlueMiddlewareGOEnrichtmentResult = DeepBlueMiddlewareGOEnrichtmentResult;
+class DeepBlueMiddlewareOverlapEnrichtmentResult {
+    constructor(data_name, universe_id, datasets, results) {
+        this.data_name = data_name;
+        this.universe_id = universe_id;
+        this.datasets = datasets;
+        this.results = results;
+    }
+    static fromObject(obj) {
+        return new DeepBlueMiddlewareOverlapEnrichtmentResult(obj['data_name'], new deepblue_2.Id(obj['universe_id']), obj['datasets'], obj['results']['enrichment']['results'].map((obj) => DeepBlueMiddlewareOverlapEnrichtmentResultItem.fromObject(obj)));
+    }
+    getDataName() {
+        return this.data_name;
+    }
+    getUniverseId() {
+        return this.universe_id;
+    }
+    getDatasets() {
+        return this.datasets;
+    }
+    getResults() {
+        return this.results;
+    }
+}
+exports.DeepBlueMiddlewareOverlapEnrichtmentResult = DeepBlueMiddlewareOverlapEnrichtmentResult;
 class AbstractDeepBlueRequest {
     constructor(_id, command) {
         this._id = _id;
@@ -618,114 +803,77 @@ class DeepBlueRequest extends AbstractDeepBlueRequest {
     }
 }
 exports.DeepBlueRequest = DeepBlueRequest;
-class DeepBlueResult {
-    constructor(request, result, request_count) {
-        this.request = request;
-        this.result = result;
-        this.request_count = request_count;
+class DeepBlueMiddlewareRequest extends AbstractDeepBlueRequest {
+    constructor(parameters, command, _id) {
+        super(_id, command);
+        this.parameters = parameters;
+        this.command = command;
+        this._id = _id;
+    }
+    clone(request_count) {
+        return new DeepBlueMiddlewareRequest(this.parameters, this.command, this._id);
+    }
+    requestId() {
+        return this._id;
+    }
+    key() {
+        return this._id.id;
+    }
+    text() {
+        return "MiddlewareRequest: " + this._id.id;
+    }
+}
+exports.DeepBlueMiddlewareRequest = DeepBlueMiddlewareRequest;
+class DeepBlueMiddlewareOverlapEnrichtmentResultItem {
+    constructor(dataset, biosource, epigenetic_mark, description, experiment_size, database_name, p_value_log, odds_ratio, support, b, c, d, support_rank, log_rank, odd_rank, max_rank, mean_rank, data) {
+        this.dataset = dataset;
+        this.biosource = biosource;
+        this.epigenetic_mark = epigenetic_mark;
+        this.description = description;
+        this.experiment_size = experiment_size;
+        this.database_name = database_name;
+        this.p_value_log = p_value_log;
+        this.odds_ratio = odds_ratio;
+        this.support = support;
+        this.b = b;
+        this.c = c;
+        this.d = d;
+        this.support_rank = support_rank;
+        this.log_rank = log_rank;
+        this.odd_rank = odd_rank;
+        this.max_rank = max_rank;
+        this.mean_rank = mean_rank;
+        this.data = data;
+        // JSON does not send infinity values, so we have to fix it manually.
+        this.p_value_log = this.p_value_log != null ? this.p_value_log : Infinity;
+        this.odds_ratio = this.odds_ratio != null ? this.odds_ratio : Infinity;
     }
     static fromObject(obj) {
-        return new DeepBlueResult(DeepBlueRequest.fromObject(obj['request']), obj['result']);
+        return new DeepBlueMiddlewareOverlapEnrichtmentResultItem(obj['dataset'], obj['biosource'], obj['epigenetic_mark'], obj['description'], obj['experiment_size'], obj['database_name'], obj['p_value_log'], obj['odds_ratio'], obj['support'], obj['b'], obj['c'], obj['d'], obj['support_rank'], obj['log_rank'], obj['odd_rank'], obj['max_rank'], obj['mean_rank'], obj);
     }
-    clone() {
-        return new DeepBlueResult(this.request.clone(), this.result, this.request_count);
-    }
-    resultAsString() {
-        return this.result;
-    }
-    static hasResult(result, key) {
-        return result[key] !== undefined;
-    }
-    resultAsCount() {
-        if (DeepBlueResult.hasResult(this.result, 'count')) {
-            return this.result.count;
-        }
-        else {
-            return null;
-        }
-    }
-    resultAsDistinct() {
-        if (DeepBlueResult.hasResult(this.result, 'distinct')) {
-            return this.result.distinct;
-        }
-        else {
-            return null;
-        }
-    }
-    resultAsTuples() {
-        return this.result;
-    }
-    resultAsEnrichment() {
-        if (DeepBlueResult.hasResult(this.result, 'enrichment')) {
-            let result = this.result.enrichment["results"];
-            if (Array.isArray(result)) {
-                return result;
-            }
-            return [];
-        }
-        return [];
-    }
-    getRequestId() {
-        return this.request._id;
-    }
-    getData() {
-        return this.request.getData();
-    }
-    getFilter() {
-        return this.request.getFilter();
+    static asColumns() {
+        return [
+            { name: 'dataset', prop: 'dataset', column_type: 'string' },
+            { name: 'biosource', prop: 'biosource', column_type: 'string' },
+            { name: 'epigenetic_mark', prop: 'epigeneticmark', column_type: 'string' },
+            { name: 'description', prop: 'description', column_type: 'string' },
+            { name: 'experiment_size', prop: 'experimentsize', column_type: 'integer' },
+            { name: 'database_name', prop: 'databasename', column_type: 'string' },
+            { name: 'p_value_log', prop: 'pvaluelog', column_type: 'double' },
+            { name: 'odds_ratio', prop: 'oddsratio', column_type: 'double' },
+            { name: 'support', prop: 'support', column_type: 'integer' },
+            { name: 'b', prop: 'b', column_type: 'integer' },
+            { name: 'c', prop: 'c', column_type: 'integer' },
+            { name: 'd', prop: 'd', column_type: 'integer' },
+            { name: 'support_rank', prop: 'supportrank', column_type: 'integer' },
+            { name: 'log_rank', prop: 'logrank', column_type: 'integer' },
+            { name: 'odd_rank', prop: 'oddrank', column_type: 'integer' },
+            { name: 'max_rank', prop: 'maxrank', column_type: 'integer' },
+            { name: 'mean_rank', prop: 'meanrank', column_type: 'integer' }
+        ];
     }
 }
-exports.DeepBlueResult = DeepBlueResult;
-class DeepBlueResultError extends DeepBlueResult {
-    constructor(request, error, request_count) {
-        super(request, error, request_count);
-        this.request = request;
-        this.error = error;
-        this.request_count = request_count;
-    }
-    getError() {
-        return this.error;
-    }
-}
-exports.DeepBlueResultError = DeepBlueResultError;
-class DeepBlueMiddlewareGOEnrichtmentResult {
-    constructor(data_name, gene_model, results) {
-        this.data_name = data_name;
-        this.gene_model = gene_model;
-        this.results = results;
-    }
-    getDataName() {
-        return this.data_name;
-    }
-    getGeneModel() {
-        return this.gene_model;
-    }
-    getResults() {
-        return this.results;
-    }
-}
-exports.DeepBlueMiddlewareGOEnrichtmentResult = DeepBlueMiddlewareGOEnrichtmentResult;
-class DeepBlueMiddlewareOverlapEnrichtmentResult {
-    constructor(data_name, universe_id, datasets, results) {
-        this.data_name = data_name;
-        this.universe_id = universe_id;
-        this.datasets = datasets;
-        this.results = results;
-    }
-    getDataName() {
-        return this.data_name;
-    }
-    getUniverseId() {
-        return this.universe_id;
-    }
-    getDatasets() {
-        return this.datasets;
-    }
-    getResults() {
-        return this.results;
-    }
-}
-exports.DeepBlueMiddlewareOverlapEnrichtmentResult = DeepBlueMiddlewareOverlapEnrichtmentResult;
+exports.DeepBlueMiddlewareOverlapEnrichtmentResultItem = DeepBlueMiddlewareOverlapEnrichtmentResultItem;
 function toClass(o) {
     switch (o._data_type) {
         case 'data_parameter': {
@@ -744,28 +892,53 @@ function toClass(o) {
         case 'metadata_parameters': {
             return new DeepBlueMetadataParameters(o.genome, o.type, o.epigenetic_mark, o.biosource, o.sample, o.technique, o.project);
         }
-        case 'data_operation': {
-            let data = toClass(o._data);
-            let query_id = new deepblue_2.Id(o.query_id.id);
-            return new DeepBlueOperation(data, query_id, o.command, o.request_count, o.cached);
-        }
         case 'tiling': {
             return new DeepBlueTiling(o.size, o.genome, o.chromosomes, new deepblue_2.Id(o.query_id.id), o.request_count, o.cached);
         }
-        case 'intersection': {
-            let subject = toClass(o._subject);
-            let filter = toClass(o._filter);
-            let query_id = new deepblue_2.Id(o.query_id.id);
-            return new DeepBlueIntersection(subject, filter, query_id, o.cached);
-        }
-        case 'regions_filter': {
-            let data = toClass(o._data);
-            let filter = DeepBlueFilterParameters.fromObject(o._params);
-            let query_id = new deepblue_2.Id(o.query_id.id);
-            return new DeepBlueFilter(data, filter, query_id, o.cached);
+        case 'data_operation': {
+            switch (o.command) {
+                case 'intersection': {
+                    let subject = toClass(o._subject);
+                    let filter = toClass(o._filter);
+                    let overlap = o.overlap;
+                    let query_id = new deepblue_2.Id(o.query_id.id);
+                    return new DeepBlueIntersection(subject, filter, overlap, query_id, o.cached);
+                }
+                case 'aggregate': {
+                    let subject = toClass(o._subject);
+                    let filter = toClass(o._ranges);
+                    let field = o.field;
+                    let query_id = new deepblue_2.Id(o.query_id.id);
+                    return new DeepBlueAggregate(subject, filter, field, query_id, o.cached);
+                }
+                case 'regions_filter': {
+                    let data = toClass(o._data);
+                    let filter = DeepBlueFilterParameters.fromObject(o._params);
+                    let query_id = new deepblue_2.Id(o.query_id.id);
+                    return new DeepBlueFilter(data, filter, query_id, o.cached);
+                }
+                case 'flank': {
+                    let data = toClass(o._data);
+                    let params = toClass(o._params);
+                    let query_id = new deepblue_2.Id(o.query_id.id);
+                    return new DeepBlueFlank(data, params, query_id);
+                }
+                case 'extend': {
+                    let data = toClass(o._data);
+                    let params = toClass(o._params);
+                    let query_id = new deepblue_2.Id(o.query_id.id);
+                    return new DeepBlueExtend(data, params, query_id);
+                }
+                default: {
+                    let data = toClass(o._data);
+                    let query_id = new deepblue_2.Id(o.query_id.id);
+                    return new DeepBlueOperation(data, query_id, o.command, o.request_count, o.cached);
+                }
+            }
         }
         default: {
-            console.error("Invalid type: ", o._data_type);
+            console.warn("Invalid type: ", o._data_type);
         }
     }
 }
+exports.toClass = toClass;
