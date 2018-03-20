@@ -220,7 +220,7 @@ export class DeepBlueService {
     params["query_id"] = query_op.id().id;
     params["start"] = start;
     params["length"] = length;
-    params["use_strand"] = true;
+    params["use_strand"] = "true";
 
     return this.execute("flank", params, status).map((response: [string, string]) => {
       status.increment();
@@ -234,7 +234,7 @@ export class DeepBlueService {
     params["query_id"] = query_op.id().id;
     params["length"] = length;
     params["direction"] = direction;
-    params["use_strand"] = true;
+    params["use_strand"] = "true";
 
     return this.execute("extend", params, status).map((response: [string, string]) => {
       status.increment();
