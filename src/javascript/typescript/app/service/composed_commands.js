@@ -131,8 +131,15 @@ class ComposedCommands {
                 case "input_regions": {
                     return Observable_1.Observable.of(new operations_1.DeepBlueOperation(content, id, type));
                 }
-                case "filter": {
-                    let filter_parameters = operations_1.DeepBlueFilterParameters.fromObject(fullMetadata['values']['args']);
+                case "filter":
+                case 'filter_by_motif': {
+                    let filter_parameters;
+                    if (type == "filter") {
+                        filter_parameters = operations_1.DeepBlueFilterParameters.fromObject(fullMetadata['values']['args']);
+                    }
+                    else {
+                        filter_parameters = operations_1.DeepBlueFilterMotifParameters.fromObject(fullMetadata['values']['args']);
+                    }
                     let _query = new deepblue_1.Id(fullMetadata.get('args')['query']);
                     return this.loadQuery(_query, status).flatMap((op) => {
                         return Observable_1.Observable.of(new operations_1.DeepBlueFilter(op, filter_parameters, query_id));
