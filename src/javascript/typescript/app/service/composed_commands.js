@@ -127,6 +127,7 @@ class ComposedCommands {
                 case "annotation_select":
                 case "experiment_select":
                 case "genes_select":
+                case 'find_motif':
                 case "input_regions": {
                     return Observable_1.Observable.of(new operations_1.DeepBlueOperation(content, id, type));
                 }

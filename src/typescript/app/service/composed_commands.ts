@@ -182,6 +182,7 @@ export class ComposedCommands {
                 case "annotation_select":
                 case "experiment_select":
                 case "genes_select":
+                case 'find_motif':
                 case "input_regions": {
                     return Observable.of(new DeepBlueOperation(content, id, type));
                 }
