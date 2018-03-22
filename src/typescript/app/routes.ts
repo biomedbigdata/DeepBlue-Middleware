@@ -149,7 +149,6 @@ export class ComposedCommandsRoutes {
         let rr = [];
         for (let i = 0; i < results.length; i++) {
           let result: DeepBlueResult[] = results[i];
-          console.log(result);
           rr.push(result);
         }
         status.finish(rr);

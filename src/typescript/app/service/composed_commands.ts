@@ -104,8 +104,7 @@ export class ComposedCommands {
     }
 
     countOverlaps(data_query_id: DeepBlueOperation[], experiments_name: Name[], filters: DeepBlueFilterParameters[], status: RequestStatus): Observable<DeepBlueResult[]> {
-        var start = new Date().getTime();
-        let total = data_query_id.length * experiments_name.length * 4;
+        let total = data_query_id.length * experiments_name.length * 3;
         status.reset(total);
 
         let response: Subject<DeepBlueResult[]> = new Subject<DeepBlueResult[]>();
@@ -120,7 +119,6 @@ export class ComposedCommands {
                     status.setStep("Intersecting regions");
 
                     this.countRegionsBatch(overlap_ops, status).subscribe((datum: DeepBlueResult[]) => {
-                        var end = new Date().getTime();
                         setTimeout(() => {
                             response.next(datum);
                             response.complete();

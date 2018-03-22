@@ -65,8 +65,8 @@ class ComposedCommands {
         }
     }
     countOverlaps(data_query_id, experiments_name, filters, status) {
-        var start = new Date().getTime();
-        let total = data_query_id.length * experiments_name.length * 4;
+        let total = data_query_id.length * experiments_name.length * 3;
+        console.log("total", total);
         status.reset(total);
         let response = new rxjs_1.Subject();
         status.setStep("Selecting experiments regions");
@@ -76,7 +76,6 @@ class ComposedCommands {
                 this.intersectWithSelected(data_query_id, filtered_data, status).subscribe((overlap_ops) => {
                     status.setStep("Intersecting regions");
                     this.countRegionsBatch(overlap_ops, status).subscribe((datum) => {
-                        var end = new Date().getTime();
                         setTimeout(() => {
                             response.next(datum);
                             response.complete();

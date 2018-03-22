@@ -91,6 +91,7 @@ export class RequestStatus {
 
   increment() {
     this.total_loaded++;
+    console.log(this.total_loaded, this.total_to_load);
   }
 
   finish(data: DeepBlueResult[]) {
