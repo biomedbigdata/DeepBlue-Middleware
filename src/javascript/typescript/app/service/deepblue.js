@@ -379,6 +379,18 @@ class DeepBlueService {
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
+    nameToId(name, collection, status) {
+        let params = {
+            "name": name,
+            "collection": collection
+        };
+        return this.execute('name_to_id', params, status).map((body) => {
+            const data = body[1] || [];
+            return data.map((value) => {
+                return new deepblue_1.IdName(new deepblue_1.Id(value[0]), value[1]);
+            });
+        });
+    }
     info(id, status) {
         let object = this.IdObjectCache.get(id);
         if (object) {

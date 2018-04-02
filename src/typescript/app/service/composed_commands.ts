@@ -178,13 +178,24 @@ export class ComposedCommands {
             }
 
             switch (type) {
-                case "annotation_select":
-                case "experiment_select":
                 case "genes_select":
                 case 'find_motif':
                 case "input_regions": {
                     return Observable.of(new DeepBlueOperation(content, id, type));
                 }
+
+                case "annotation_select": {
+                    let ann_name = fullMetadata.get('args')['annotation_name'];
+                    return this.deepBlueService.nameToId(ann_name, "annotations", status).flatMap((idNames: IdName[]) => {
+                        return Observable.of(new DeepBlueOperation(new DeepBlueDataParameter(idNames[0]), id, "select_annotations"));
+                    })
+                }
+
+                case "experiment_select":
+                    let exp_name = fullMetadata.get('args')['experiment_name'];
+                    return this.deepBlueService.nameToId(exp_name, "experiments", status).flatMap((idNames: IdName[]) => {
+                        return Observable.of(new DeepBlueOperation(new DeepBlueDataParameter(idNames[0]), id, "select_annotations"));
+                    })
 
                 case "filter":
                 case 'filter_by_motif': {

@@ -503,6 +503,21 @@ export class DeepBlueService {
     });
   }
 
+
+  nameToId(name: string, collection: string, status: RequestStatus): Observable<IdName[]> {
+    let params = {
+      "name": name,
+      "collection": collection
+    }
+
+    return this.execute('name_to_id', params, status).map((body: any) => {
+      const data = body[1] || [];
+      return data.map((value: any) => {
+        return new IdName(new Id(value[0]), value[1]);
+      })
+    })
+  }
+
   info(id: Id, status: RequestStatus): Observable<FullMetadata> {
 
     let object = this.IdObjectCache.get(id);

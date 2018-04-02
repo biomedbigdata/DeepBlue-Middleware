@@ -66,7 +66,6 @@ class ComposedCommands {
     }
     countOverlaps(data_query_id, experiments_name, filters, status) {
         let total = data_query_id.length * experiments_name.length * 3;
-        console.log("total", total);
         status.reset(total);
         let response = new rxjs_1.Subject();
         status.setStep("Selecting experiments regions");
@@ -123,13 +122,22 @@ class ComposedCommands {
                 content = new operations_1.DeepBlueOperationArgs(fullMetadata.get('args'));
             }
             switch (type) {
-                case "annotation_select":
-                case "experiment_select":
                 case "genes_select":
                 case 'find_motif':
                 case "input_regions": {
                     return Observable_1.Observable.of(new operations_1.DeepBlueOperation(content, id, type));
                 }
+                case "annotation_select": {
+                    let ann_name = fullMetadata.get('args')['annotation_name'];
+                    return this.deepBlueService.nameToId(ann_name, "annotations", status).flatMap((idNames) => {
+                        return Observable_1.Observable.of(new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(idNames[0]), id, "select_annotations"));
+                    });
+                }
+                case "experiment_select":
+                    let exp_name = fullMetadata.get('args')['experiment_name'];
+                    return this.deepBlueService.nameToId(exp_name, "experiments", status).flatMap((idNames) => {
+                        return Observable_1.Observable.of(new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(idNames[0]), id, "select_annotations"));
+                    });
                 case "filter":
                 case 'filter_by_motif': {
                     let filter_parameters;
