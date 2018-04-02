@@ -189,7 +189,7 @@ class DeepBlueOperationArgs extends AbstractDataParameter {
         return this.text();
     }
     id() {
-        throw new deepblue_2.Id(this.text());
+        return new deepblue_2.Id(this.text());
     }
 }
 exports.DeepBlueOperationArgs = DeepBlueOperationArgs;
@@ -573,7 +573,7 @@ class DeepBlueOperationError extends AbstractNamedDataType {
         this.request_count = request_count;
     }
     data() {
-        throw new DeepBlueDataParameter(this.message);
+        return new DeepBlueDataParameter(this.message);
     }
     mainOperation() {
         return this;
@@ -791,7 +791,7 @@ class DeepBlueRequest extends AbstractDeepBlueRequest {
         }
     }
     text() {
-        throw "Request: " + this._id.id;
+        return "Request: " + this._id.id;
     }
     id() {
         return this._id;
