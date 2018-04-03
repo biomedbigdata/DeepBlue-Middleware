@@ -210,7 +210,6 @@ export class DeepBlueService {
     params["query_id"] = query_op.id().id;
 
     return this.execute("filter_regions", params, status).map((response: [string, string]) => {
-      status.increment();
       return new DeepBlueFilter(query_op, filter, new Id(response[1]));
     }).catch(this.handleError);
   }
@@ -220,7 +219,7 @@ export class DeepBlueService {
     params["query_id"] = query_op.id().id;
     params["start"] = start;
     params["length"] = length;
-    params["use_strand"] = true;
+    params["use_strand"] = "true";
 
     return this.execute("flank", params, status).map((response: [string, string]) => {
       status.increment();
@@ -234,7 +233,7 @@ export class DeepBlueService {
     params["query_id"] = query_op.id().id;
     params["length"] = length;
     params["direction"] = direction;
-    params["use_strand"] = true;
+    params["use_strand"] = "true";
 
     return this.execute("extend", params, status).map((response: [string, string]) => {
       status.increment();
@@ -267,16 +266,16 @@ export class DeepBlueService {
 
     return this.execute("select_genes", params, status).map((response: [string, string]) => {
       status.increment();
-      return new DeepBlueOperation(new DeepBlueDataParameter(gene_model_name), new Id(response[1]), 'select_genes');
+      return new DeepBlueOperation(new DeepBlueOperationArgs({ "gene_model": gene_model_name }), new Id(response[1]), 'select_genes');
     }).do((operation) => {
       this.idNamesQueryCache.put(gene_model_name, operation);
     }).catch(this.handleError);
   }
 
 
-  intersection(query_data_id: DeepBlueOperation, query_filter_id: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueIntersection> {
+  intersection(query_data: DeepBlueOperation, query_filter: DeepBlueOperation, status: RequestStatus): Observable<DeepBlueIntersection> {
 
-    let cache_key = [query_data_id, query_filter_id];
+    let cache_key = [query_data, query_filter];
 
     let cached_intersection = this.intersectsQueryCache.get(cache_key);
     if (cached_intersection) {
@@ -285,11 +284,12 @@ export class DeepBlueService {
     }
 
     let params = {};
-    params["query_data_id"] = query_data_id.id().id;
-    params["query_filter_id"] = query_filter_id.id().id;
+    params["query_data_id"] = query_data.id().id;
+    params["query_filter_id"] = query_filter.id().id;
     return this.execute("intersection", params, status)
       .map((response: [string, string]) => {
-        return new DeepBlueIntersection(query_data_id, query_filter_id, new Id(response[1]))
+        status.increment();
+        return new DeepBlueIntersection(query_data, query_filter, true, new Id(response[1]))
       })
 
       .do((operation: DeepBlueIntersection) => this.intersectsQueryCache.put(cache_key, operation))
@@ -503,6 +503,21 @@ export class DeepBlueService {
     });
   }
 
+
+  nameToId(name: string, collection: string, status: RequestStatus): Observable<IdName[]> {
+    let params = {
+      "name": name,
+      "collection": collection
+    }
+
+    return this.execute('name_to_id', params, status).map((body: any) => {
+      const data = body[1] || [];
+      return data.map((value: any) => {
+        return new IdName(new Id(value[0]), value[1]);
+      })
+    })
+  }
+
   info(id: Id, status: RequestStatus): Observable<FullMetadata> {
 
     let object = this.IdObjectCache.get(id);
@@ -605,6 +620,7 @@ export class DeepBlueService {
             if (value[0] === "okay") {
               let op_result = new DeepBlueResult(op_request, value[1]);
               this.resultCache.put(op_request, op_result);
+              status.increment();
               timer.unsubscribe();
               pollSubject.next(op_result);
               pollSubject.complete();
@@ -623,7 +639,7 @@ export class DeepBlueService {
         } else if (state == "removed" || state == "canceled") {
           let client = xmlrpc.createClient(xmlrpc_host);
           client.methodCall("reprocess", [op_request._id.id, 'anonymous_key'], (err: Object, value: any) => {
-            console.log(value);
+            console.info("Reprocessed", value);
           });
           isProcessing = false;
         } else { // 'new' or 'running'

@@ -149,7 +149,6 @@ class DeepBlueService {
         let params = filter.asKeyValue();
         params["query_id"] = query_op.id().id;
         return this.execute("filter_regions", params, status).map((response) => {
-            status.increment();
             return new operations_1.DeepBlueFilter(query_op, filter, new deepblue_1.Id(response[1]));
         }).catch(this.handleError);
     }
@@ -158,7 +157,7 @@ class DeepBlueService {
         params["query_id"] = query_op.id().id;
         params["start"] = start;
         params["length"] = length;
-        params["use_strand"] = true;
+        params["use_strand"] = "true";
         return this.execute("flank", params, status).map((response) => {
             status.increment();
             let args = new operations_1.DeepBlueOperationArgs(params);
@@ -170,7 +169,7 @@ class DeepBlueService {
         params["query_id"] = query_op.id().id;
         params["length"] = length;
         params["direction"] = direction;
-        params["use_strand"] = true;
+        params["use_strand"] = "true";
         return this.execute("extend", params, status).map((response) => {
             status.increment();
             let args = new operations_1.DeepBlueOperationArgs(params);
@@ -196,24 +195,25 @@ class DeepBlueService {
         params['gene_model'] = gene_model_name.name;
         return this.execute("select_genes", params, status).map((response) => {
             status.increment();
-            return new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(gene_model_name), new deepblue_1.Id(response[1]), 'select_genes');
+            return new operations_1.DeepBlueOperation(new operations_1.DeepBlueOperationArgs({ "gene_model": gene_model_name }), new deepblue_1.Id(response[1]), 'select_genes');
         }).do((operation) => {
             this.idNamesQueryCache.put(gene_model_name, operation);
         }).catch(this.handleError);
     }
-    intersection(query_data_id, query_filter_id, status) {
-        let cache_key = [query_data_id, query_filter_id];
+    intersection(query_data, query_filter, status) {
+        let cache_key = [query_data, query_filter];
         let cached_intersection = this.intersectsQueryCache.get(cache_key);
         if (cached_intersection) {
             status.increment();
             return Observable_1.Observable.of(cached_intersection);
         }
         let params = {};
-        params["query_data_id"] = query_data_id.id().id;
-        params["query_filter_id"] = query_filter_id.id().id;
+        params["query_data_id"] = query_data.id().id;
+        params["query_filter_id"] = query_filter.id().id;
         return this.execute("intersection", params, status)
             .map((response) => {
-            return new operations_1.DeepBlueIntersection(query_data_id, query_filter_id, new deepblue_1.Id(response[1]));
+            status.increment();
+            return new operations_1.DeepBlueIntersection(query_data, query_filter, true, new deepblue_1.Id(response[1]));
         })
             .do((operation) => this.intersectsQueryCache.put(cache_key, operation))
             .catch(this.handleError);
@@ -379,6 +379,18 @@ class DeepBlueService {
             }).sort((a, b) => a.name.localeCompare(b.name));
         });
     }
+    nameToId(name, collection, status) {
+        let params = {
+            "name": name,
+            "collection": collection
+        };
+        return this.execute('name_to_id', params, status).map((body) => {
+            const data = body[1] || [];
+            return data.map((value) => {
+                return new deepblue_1.IdName(new deepblue_1.Id(value[0]), value[1]);
+            });
+        });
+    }
     info(id, status) {
         let object = this.IdObjectCache.get(id);
         if (object) {
@@ -460,6 +472,7 @@ class DeepBlueService {
                         if (value[0] === "okay") {
                             let op_result = new operations_1.DeepBlueResult(op_request, value[1]);
                             this.resultCache.put(op_request, op_result);
+                            status.increment();
                             timer.unsubscribe();
                             pollSubject.next(op_result);
                             pollSubject.complete();
@@ -480,7 +493,7 @@ class DeepBlueService {
                 else if (state == "removed" || state == "canceled") {
                     let client = xmlrpc.createClient(xmlrpc_host);
                     client.methodCall("reprocess", [op_request._id.id, 'anonymous_key'], (err, value) => {
-                        console.log(value);
+                        console.info("Reprocessed", value);
                     });
                     isProcessing = false;
                 }

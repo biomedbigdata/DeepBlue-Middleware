@@ -53,7 +53,7 @@ export class RegionsEnrichment {
 
               for (let filter of filters) {
                 let exp_name = filter.mainOperation().name();
-                let filter_name = filter._params.value;
+                let filter_name = (<DeepBlueFilterParameters>filter._params).value;
                 let q_id = filter.id().id;
                 exp_filter_id.push([experiment.id.id, exp_name, experiment.biosource(), filter_name, experiment.project(), q_id]);
               }

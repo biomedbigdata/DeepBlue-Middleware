@@ -65,8 +65,7 @@ class ComposedCommands {
         }
     }
     countOverlaps(data_query_id, experiments_name, filters, status) {
-        var start = new Date().getTime();
-        let total = data_query_id.length * experiments_name.length * 4;
+        let total = data_query_id.length * experiments_name.length * 3;
         status.reset(total);
         let response = new rxjs_1.Subject();
         status.setStep("Selecting experiments regions");
@@ -76,7 +75,6 @@ class ComposedCommands {
                 this.intersectWithSelected(data_query_id, filtered_data, status).subscribe((overlap_ops) => {
                     status.setStep("Intersecting regions");
                     this.countRegionsBatch(overlap_ops, status).subscribe((datum) => {
-                        var end = new Date().getTime();
                         setTimeout(() => {
                             response.next(datum);
                             response.complete();
@@ -124,13 +122,32 @@ class ComposedCommands {
                 content = new operations_1.DeepBlueOperationArgs(fullMetadata.get('args'));
             }
             switch (type) {
-                case "annotation_select":
-                case "experiment_select":
+                case "genes_select":
+                case 'find_motif':
                 case "input_regions": {
                     return Observable_1.Observable.of(new operations_1.DeepBlueOperation(content, id, type));
                 }
-                case "filter": {
-                    let filter_parameters = operations_1.DeepBlueFilterParameters.fromObject(fullMetadata['values']['args']);
+                case "annotation_select": {
+                    let ann_name = fullMetadata.get('args')['annotation'];
+                    console.log(fullMetadata.get('args'));
+                    return this.deepBlueService.nameToId(ann_name, "annotations", status).flatMap((idNames) => {
+                        return Observable_1.Observable.of(new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(idNames[0]), id, "select_annotations"));
+                    });
+                }
+                case "experiment_select":
+                    let exp_name = fullMetadata.get('args')['experiment_name'];
+                    return this.deepBlueService.nameToId(exp_name, "experiments", status).flatMap((idNames) => {
+                        return Observable_1.Observable.of(new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(idNames[0]), id, "select_experiments"));
+                    });
+                case "filter":
+                case 'filter_by_motif': {
+                    let filter_parameters;
+                    if (type == "filter") {
+                        filter_parameters = operations_1.DeepBlueFilterParameters.fromObject(fullMetadata['values']['args']);
+                    }
+                    else {
+                        filter_parameters = operations_1.DeepBlueFilterMotifParameters.fromObject(fullMetadata['values']['args']);
+                    }
                     let _query = new deepblue_1.Id(fullMetadata.get('args')['query']);
                     return this.loadQuery(_query, status).flatMap((op) => {
                         return Observable_1.Observable.of(new operations_1.DeepBlueFilter(op, filter_parameters, query_id));
@@ -150,7 +167,7 @@ class ComposedCommands {
                         this.loadQuery(data, status),
                         this.loadQuery(filter, status)
                     ]).map(([op_data, op_filter]) => {
-                        return new operations_1.DeepBlueIntersection(op_data, op_filter, id);
+                        return new operations_1.DeepBlueIntersection(op_data, op_filter, true, id);
                     });
                 }
                 case "aggregate": {
@@ -162,6 +179,23 @@ class ComposedCommands {
                         this.loadQuery(ranges_id, status)
                     ]).map(([op_data, op_ranges]) => {
                         return new operations_1.DeepBlueAggregate(op_data, op_ranges, field, id);
+                    });
+                }
+                case "flank":
+                case 'extend': {
+                    let args = operations_1.DeepBlueOperationArgs.fromObject(fullMetadata.get('args'));
+                    let _data = new deepblue_1.Id(fullMetadata.get('args')['query_id']);
+                    return this.loadQuery(_data, status).flatMap((op) => {
+                        if (type == "flank") {
+                            return Observable_1.Observable.of(new operations_1.DeepBlueFlank(op, args, query_id));
+                        }
+                        else if (type == "extend") {
+                            return Observable_1.Observable.of(new operations_1.DeepBlueExtend(op, args, query_id));
+                        }
+                        else {
+                            console.log("Unknow type", type);
+                            return Observable_1.Observable.of(null);
+                        }
                     });
                 }
                 default: {
