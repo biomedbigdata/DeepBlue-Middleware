@@ -128,7 +128,8 @@ class ComposedCommands {
                     return Observable_1.Observable.of(new operations_1.DeepBlueOperation(content, id, type));
                 }
                 case "annotation_select": {
-                    let ann_name = fullMetadata.get('args')['annotation_name'];
+                    let ann_name = fullMetadata.get('args')['annotation'];
+                    console.log(fullMetadata.get('args'));
                     return this.deepBlueService.nameToId(ann_name, "annotations", status).flatMap((idNames) => {
                         return Observable_1.Observable.of(new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(idNames[0]), id, "select_annotations"));
                     });
@@ -136,7 +137,7 @@ class ComposedCommands {
                 case "experiment_select":
                     let exp_name = fullMetadata.get('args')['experiment_name'];
                     return this.deepBlueService.nameToId(exp_name, "experiments", status).flatMap((idNames) => {
-                        return Observable_1.Observable.of(new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(idNames[0]), id, "select_annotations"));
+                        return Observable_1.Observable.of(new operations_1.DeepBlueOperation(new operations_1.DeepBlueDataParameter(idNames[0]), id, "select_experiments"));
                     });
                 case "filter":
                 case 'filter_by_motif': {

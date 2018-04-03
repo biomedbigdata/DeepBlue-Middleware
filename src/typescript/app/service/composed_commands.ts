@@ -185,7 +185,7 @@ export class ComposedCommands {
                 }
 
                 case "annotation_select": {
-                    let ann_name = fullMetadata.get('args')['annotation_name'];
+                    let ann_name = fullMetadata.get('args')['annotation'];
                     return this.deepBlueService.nameToId(ann_name, "annotations", status).flatMap((idNames: IdName[]) => {
                         return Observable.of(new DeepBlueOperation(new DeepBlueDataParameter(idNames[0]), id, "select_annotations"));
                     })
@@ -194,7 +194,7 @@ export class ComposedCommands {
                 case "experiment_select":
                     let exp_name = fullMetadata.get('args')['experiment_name'];
                     return this.deepBlueService.nameToId(exp_name, "experiments", status).flatMap((idNames: IdName[]) => {
-                        return Observable.of(new DeepBlueOperation(new DeepBlueDataParameter(idNames[0]), id, "select_annotations"));
+                        return Observable.of(new DeepBlueOperation(new DeepBlueDataParameter(idNames[0]), id, "select_experiments"));
                     })
 
                 case "filter":
