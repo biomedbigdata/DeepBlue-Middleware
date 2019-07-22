@@ -121,7 +121,7 @@ export class RegionsEnrichment {
   buildFullDatabases(request_status: RequestStatus, genome: string): Observable<[string, string[]][]> {
     let pollSubject = new Subject<[string, string[]][]>();
 
-    this.deepBlueService.collection_experiments_count(request_status, "epigenetic_marks", "peaks", genome).subscribe((ems: IdNameCount[]) => {
+    this.deepBlueService.collection_experiments_count(request_status,    "epigenetic_marks", "peaks", genome).subscribe((ems: IdNameCount[]) => {
       let histone_marks_names = ems.map((id_name: IdNameCount) => id_name.name);
       this.listExperimentsMany(request_status, histone_marks_names, genome).subscribe((dbs: [string, string[]][]) => {
         pollSubject.next(dbs.filter((em) => {
