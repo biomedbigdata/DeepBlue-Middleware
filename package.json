@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node --max-old-space-size=2048 ./bin/www"
+    "start": "node --max-old-space-size=4096 ./bin/www"
   },
   "dependencies": {
     "@types/multer": "^1.3.5",
