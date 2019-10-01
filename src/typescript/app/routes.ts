@@ -5,7 +5,6 @@ import { RequestManager } from './service/requests_manager';
 import {
   FullGeneModel,
   FullMetadata,
-  IdName,
   Name,
   Gene,
   Id
@@ -21,10 +20,6 @@ import {
   DeepBlueFilterParameters
 } from './domain/operations';
 
-import { Router } from 'express';
-
-import { Utils } from './service/utils';
-
 import { Manager } from './service/manager';
 import { RegionsEnrichment } from './service/regions_enrichment';
 import { ComposedCommands } from './service/composed_commands';
@@ -36,8 +31,6 @@ import * as multer from 'multer';
 
 import { DeepBlueService } from 'app/service/deepblue';
 import { ComposedData } from 'app/service/composed_data';
-import { request } from 'https';
-import { CANCELLED } from 'dns';
 import { Observable } from 'rxjs/Observable';
 
 export class ComposedCommandsRoutes {

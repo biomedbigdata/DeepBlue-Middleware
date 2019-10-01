@@ -6,7 +6,7 @@ const rxjs_1 = require("rxjs");
 class RegionsEnrichment {
     constructor(deepBlueService) {
         this.deepBlueService = deepBlueService;
-        this.chromatinCache = null;
+        this.chromatinCache = new Map();
     }
     getChromatinStates(request_status, genome) {
         return this.deepBlueService.select_regions_from_metadata(genome, "peaks", "Chromatin State Segmentation", null, null, null, null, request_status).flatMap((op) => {
@@ -15,8 +15,8 @@ class RegionsEnrichment {
     }
     buildChromatinStatesQueries(request_status, genome) {
         let response = new rxjs_1.Subject();
-        if (this.chromatinCache) {
-            return Observable_1.Observable.of(this.chromatinCache);
+        if (this.chromatinCache.has(genome)) {
+            return Observable_1.Observable.of(this.chromatinCache.get(genome));
         }
         Observable_1.Observable.forkJoin([
             this.getChromatinStates(request_status, genome),
@@ -25,7 +25,6 @@ class RegionsEnrichment {
             let states = subs[0].resultAsDistinct();
             let state_names = Object.keys(states);
             let experiments = subs[1];
-            let total_processed = 0;
             let exp_states_obs = experiments.map((experiment) => {
                 return this.deepBlueService.selectExperiment(experiment, request_status)
                     .flatMap((exp_op) => {
@@ -57,15 +56,16 @@ class RegionsEnrichment {
                         if (!(filter[3] in states)) {
                             states[filter[3]] = new Array();
                         }
-                        // filter_namae is the key, values are: exp_id, exp_name, biosource, and query id
+                        // filter_name is the key, values are: exp_id, exp_name, biosource, project, and query id
                         states[filter[3]].push([filter[0], filter[1], filter[2], filter[4], filter[5]]);
                     }
                 }
                 let arr_filter = Object.keys(states).map((state) => {
                     return [state, states[state]];
                 });
-                this.chromatinCache = ["Chomatin States Segmentation", arr_filter];
-                response.next(this.chromatinCache);
+                let result = ["Chromatin States Segmentation", arr_filter];
+                this.chromatinCache.set(genome, result);
+                response.next(result);
                 response.complete();
             });
         });
@@ -75,7 +75,6 @@ class RegionsEnrichment {
     listExperiments(request_status, epigenetic_mark, genome) {
         return this.deepBlueService.list_experiments_full(request_status, "peaks", epigenetic_mark, genome).map(((experiments) => [epigenetic_mark, experiments.map((experiment) => [experiment.id.id, experiment.name, experiment.biosource(), experiment.project()])]));
     }
-    //  {[key: string]: [string, string][]};
     listExperimentsMany(request_status, epigenetic_marks, genome) {
         let observableBatch = [];
         epigenetic_marks.forEach((epigenetic_mark) => {
